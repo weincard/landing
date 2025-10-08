@@ -1,0 +1,28 @@
+export const routes = {
+  auth: {
+    login: "/login",
+    // register: "/register",
+    // forgotPassword: "/forgot-password",
+    // resetPassword: "/reset-password",
+    // emailVerification: "/email-verification",
+  },
+
+  useTerms: "/terminos-de-uso",
+  privacyPolicy: "/politica-de-privacidad",
+  dashboard: "/dashboard",
+  pedidos: "/dashboard/pedidos",
+  productos: "/dashboard/productos",
+  crear_productos:"/dashboard/productos/crear_productos",
+  editar_productos:"/dashboard/productos/editar_productos",
+  categorias: "/dashboard/categorias",
+  atributos: "/dashboard/atributos",
+  opciones_de_atributos: "/dashboard/opciones",
+  marcas: "/dashboard/marcas",
+  mascotas: "/dashboard/mascotas",
+  especies: "/dashboard/especies",
+  razas: "/dashboard/razas",
+  condiciones_medicas: "/dashboard/condiciones_medicas",
+  tiendas: "/dashboard/tiendas",
+  solicitudes_surtido: "/dashboard/solicitudes_surtido",
+  gestion_pagos: "/dashboard/gestion_pagos",
+};

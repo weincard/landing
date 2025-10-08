@@ -1,0 +1,19 @@
+{
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/setupTests.js"],
+    "moduleNameMapping": {
+        "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testPathIgnorePatterns": ["<rootDir>/.next/", "<rootDir>/node_modules/"],
+    "collectCoverageFrom": [
+        "src/**/*.{js,jsx,ts,tsx}",
+        "!src/**/*.d.ts",
+        "!src/app/**/*",
+        "!src/lib/**/*"
+    ],
+    "transform": {
+        "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { "presets": ["next/babel"] }]
+    },
+    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"]
+}

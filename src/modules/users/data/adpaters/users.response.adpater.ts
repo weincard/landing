@@ -1,0 +1,43 @@
+import type { IUser } from "@/data/interfaces/user.interface"
+import type {
+  AllUsersResponse,
+  ApiAllUsersResponse,
+  CreateUserResponse,
+  DeleteUserResponse,
+  UserResponse,
+  UpdateUserResponse,
+} from "../interfaces/users.response.interface"
+
+export const createUserResponseAdapter = (response: CreateUserResponse | any): UserResponse => ({
+  message: response.message,
+  user: response.user ? mapearUsuario(response.user) : undefined,
+})
+
+export const updateUserResponseAdapter = (response: UpdateUserResponse | any): UserResponse => ({
+  message: response.message,
+  user: response.user ? mapearUsuario(response.user) : undefined,
+})
+
+export const deleteUserResponseAdapter = (response: DeleteUserResponse | any): UserResponse => ({
+  message: response.message,
+  user: response.user ? mapearUsuario(response.user) : undefined,
+})
+
+export const allUsersResponseAdapter = (response: ApiAllUsersResponse | any): AllUsersResponse => ({
+  count: response.count,
+  users: response.users.map((user: any) => mapearUsuario(user)),
+})
+
+function mapearUsuario(user: any): IUser {
+  return {
+    idUsuario: user.userId,
+    nombre: user.firstName || "",
+    apellido: user.lastName || "",
+    email: user.email || "",
+    telefono: user.phone || "",
+    role: user.role || "Comprador",
+    codigoVerificacion: user.verificationCode || "",
+    estaVerificado: user.isVerified || false,
+    creadoEn: user.createdAt ? new Date(user.createdAt) : undefined,
+  }
+}
