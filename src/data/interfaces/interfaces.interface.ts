@@ -3,7 +3,7 @@ import {
   PedidoEstadoPagoType,
   PedidoEstadoType,
 } from "@/utilities/enums/pedidos-estados-enum";
-import { IUser } from "./user.interface";
+import { IUser, UserRole } from "./user.interface";
 
 /////////////////DASHBOARD//////////////////////////////////////////////
 export interface IDireccionEnvio {
@@ -541,7 +541,7 @@ export interface IUserProfile {
   name: string;
   email: string;
   phone: string;
-  role: string;
+  role: UserRole;
   image?: string;
   verified: boolean;
   createdAt: Date;

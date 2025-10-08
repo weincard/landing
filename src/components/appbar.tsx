@@ -53,7 +53,7 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
         {/* Logo */}
         <Image
           src="/logo.png"
-          alt="ZonaPet Logo"
+          alt="Weincard Logo"
           width={170}
           height={50}
           className="hidden lg:block h-[40px] w-[170px] object-contain"
@@ -62,7 +62,7 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
         {/* Logo versión móvil (más pequeño) */}
         <Image
           src="/logo.png"
-          alt="ZonaPet Logo"
+          alt="Weincard Logo"
           width={120}
           height={35}
           className="lg:hidden h-[35px] w-[120px] object-contain"
@@ -119,17 +119,21 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-                {user?.nombre.split("")[0]}
+                {user?.name?.split("")[0] || "U"}
               </div>
               {/* Nombre de usuario - Se oculta en móvil */}
-              <span className="hidden md:inline">{user?.nombre}</span>
+              <span className="hidden md:inline">
+                {user?.name || "Usuario"}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {/* Información del usuario - Visible solo en móvil */}
             <div className="md:hidden px-2 py-1.5 text-sm">
-              <div className="font-medium">{user?.nombre}</div>
-              <div className="text-muted-foreground">juan@email.com</div>
+              <div className="font-medium">{user?.name || "Usuario"}</div>
+              <div className="text-muted-foreground">
+                {user?.email || "correo@ejemplo.com"}
+              </div>
             </div>
             <DropdownMenuItem>Perfil</DropdownMenuItem>
             <DropdownMenuItem>Configuración</DropdownMenuItem>

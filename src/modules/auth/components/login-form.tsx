@@ -15,11 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { AlertCircle, EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { routes } from "@/config";
@@ -71,7 +67,7 @@ export const LoginForm = () => {
       console.log("AccesTocken:", resp.accessToken);
       setCookie(CookiesKeysEnum.token, resp.accessToken);
       // setUserCookies(resp);
-      if (resp.role === "Administrador") {
+      if (resp.role === "superadmin") {
         router.replace(routes.dashboard);
       }
       toast.success("Login exitoso", {
