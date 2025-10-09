@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IUser } from "@/data/interfaces/user.interface";
+import type { IUser, UserRole } from "@/data/interfaces/user.interface";
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,6 +39,7 @@ interface UsersViewProps {
 export default function UsersView({ token }: UsersViewProps) {
   const { getAllUsers, loading, error } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("client");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -51,12 +52,12 @@ export default function UsersView({ token }: UsersViewProps) {
     const skip = (currentPage - 1) * pageSize;
     const paginationParams = { limit: pageSize, skip };
 
-    const response = await getAllUsers(token, paginationParams);
+    const response = await getAllUsers(token, paginationParams, selectedRole);
     if (response) {
       setUsers(response.users || []);
       setTotalCount(response.count || 0);
     }
-  }, [currentPage, pageSize, token, getAllUsers]);
+  }, [currentPage, pageSize, token, selectedRole, getAllUsers]);
 
   useEffect(() => {
     fetchUsers();
@@ -70,9 +71,30 @@ export default function UsersView({ token }: UsersViewProps) {
   }, []);
 
   const handleSearch = useCallback(() => {
-    // Lógica de búsqueda aquí
+    // Resetear a la primera página cuando se hace una búsqueda
+    setCurrentPage(1);
+    // La búsqueda se manejará automáticamente con el useEffect
     console.log("Buscar:", searchTerm);
   }, [searchTerm]);
+
+  const handleRoleChange = useCallback((role: UserRole) => {
+    setSelectedRole(role);
+    setCurrentPage(1); // Reset to first page when role changes
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when page size changes
+  }, []);
+
+  const filteredUsers = users.filter((user) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(term) ||
+      user.email?.toLowerCase().includes(term) ||
+      user.phone?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div>
@@ -93,7 +115,7 @@ export default function UsersView({ token }: UsersViewProps) {
         <CardContent className="p-6 space-y-4">
           {/* Filtros */}
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-4">
-            <div className="flex-1 relative bg-card">
+            <div className="max-w-[300px] relative bg-card">
               <Input
                 placeholder="Buscar usuarios.."
                 value={searchTerm}
@@ -103,6 +125,21 @@ export default function UsersView({ token }: UsersViewProps) {
               />
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             </div>
+
+            <Select value={selectedRole} onValueChange={handleRoleChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por rol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los roles</SelectItem>
+                <SelectItem value="superadmin">Super Admin</SelectItem>
+                <SelectItem value="owner">Propietario</SelectItem>
+                <SelectItem value="manager">Gerente</SelectItem>
+                <SelectItem value="staff">Personal</SelectItem>
+                <SelectItem value="client">Cliente</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Button onClick={handleSearch} disabled={loading}>
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -148,7 +185,7 @@ export default function UsersView({ token }: UsersViewProps) {
                       {error}
                     </TableCell>
                   </TableRow>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={8}
@@ -158,7 +195,7 @@ export default function UsersView({ token }: UsersViewProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
+                  filteredUsers.map((user) => (
                     <TableRow key={user.idUsuario}>
                       <TableCell>
                         <Checkbox
@@ -228,7 +265,7 @@ export default function UsersView({ token }: UsersViewProps) {
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               Mostrando{" "}
-              {users.length === 0
+              {filteredUsers.length === 0
                 ? "0"
                 : `${(currentPage - 1) * pageSize + 1} - ${Math.min(
                     currentPage * pageSize,
@@ -238,8 +275,8 @@ export default function UsersView({ token }: UsersViewProps) {
             </div>
             <div className="flex items-center gap-2">
               <Select
-              // value={pageSize.toString()}
-              // onValueChange={(value) => handlePageSizeChange(Number(value))}
+                value={pageSize.toString()}
+                onValueChange={(value) => handlePageSizeChange(Number(value))}
               >
                 <SelectTrigger className="w-[100px]">
                   <SelectValue placeholder="10 por página" />
