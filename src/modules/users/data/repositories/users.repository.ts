@@ -74,10 +74,20 @@ export class UsersRepositoryImpl implements UsersRepository {
   async create(userParams: IUser): Promise<UserResponse> {
     console.log("Create User Params:", userParams);
 
+    // Preparar los datos según la estructura esperada por la API
+    const requestBody = {
+      email: userParams.email,
+      phone: userParams.phone,
+      roleName: userParams.role || "client",
+      document: userParams.document,
+      documentType: userParams.documentType || "CC",
+      isVerified: userParams.isVerified ?? true,
+    };
+
     const axiosRequest = await this.httpClient.request({
       url: apiUrls.users.register,
       method: "post",
-      body: userParams,
+      body: requestBody,
       isAuth: true,
     });
 

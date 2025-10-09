@@ -11,15 +11,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, Save, Camera, User as UserIcon } from "lucide-react";
+import { Plus, X, Save, Camera, User as UserIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import type { UserRole } from "@/data/interfaces/user.interface";
+import { toast } from "sonner";
 
 interface CreateOrEditUserProps {
-  userId?: string;
+  token?: string;
 }
 
-export function CreateOrEditUser({ userId }: CreateOrEditUserProps) {
+export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
+  const router = useRouter();
+  const { createUser, loading, error } = useUsers();
   const [avatar, setAvatar] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("client");
   const [formData, setFormData] = useState({
@@ -28,7 +33,7 @@ export function CreateOrEditUser({ userId }: CreateOrEditUserProps) {
     phone: "",
     document: "",
     documentType: "CC" as "CC" | "NIT",
-    // Shipping address fields
+    // Shipping address fields (no se envían al backend pero se mantienen en la vista)
     address: "",
     apartment: "",
     country: "",
@@ -60,26 +65,55 @@ export function CreateOrEditUser({ userId }: CreateOrEditUserProps) {
     }));
   };
 
-  const handleSave = () => {
-    // Lógica para guardar usuario
-    console.log("Saving user:", { ...formData, role: selectedRole, avatar });
+  const handleSave = async () => {
+    if (!formData.email || !formData.phone) {
+      toast.error("Email y teléfono son campos requeridos");
+      return;
+    }
+
+    // Preparar datos para enviar al backend (solo los campos requeridos)
+    const userParams = {
+      name: formData.name,
+      lastName: "", // La API espera lastName pero el formulario no lo tiene separado
+      email: formData.email,
+      phone: formData.phone,
+      document: formData.document,
+      documentType: formData.documentType,
+      role: selectedRole,
+      isVerified: true,
+    };
+
+    console.log("Sending user data:", userParams);
+
+    const response = await createUser(userParams);
+
+    if (response) {
+      console.log("User created successfully:", response);
+      toast.success(`Usuario creado exitosamente: ${response.message}`);
+      router.push("/dashboard/usuarios"); // Redirigir a la lista de usuarios
+    } else if (error) {
+      console.error("Error creating user:", error);
+      toast.error(`Error al crear usuario: ${error}`);
+    }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">
-          {userId ? "Editar Usuario" : "Agregar Usuario"}
-        </h1>
+        <h1 className="text-xl font-semibold">Agregar Usuario</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => router.back()}>
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Guardar
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            {loading ? "Guardando..." : "Guardar"}
           </Button>
         </div>
       </div>

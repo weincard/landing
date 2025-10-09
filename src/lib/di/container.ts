@@ -10,6 +10,7 @@ import {
   UsersRepositoryImpl,
 } from "@/modules/users/data/repositories/users.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
+import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
 import {
   LocalStorageProtocol,
   LocalStorageProtocolImpl,
@@ -27,6 +28,7 @@ container.bind(HttpClient).to(AxiosHttpClient).inSingletonScope();
 container.bind(AuthRepository).to(AuthRepositoryImpl).inSingletonScope();
 container.bind("UsersRepository").to(UsersRepositoryImpl).inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
+container.bind(CreateUserUseCase).toSelf().inSingletonScope();
 container
   .bind(LocalStorageProtocol)
   .to(LocalStorageProtocolImpl)
