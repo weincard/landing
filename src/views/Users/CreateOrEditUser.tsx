@@ -190,9 +190,9 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
             Información más importante sobre el usuario
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Nombres */}
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <label
                 htmlFor="name"
                 className="text-sm font-medium text-muted-foreground"
@@ -248,7 +248,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <label
                 htmlFor="email"
                 className="text-sm font-medium text-muted-foreground"
@@ -265,7 +265,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
             </div>
 
             {/* Teléfono */}
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <label
                 htmlFor="phone"
                 className="text-sm font-medium text-muted-foreground"
@@ -287,9 +287,9 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
               Shipping address information
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Dirección */}
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <label
                   htmlFor="address"
                   className="text-sm font-medium text-muted-foreground"
@@ -305,7 +305,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
               </div>
 
               {/* Apartamentos */}
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <label
                   htmlFor="apartment"
                   className="text-sm font-medium text-muted-foreground"
@@ -347,8 +347,10 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 </Select>
               </div>
 
+              <div></div>
+
               {/* Ciudad */}
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <label
                   htmlFor="city"
                   className="text-sm font-medium text-muted-foreground"
@@ -364,7 +366,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
               </div>
 
               {/* Phone (Shipping) */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 md:col-span-4">
                 <label
                   htmlFor="shippingPhone"
                   className="text-sm font-medium text-muted-foreground"
