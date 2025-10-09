@@ -1,55 +1,42 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Save, Camera, Image as ImageIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X, Save, Camera, User as UserIcon } from "lucide-react";
 import Image from "next/image";
-
-interface Office {
-  name: string;
-  address: string;
-  redemptions: number;
-  total: number;
-}
+import type { UserRole } from "@/data/interfaces/user.interface";
 
 interface CreateOrEditUserProps {
-  allyId?: string;
+  userId?: string;
 }
 
-export function CreateOrEditUser({ allyId }: CreateOrEditUserProps) {
-  const [files, setFiles] = useState<string[]>([]);
-  const [offices, setOffices] = useState<Office[]>([]);
-  const [newOffice, setNewOffice] = useState<Office>({
+export function CreateOrEditUser({ userId }: CreateOrEditUserProps) {
+  const [avatar, setAvatar] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("client");
+  const [formData, setFormData] = useState({
     name: "",
+    email: "",
+    phone: "",
+    document: "",
+    documentType: "CC" as "CC" | "NIT",
+    // Shipping address fields
     address: "",
-    redemptions: 0,
-    total: 0,
+    apartment: "",
+    country: "",
+    city: "",
+    shippingPhone: "",
   });
 
-  const handleAddOffice = () => {
-    if (newOffice.name && newOffice.address) {
-      setOffices([...offices, newOffice]);
-      setNewOffice({
-        name: "",
-        address: "",
-        redemptions: 0,
-        total: 0,
-      });
-    }
-  };
-
-  const handleFileChange = useCallback(
+  const handleAvatarChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
@@ -57,7 +44,7 @@ export function CreateOrEditUser({ allyId }: CreateOrEditUserProps) {
 
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          setFiles([base64]); // Solo mantenemos una imagen
+          setAvatar(base64);
         };
 
         reader.readAsDataURL(file);
@@ -66,39 +53,53 @@ export function CreateOrEditUser({ allyId }: CreateOrEditUserProps) {
     []
   );
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSave = () => {
+    // Lógica para guardar usuario
+    console.log("Saving user:", { ...formData, role: selectedRole, avatar });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Agregar Usuario</h1>
+        <h1 className="text-xl font-semibold">
+          {userId ? "Editar Usuario" : "Agregar Usuario"}
+        </h1>
         <div className="flex items-center gap-2">
           <Button variant="outline">
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button>
+          <Button onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
             Guardar
           </Button>
         </div>
       </div>
 
-      {/* Ally Information Card */}
+      {/* Avatar y Rol Card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex gap-6">
+          <div className="flex gap-6 items-center">
             <div className="relative group">
               <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-border">
-                {files[0] ? (
+                {avatar ? (
                   <Image
-                    src={files[0]}
-                    alt="Ally avatar"
+                    src={avatar}
+                    alt="Usuario avatar"
                     fill
                     className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                    <UserIcon className="h-12 w-12 text-muted-foreground" />
                   </div>
                 )}
                 <label
@@ -112,142 +113,240 @@ export function CreateOrEditUser({ allyId }: CreateOrEditUserProps) {
                   id="avatar-upload"
                   className="hidden"
                   accept="image/*"
-                  onChange={handleFileChange}
+                  onChange={handleAvatarChange}
                 />
               </div>
             </div>
             <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="name"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Nombre
-                  </label>
-                  <Input id="name" placeholder="Nombre del aliado" />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="description"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Descripción
-                  </label>
-                  <Textarea
-                    id="description"
-                    placeholder="Descripción del aliado"
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="owner"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Propietario
-                  </label>
-                  <Input id="owner" placeholder="Nombre del propietario" />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="address"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Dirección Principal
-                  </label>
-                  <Input id="address" placeholder="Dirección principal" />
-                </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="role"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Rol del Usuario
+                </label>
+                <Select
+                  value={selectedRole}
+                  onValueChange={(value: UserRole) => setSelectedRole(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="owner">Propietario</SelectItem>
+                    <SelectItem value="manager">Gerente</SelectItem>
+                    <SelectItem value="staff">Personal</SelectItem>
+                    <SelectItem value="superadmin">
+                      Super Administrador
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Offices Card */}
+      {/* Información del Usuario Card */}
       <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Sucursales</h2>
-            <Button onClick={handleAddOffice}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Sucursal
-            </Button>
+        <CardContent className="p-6">
+          <h2 className="text-lg font-medium mb-4">Información del usuario</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Información más importante sobre el usuario
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Nombres */}
+            <div className="space-y-2">
+              <label
+                htmlFor="name"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Nombres
+              </label>
+              <Input
+                id="name"
+                placeholder="Ingrese nombres"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+              />
+            </div>
+
+            {/* Tipo de Documento */}
+            <div className="space-y-2">
+              <label
+                htmlFor="documentType"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Tipo
+              </label>
+              <Select
+                value={formData.documentType}
+                onValueChange={(value: "CC" | "NIT") =>
+                  handleInputChange("documentType", value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="CC" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CC">CC</SelectItem>
+                  <SelectItem value="NIT">NIT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Documento */}
+            <div className="space-y-2">
+              <label
+                htmlFor="document"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Documento
+              </label>
+              <Input
+                id="document"
+                placeholder="Número de documento"
+                value={formData.document}
+                onChange={(e) => handleInputChange("document", e.target.value)}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+              />
+            </div>
+
+            {/* Teléfono */}
+            <div className="space-y-2">
+              <label
+                htmlFor="phone"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Teléfono
+              </label>
+              <Input
+                id="phone"
+                placeholder="+57 300 123 4567"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Add Office Form */}
-          <div className="grid grid-cols-4 gap-4">
-            <Input
-              placeholder="Nombre de la sucursal"
-              value={newOffice.name}
-              onChange={(e) =>
-                setNewOffice({ ...newOffice, name: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Dirección"
-              value={newOffice.address}
-              onChange={(e) =>
-                setNewOffice({ ...newOffice, address: e.target.value })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Redenciones"
-              value={newOffice.redemptions || ""}
-              onChange={(e) =>
-                setNewOffice({
-                  ...newOffice,
-                  redemptions: parseInt(e.target.value) || 0,
-                })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Total"
-              value={newOffice.total || ""}
-              onChange={(e) =>
-                setNewOffice({
-                  ...newOffice,
-                  total: parseInt(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
+          {/* Shipping Address Section */}
+          <div className="mt-8">
+            <h3 className="text-base font-medium text-muted-foreground mb-4">
+              Shipping address information
+            </h3>
 
-          {/* Offices Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Redenciones</TableHead>
-                  <TableHead>Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {offices.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center py-8 text-gray-500"
-                    >
-                      No hay sucursales agregadas
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  offices.map((office, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{office.name}</TableCell>
-                      <TableCell>{office.address}</TableCell>
-                      <TableCell>{office.redemptions}</TableCell>
-                      <TableCell>{office.total}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Dirección */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="address"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Dirección
+                </label>
+                <Input
+                  id="address"
+                  placeholder="Ingrese la dirección"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                />
+              </div>
+
+              {/* Apartamentos */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="apartment"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Apartamentos
+                </label>
+                <Input
+                  id="apartment"
+                  placeholder="Número de apartamento"
+                  value={formData.apartment}
+                  onChange={(e) =>
+                    handleInputChange("apartment", e.target.value)
+                  }
+                />
+              </div>
+
+              {/* País */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="country"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  País
+                </label>
+                <Select
+                  value={formData.country}
+                  onValueChange={(value) => handleInputChange("country", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="colombia">Colombia</SelectItem>
+                    <SelectItem value="venezuela">Venezuela</SelectItem>
+                    <SelectItem value="ecuador">Ecuador</SelectItem>
+                    <SelectItem value="peru">Perú</SelectItem>
+                    <SelectItem value="mexico">México</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Ciudad */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="city"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Ciudad
+                </label>
+                <Input
+                  id="city"
+                  placeholder="Ingrese la ciudad"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange("city", e.target.value)}
+                />
+              </div>
+
+              {/* Phone (Shipping) */}
+              <div className="space-y-2 md:col-span-2">
+                <label
+                  htmlFor="shippingPhone"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Phone
+                </label>
+                <Input
+                  id="shippingPhone"
+                  placeholder="+57 300 123 4567"
+                  value={formData.shippingPhone}
+                  onChange={(e) =>
+                    handleInputChange("shippingPhone", e.target.value)
+                  }
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

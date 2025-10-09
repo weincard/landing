@@ -44,6 +44,8 @@ function mapearUsuario(user: any): IUser {
     lastName: user.lastName || user.apellido || "",
     email: user.email || "",
     phone: user.phone || "",
+    document: user.document || "",
+    documentType: user.documentType || "CC",
     role: user.role?.name || user.role || "client",
     verificationCode: user.verificationCode || "",
     isVerified: user.isVerified || false,

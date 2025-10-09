@@ -8,6 +8,8 @@ export interface IUser {
   email: string; // Varchar(250) - Correo electrónico del usuario
   password?: string; // Varchar(250) - Contraseña del usuario
   phone: string; // Varchar(250) - Teléfono del usuario
+  document?: string; // Número de documento
+  documentType?: "CC" | "NIT"; // Tipo de documento
   verificationCode?: string;
   isVerified?: boolean;
   role?: UserRole; // Enum de tipos de usuario
