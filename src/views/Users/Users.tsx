@@ -23,9 +23,7 @@ import type { IUser } from "@/data/interfaces/user.interface";
 import {
   ChevronLeft,
   ChevronRight,
-  Pencil,
   Plus,
-  Trash2,
   Loader2,
   Search,
   User,

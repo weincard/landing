@@ -3,6 +3,7 @@ import container from "@/lib/di/container";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type { AllUsersResponse } from "@/modules/users/data/interfaces/users.response.interface";
+import { UserRole } from "@/data/interfaces/user.interface";
 
 export const useUsers = () => {
   const [loading, setLoading] = useState(false);
@@ -11,7 +12,8 @@ export const useUsers = () => {
   const getAllUsers = useCallback(
     async (
       token?: string,
-      paginationParams?: IPaginationParams
+      paginationParams?: IPaginationParams,
+      role?: UserRole
     ): Promise<AllUsersResponse | null> => {
       setLoading(true);
       setError(null);
@@ -20,7 +22,8 @@ export const useUsers = () => {
         const getAllUsersUseCase = container.get(GetAllUsersUseCase);
         const response = await getAllUsersUseCase.execute(
           token,
-          paginationParams
+          paginationParams,
+          role
         );
         return response;
       } catch (err: any) {

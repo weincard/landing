@@ -1,5 +1,6 @@
+import { CreateOrEditUser } from "@/views/Users/CreateOrEditUser";
 import React from "react";
 
 export default function CreateUserPage() {
-  return <div>Crear Usuario</div>;
+  return <CreateOrEditUser />;
 }

@@ -70,7 +70,7 @@ export function CreateOrEditUser({ allyId }: CreateOrEditUserProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Aliado</h1>
+        <h1 className="text-xl font-semibold">Agregar Usuario</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline">
             <X className="h-4 w-4 mr-2" />
