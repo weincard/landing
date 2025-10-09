@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { DashboardData } from "@/data/interfaces/dashboard.interface";
+import DashboardView from "@/views/Dashboard/Dashboard";
 
 async function getDashboardData(): Promise<DashboardData> {
   // Aquí implementarías la lógica para obtener los datos reales
@@ -189,7 +190,7 @@ export default async function DashboardPage() {
 
   return (
     <Suspense fallback={<div>Cargando...</div>}>
-      {/* <DashboardView data={dashboardData} /> --- IGNORE --- */}
+      <DashboardView data={dashboardData} />
     </Suspense>
   );
 }
