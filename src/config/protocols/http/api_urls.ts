@@ -9,4 +9,11 @@ export const apiUrls = {
     loginByEmail: "/auth/login-by-email",
     me: "/auth/me",
   },
+  users: {
+    register: "/users/register",
+    getAll: "/users/all",
+    update: "/users/update",
+    delete: "/users/delete",
+    getByRole: "/users/by-role",
+  },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IUserProfile } from "@/data/interfaces/interfaces.interface";
+import type { IUser } from "@/data/interfaces/user.interface";
 import {
   ChevronLeft,
   ChevronRight,
@@ -30,50 +30,41 @@ import {
   Search,
   User,
 } from "lucide-react";
-import Image from "next/image";
-
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-const allies: IUserProfile[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1234567890",
-    role: "user",
-    verified: true,
-    createdAt: new Date("2023-01-15"),
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    phone: "+1987654321",
-    role: "admin",
-    verified: true,
-    createdAt: new Date("2023-02-20"),
-  },
-  {
-    id: 3,
-    name: "Bob Wilson",
-    email: "bob@example.com",
-    phone: "+1122334455",
-    role: "user",
-    verified: false,
-    createdAt: new Date("2023-03-25"),
-  },
-];
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
 
-interface UsersViewProps {}
+interface UsersViewProps {
+  token: string;
+}
 
-export default function UsersView({}: UsersViewProps) {
-  const [loading, setLoading] = useState(false);
+export default function UsersView({ token }: UsersViewProps) {
+  const { getAllUsers, loading, error } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const totalPages = Math.ceil(allies.length / pageSize);
+  const fetchUsers = useCallback(async () => {
+    if (!token) return;
+
+    const skip = (currentPage - 1) * pageSize;
+    const paginationParams = { limit: pageSize, skip };
+
+    const response = await getAllUsers(token, paginationParams);
+    if (response) {
+      setUsers(response.users || []);
+      setTotalCount(response.count || 0);
+    }
+  }, [currentPage, pageSize, token, getAllUsers]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handlePageChange = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -89,47 +80,40 @@ export default function UsersView({}: UsersViewProps) {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Redenciones</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            // onClick={handleAddRaza}
-          >
-            <Plus className="h-4 w-4" />
-            Exportar
-          </Button>
-
-          <Button
-          // onClick={handleAddRaza}
-          >
-            <Link href="/dashboard/users/create">
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar
-              </div>
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-4">
-        <div className="flex-1 relative bg-card">
-          <Input
-            placeholder="Buscar usuarios.."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="pl-8 w-full"
-          />
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-        </div>
-        <Button onClick={handleSearch} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+        <h1 className="text-xl font-semibold">Usuarios</h1>
+        <Button>
+          <Link href="/dashboard/users/create">
+            <div className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar
+            </div>
+          </Link>
         </Button>
       </div>
+
       <Card className="mt-4">
         <CardContent className="p-6 space-y-4">
+          {/* Filtros */}
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-4">
+            <div className="flex-1 relative bg-card">
+              <Input
+                placeholder="Buscar usuarios.."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-8 w-full"
+              />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            </div>
+            <Button onClick={handleSearch} disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Buscar"
+              )}
+            </Button>
+          </div>
+
           {/* Tabla */}
           <div className="rounded-md border">
             <Table>
@@ -142,7 +126,6 @@ export default function UsersView({}: UsersViewProps) {
                   <TableHead>Rol</TableHead>
                   <TableHead>Verificado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
-                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -158,7 +141,16 @@ export default function UsersView({}: UsersViewProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : allies.length === 0 ? (
+                ) : error ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-8 text-red-500"
+                    >
+                      {error}
+                    </TableCell>
+                  </TableRow>
+                ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={8}
@@ -168,80 +160,64 @@ export default function UsersView({}: UsersViewProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  allies.map((user) => (
-                    <TableRow key={user.id}>
+                  users.map((user) => (
+                    <TableRow key={user.idUsuario}>
                       <TableCell>
-                        <div className="h-8 w-8 relative rounded-full overflow-hidden bg-muted">
-                          {user.image ? (
-                            <Image
-                              src={user.image}
-                              alt={user.name}
-                              className="object-cover"
-                              fill
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full w-full bg-muted text-muted-foreground text-sm font-medium">
-                              {user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2)}
-                            </div>
-                          )}
-                        </div>
+                        <Checkbox
+                          checked={selectedUsers.includes(user.idUsuario!)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedUsers([
+                                ...selectedUsers,
+                                user.idUsuario!,
+                              ]);
+                            } else {
+                              setSelectedUsers(
+                                selectedUsers.filter(
+                                  (id) => id !== user.idUsuario
+                                )
+                              );
+                            }
+                          }}
+                        />
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {user.name}
+                          <div className="h-8 w-8 relative rounded-full overflow-hidden bg-muted">
+                            {/* Avatar placeholder, you can add user.image if available */}
+                            <User className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          {user.name || user.email}
                         </div>
                       </TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.email || "N/A"}</TableCell>
                       <TableCell>{user.phone || "N/A"}</TableCell>
                       <TableCell>
-                        <div className="border px-2 py-1 rounded-md w-max">
-                          <span className="text-muted-foreground ">
-                            {user.role}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
                         <span
-                          className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${
-                            user.verified
-                              ? "bg-green-50 text-green-700"
-                              : "bg-destructive text-destructive-foreground"
+                          className={`capitalize ${
+                            user.role === "superadmin"
+                              ? "text-primary"
+                              : "text-muted-foreground"
                           }`}
                         >
-                          {user.verified ? "Verificado" : "No verificado"}
+                          {user.role || "N/A"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {user.createdAt.toLocaleDateString()}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            user.isVerified
+                              ? "bg-green-50 text-green-700"
+                              : "bg-red-50 text-red-700"
+                          }`}
+                        >
+                          {user.isVerified ? "Sí" : "No"}
+                        </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <Link href={`/dashboard/users/${user.id}/edit`}>
-                              <div>
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </div>
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                            <span className="sr-only">Eliminar</span>
-                          </Button>
-                        </div>
+                        {user.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString()
+                          : "N/A"}
                       </TableCell>
                     </TableRow>
                   ))
@@ -253,9 +229,14 @@ export default function UsersView({}: UsersViewProps) {
           {/* Paginación */}
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
-              Mostrando
-              {allies.length === 0 ? " 0 " : ` ${1} - ${allies.length} `}
-              de {allies.length} usuarios
+              Mostrando{" "}
+              {users.length === 0
+                ? "0"
+                : `${(currentPage - 1) * pageSize + 1} - ${Math.min(
+                    currentPage * pageSize,
+                    totalCount
+                  )} `}{" "}
+              de {totalCount} usuarios
             </div>
             <div className="flex items-center gap-2">
               <Select
@@ -365,8 +346,8 @@ export default function UsersView({}: UsersViewProps) {
 
               <Button
                 variant="outline"
-                // disabled={currentPage >= totalPages || loading}
-                // onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages || loading}
+                onClick={() => handlePageChange(currentPage + 1)}
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-1" />

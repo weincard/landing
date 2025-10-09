@@ -1,4 +1,4 @@
-import type { IUser } from "@/data/interfaces/user.interface"
+import type { IUser } from "@/data/interfaces/user.interface";
 import type {
   AllUsersResponse,
   ApiAllUsersResponse,
@@ -6,38 +6,47 @@ import type {
   DeleteUserResponse,
   UserResponse,
   UpdateUserResponse,
-} from "../interfaces/users.response.interface"
+} from "../interfaces/users.response.interface";
 
-export const createUserResponseAdapter = (response: CreateUserResponse | any): UserResponse => ({
+export const createUserResponseAdapter = (
+  response: CreateUserResponse | any
+): UserResponse => ({
   message: response.message,
   user: response.user ? mapearUsuario(response.user) : undefined,
-})
+});
 
-export const updateUserResponseAdapter = (response: UpdateUserResponse | any): UserResponse => ({
+export const updateUserResponseAdapter = (
+  response: UpdateUserResponse | any
+): UserResponse => ({
   message: response.message,
   user: response.user ? mapearUsuario(response.user) : undefined,
-})
+});
 
-export const deleteUserResponseAdapter = (response: DeleteUserResponse | any): UserResponse => ({
+export const deleteUserResponseAdapter = (
+  response: DeleteUserResponse | any
+): UserResponse => ({
   message: response.message,
   user: response.user ? mapearUsuario(response.user) : undefined,
-})
+});
 
-export const allUsersResponseAdapter = (response: ApiAllUsersResponse | any): AllUsersResponse => ({
+export const allUsersResponseAdapter = (
+  response: ApiAllUsersResponse | any
+): AllUsersResponse => ({
   count: response.count,
   users: response.users.map((user: any) => mapearUsuario(user)),
-})
+});
 
 function mapearUsuario(user: any): IUser {
   return {
+    id: user.userId?.toString(),
     idUsuario: user.userId,
-    nombre: user.firstName || "",
-    apellido: user.lastName || "",
+    name: user.name || user.firstName || "",
+    lastName: user.lastName || user.apellido || "",
     email: user.email || "",
-    telefono: user.phone || "",
-    role: user.role || "Comprador",
-    codigoVerificacion: user.verificationCode || "",
-    estaVerificado: user.isVerified || false,
-    creadoEn: user.createdAt ? new Date(user.createdAt) : undefined,
-  }
+    phone: user.phone || "",
+    role: user.role?.name || user.role || "client",
+    verificationCode: user.verificationCode || "",
+    isVerified: user.isVerified || false,
+    createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
+  };
 }

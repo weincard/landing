@@ -1,6 +1,18 @@
+import { CookiesKeysEnum } from "@/utilities";
 import UsersView from "@/views/Users/Users";
-import React from "react";
+import { cookies } from "next/headers";
+import React, { Suspense } from "react";
 
 export default async function UsersPage() {
-  return <UsersView />;
+  const token = (await cookies()).get(CookiesKeysEnum.token)?.value;
+
+  if (!token) {
+    return <div>No access</div>;
+  }
+
+  return (
+    <Suspense>
+      <UsersView token={token} />
+    </Suspense>
+  );
 }
