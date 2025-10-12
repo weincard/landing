@@ -24,7 +24,7 @@ interface CreateOrEditBranchProps {
 export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
   const [logo, setLogo] = useState<string>("");
   const [images, setImages] = useState<string[]>([]);
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(4.5);
   const [isActive, setIsActive] = useState(true);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -122,6 +122,34 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
     );
   };
 
+  // Función para manejar el click en las estrellas (permite medias estrellas)
+  const handleStarClick = (
+    starPosition: number,
+    event: React.MouseEvent<SVGSVGElement>
+  ) => {
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const starWidth = rect.width;
+
+    // Si el click fue en la primera mitad, asignar .5, si fue en la segunda mitad, asignar entero
+    const isFirstHalf = clickX < starWidth / 2;
+    const newRating = isFirstHalf ? starPosition - 0.5 : starPosition;
+
+    setRating(newRating);
+  };
+
+  // Función para determinar cómo mostrar cada estrella
+  const getStarFill = (starPosition: number) => {
+    if (rating >= starPosition) {
+      return "full"; // Estrella completamente llena
+    } else if (rating >= starPosition - 0.5) {
+      return "half"; // Media estrella
+    } else {
+      return "empty"; // Estrella vacía
+    }
+  };
+
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -184,17 +212,46 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
               <div className="flex">
                 <h2 className="text-lg font-semibold">Información</h2>
                 <div className="flex items-center gap-1 ml-auto">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-5 w-5 cursor-pointer ${
-                        star <= rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "fill-gray-200 text-gray-200"
-                      }`}
-                      onClick={() => setRating(star)}
-                    />
-                  ))}
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const fillType = getStarFill(star);
+                    return (
+                      <div key={star} className="relative cursor-pointer">
+                        {fillType === "half" ? (
+                          // Media estrella - usa un SVG con gradient
+                          <svg
+                            onClick={(e) => handleStarClick(star, e)}
+                            className="h-5 w-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <defs>
+                              <linearGradient id={`half-${star}`}>
+                                <stop offset="50%" stopColor="#facc15" />
+                                <stop offset="50%" stopColor="#e5e7eb" />
+                              </linearGradient>
+                            </defs>
+                            <path
+                              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                              fill={`url(#half-${star})`}
+                              stroke="#facc15"
+                              strokeWidth="1"
+                            />
+                          </svg>
+                        ) : (
+                          // Estrella completa o vacía
+                          <Star
+                            onClick={(e) => handleStarClick(star, e)}
+                            className={`h-5 w-5 ${
+                              fillType === "full"
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-gray-200 text-gray-200"
+                            }`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardHeader>
