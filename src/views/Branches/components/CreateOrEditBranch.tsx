@@ -1,0 +1,572 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Star, Upload, MapPin, X } from "lucide-react";
+import Image from "next/image";
+
+interface CreateOrEditBranchProps {
+  branchId?: string;
+}
+
+export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
+  const [logo, setLogo] = useState<string>("");
+  const [images, setImages] = useState<string[]>([]);
+  const [rating, setRating] = useState(0);
+  const [isActive, setIsActive] = useState(true);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+
+  const handleLogoUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogo(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    []
+  );
+
+  const handleImagesUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        const filesArray = Array.from(e.target.files);
+        filesArray.forEach((file) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImages((prev) => [...prev, reader.result as string]);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    },
+    []
+  );
+
+  const toggleDay = (day: string) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
+
+  const toggleTime = (time: string) => {
+    setSelectedTimes((prev) =>
+      prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Agregar sucursal</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">Cancel</Button>
+          <Button>Save</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {/* Left Column - Main Information */}
+        <div className="col-span-2 space-y-6">
+          {/* Information Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex">
+                <h2 className="text-lg font-semibold">Información</h2>
+                <div className="flex items-center gap-1 ml-auto">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`h-5 w-5 cursor-pointer ${
+                        star <= rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-gray-200 text-gray-200"
+                      }`}
+                      onClick={() => setRating(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="name">
+                    Nombre de la sucursal
+                  </Label>
+                  <Input id="name" placeholder="Kielo Sushi" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="contact">
+                    Contacto
+                  </Label>
+                  <Input id="contact" placeholder="+57237176267" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="code">
+                    Correo
+                  </Label>
+                  <Input id="code" placeholder="+547237176267" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground" htmlFor="description">
+                  Descripción
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Descripción del aliado"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground" htmlFor="redemption">
+                  ¿Cómo funciona la redención?
+                </Label>
+                <Textarea
+                  id="redemption"
+                  placeholder="Como funciona la redención en esta sucursal"
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Logo Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Logo</h2>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                {logo ? (
+                  <div className="relative w-32 h-32 mx-auto">
+                    <Image
+                      src={logo}
+                      alt="Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <div className="text-sm text-muted-foreground">
+                      Arrastra una imagen aquí
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="logo-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                />
+                <Button
+                  variant="link"
+                  className="mt-2"
+                  onClick={() =>
+                    document.getElementById("logo-upload")?.click()
+                  }
+                >
+                  Agregar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Images Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Imágenes</h2>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                {images.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-4">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative aspect-square">
+                        <Image
+                          src={img}
+                          alt={`Image ${idx + 1}`}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <div className="text-sm text-muted-foreground">
+                      Arrastra varias imágenes aquí
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="images-upload"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImagesUpload}
+                />
+                <Button
+                  variant="link"
+                  className="mt-2"
+                  onClick={() =>
+                    document.getElementById("images-upload")?.click()
+                  }
+                >
+                  Agregar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Offer Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Oferta</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">
+                    Tipo de oferta
+                  </Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Cantidad de comensales" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="comensales">
+                        Cantidad de comensales
+                      </SelectItem>
+                      <SelectItem value="porcentaje">Porcentaje</SelectItem>
+                      <SelectItem value="monto">Monto fijo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">
+                    Tipo de membresía
+                  </Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wein card premium" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="premium">Wein card premium</SelectItem>
+                      <SelectItem value="basic">Wein card basic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">
+                  Establece la cantidad de comensales
+                </Label>
+                <Input placeholder="2×1" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">
+                  Detalles de la promoción
+                </Label>
+                <Input placeholder="Qué productos" />
+              </div>
+
+              <Button variant="link" className="p-0 h-auto text-blue-600">
+                Agregar otra oferta
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Availability Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Disponibilidad</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Tipo</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Días" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dias">Días</SelectItem>
+                    <SelectItem value="horas">Horas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Tipo</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Valores</Label>
+                <div className="flex flex-wrap gap-2">
+                  {["Sábado", "Domingo"].map((day) => (
+                    <Button
+                      key={day}
+                      variant={
+                        selectedDays.includes(day) ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => toggleDay(day)}
+                    >
+                      {day}
+                      {selectedDays.includes(day) && (
+                        <X className="h-3 w-3 ml-1" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Valores</Label>
+                <div className="flex flex-wrap gap-2">
+                  {["14h", "15h", "16h"].map((time) => (
+                    <Button
+                      key={time}
+                      variant={
+                        selectedTimes.includes(time) ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => toggleTime(time)}
+                    >
+                      {time}
+                      {selectedTimes.includes(time) && (
+                        <X className="h-3 w-3 ml-1" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start">
+                <Button variant="link" className="p-0 h-auto text-blue-600">
+                  Agregar otra disponibilidad
+                </Button>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-blue-600 mt-4"
+                >
+                  Agregar nuevo beneficio
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Categories, Address, Manager, Ally, Active */}
+        <div className="space-y-6">
+          {/* Categories Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Categorías</h2>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {[
+                  "Restaurante",
+                  "Étnico",
+                  "De autor",
+                  "Alimento natural",
+                  "Café",
+                  "Cinema",
+                  "Pizza",
+                  "Retail",
+                ].map((category) => (
+                  <div key={category} className="flex items-center space-x-2">
+                    <input type="checkbox" id={category} />
+                    <Label
+                      className="text-muted-foreground cursor-pointer"
+                      htmlFor={category}
+                    >
+                      {category}
+                    </Label>
+                  </div>
+                ))}
+                <Button variant="link" className="p-0 h-auto text-blue-600">
+                  Crear nueva
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Address Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Dirección</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input placeholder="Cra. 35 #58-35, Villa Flora, Medellín..." />
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                  <div className="text-sm">
+                    <div>Cra. 35 #66-35</div>
+                    <div className="text-muted-foreground">
+                      Villa Flora, Medellín, Antioquia
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                  <div className="text-sm">
+                    <div>Cra. 152 #44-35</div>
+                    <div className="text-muted-foreground">
+                      Robledo, Medellín, Antioquia
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">
+                  Dirección escogida:
+                </Label>
+                <div className="text-sm flex gap-1">
+                  <span className="font-medium">País:</span>
+                  <span className="text-muted-foreground">Colombia</span>
+                </div>
+                <div className="text-sm flex gap-1">
+                  <span className="font-medium">Estado:</span>
+                  <span className="text-muted-foreground">Antioquia</span>
+                </div>
+                <div className="text-sm flex gap-1">
+                  <span className="font-medium">Ciudad:</span>
+                  <span className="text-muted-foreground">Medellín</span>
+                </div>
+                <div className="text-sm flex gap-1">
+                  <span className="font-medium">Código postal:</span>
+                  <span className="text-muted-foreground">05001</span>
+                </div>
+                <div className="text-sm flex gap-1">
+                  <span className="font-medium">Dirección:</span>
+                  <span className="text-muted-foreground">
+                    Cra. 35 #66-35, Villa...
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Nota</h2>
+            </CardHeader>
+            <CardContent>
+              <Textarea placeholder="Nota" rows={3} />
+            </CardContent>
+          </Card>
+
+          {/* Manager Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold flex items-center justify-between">
+                <span>Manager</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  NO
+                </span>
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <Input placeholder="Buscar manager ó staff" />
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Juan Felipe</span>
+                  <Button variant="ghost" size="sm">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Jeff E</span>
+                  <Button variant="ghost" size="sm">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Emerson B</span>
+                  <Button variant="ghost" size="sm">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ally Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Aliado</h2>
+            </CardHeader>
+            <CardContent>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Aliado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="friday">Friday Antioquia</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Active Card */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Activo</h2>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground" htmlFor="active">
+                  Sí
+                </Label>
+                <Switch
+                  id="active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

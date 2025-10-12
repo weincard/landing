@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   mainItems,
-  oldItems,
   otherInformationItems,
   settingsItems,
 } from "./sideBarItems";
@@ -89,30 +88,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <Collapsible className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Old
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {oldItems.map((item) => (
-                    <CustomMenuItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      icon={item.icon}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
       </SidebarContent>
     </Sidebar>
   );

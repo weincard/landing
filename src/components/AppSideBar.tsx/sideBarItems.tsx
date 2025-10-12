@@ -39,9 +39,9 @@ const mainItems = [
     icon: Tag,
   },
   {
-    title: "Categorías",
-    href: "/dashboard/categories",
-    icon: Folder,
+    title: "Sucursales",
+    href: "/dashboard/branches",
+    icon: Store,
   },
   {
     title: "Usuarios",
@@ -86,63 +86,4 @@ const settingsItems = [
   },
 ];
 
-// Items del catálogo
-const oldItems = [
-  {
-    title: "Productos",
-    href: "/dashboard/old/productos",
-    icon: Package,
-  },
-  {
-    title: "Categorías",
-    href: "/dashboard/old/categorias",
-    icon: ListTodo,
-  },
-  {
-    title: "Atributos",
-    href: "/dashboard/old/atributos",
-    icon: BarChart2,
-  },
-  {
-    title: "Marcas",
-    href: "/dashboard/old/marcas",
-    icon: Package,
-  },
-  {
-    title: "Lista de Mascotas",
-    href: "/dashboard/old/mascotas",
-    icon: ListIcon,
-  },
-  {
-    title: "Especies",
-    href: "/dashboard/old/especies",
-    icon: TreePineIcon,
-  },
-  {
-    title: "Razas",
-    href: "/dashboard/old/razas",
-    icon: PawPrint,
-  },
-  {
-    title: "Condiciones médicas",
-    href: "/dashboard/old/condiciones_medicas",
-    icon: Stethoscope,
-  },
-  {
-    title: "Lista de tiendas",
-    href: "/dashboard/old/tiendas/lista_tiendas",
-    icon: Store,
-  },
-  {
-    title: "Solicitudes de surtido",
-    href: "/dashboard/old/tiendas/solicitudes_surtido",
-    icon: Package,
-  },
-  {
-    title: "Gestión de pagos",
-    href: "/dashboard/old/tiendas/gestion_pagos",
-    icon: CreditCard,
-  },
-];
-
-export { mainItems, otherInformationItems, settingsItems, oldItems };
+export { mainItems, otherInformationItems, settingsItems };

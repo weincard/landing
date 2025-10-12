@@ -546,3 +546,15 @@ export interface IUserProfile {
   verified: boolean;
   createdAt: Date;
 }
+
+export interface IBranch {
+  branchId: number;
+  name: string;
+  slug: string;
+  address: string;
+  city: string;
+  country: string;
+  logoUrl?: string;
+  isActive: boolean;
+  createdAt: Date;
+}
