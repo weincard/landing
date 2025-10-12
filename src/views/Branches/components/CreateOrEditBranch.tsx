@@ -28,6 +28,99 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
   const [isActive, setIsActive] = useState(true);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [addressSearch, setAddressSearch] = useState("");
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<{
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  } | null>(null);
+  const [managerSearch, setManagerSearch] = useState("");
+  const [showManagerSuggestions, setShowManagerSuggestions] = useState(false);
+  const [selectedManagers, setSelectedManagers] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
+  // Mock de managers disponibles (en producción vendría de la API)
+  const availableManagers = [
+    { id: "1", name: "Juan Felipe" },
+    { id: "2", name: "Jeff E" },
+    { id: "3", name: "Emerson Benavides" },
+    { id: "4", name: "María García" },
+    { id: "5", name: "Carlos Rodríguez" },
+  ];
+
+  const filteredManagers = availableManagers.filter(
+    (manager) =>
+      manager.name.toLowerCase().includes(managerSearch.toLowerCase()) &&
+      !selectedManagers.some((selected) => selected.id === manager.id)
+  );
+
+  // Mock de direcciones sugeridas (en producción vendría de una API de geocoding)
+  const addressSuggestions = [
+    {
+      street: "Cra. 35 #66-35",
+      city: "Medellín",
+      state: "Antioquia",
+      country: "Colombia",
+      postalCode: "05001",
+      fullAddress: "Cra. 35 #66-35, Villa Flora, Medellín, Antioquia",
+    },
+    {
+      street: "Cra. 152 #44-35",
+      city: "Medellín",
+      state: "Antioquia",
+      country: "Colombia",
+      postalCode: "05001",
+      fullAddress: "Cra. 152 #44-35, Robledo, Medellín, Antioquia",
+    },
+    {
+      street: "Cra. 43 #1 Sur-25",
+      city: "Medellín",
+      state: "Antioquia",
+      country: "Colombia",
+      postalCode: "05001",
+      fullAddress: "Cra. 43 #1 Sur-25, El Poblado, Medellín, Antioquia",
+    },
+    {
+      street: "Cra. 80C #44-35",
+      city: "Medellín",
+      state: "Antioquia",
+      country: "Colombia",
+      postalCode: "05001",
+      fullAddress: "Cra. 80C #44-35, Santa Monica, Medellín, Antioquia",
+    },
+  ];
+
+  const filteredSuggestions = addressSuggestions.filter((suggestion) =>
+    suggestion.fullAddress.toLowerCase().includes(addressSearch.toLowerCase())
+  );
+
+  const handleSelectAddress = (suggestion: (typeof addressSuggestions)[0]) => {
+    setSelectedAddress({
+      street: suggestion.street,
+      city: suggestion.city,
+      state: suggestion.state,
+      country: suggestion.country,
+      postalCode: suggestion.postalCode,
+    });
+    setAddressSearch(suggestion.fullAddress);
+    setShowAddressSuggestions(false);
+  };
+
+  const handleSelectManager = (manager: { id: string; name: string }) => {
+    setSelectedManagers([...selectedManagers, manager]);
+    setManagerSearch("");
+    setShowManagerSuggestions(false);
+  };
+
+  const handleRemoveManager = (managerId: string) => {
+    setSelectedManagers(
+      selectedManagers.filter((manager) => manager.id !== managerId)
+    );
+  };
 
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -434,54 +527,82 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
               <h2 className="text-lg font-semibold">Dirección</h2>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Input placeholder="Cra. 35 #58-35, Villa Flora, Medellín..." />
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                  <div className="text-sm">
-                    <div>Cra. 35 #66-35</div>
-                    <div className="text-muted-foreground">
-                      Villa Flora, Medellín, Antioquia
+              <div className="relative">
+                <Input
+                  placeholder="Cra. 35 #58-35, Villa Flora, Medellín..."
+                  value={addressSearch}
+                  onChange={(e) => {
+                    setAddressSearch(e.target.value);
+                    setShowAddressSuggestions(true);
+                  }}
+                  onFocus={() => setShowAddressSuggestions(true)}
+                />
+
+                {/* Autocomplete Suggestions */}
+                {showAddressSuggestions &&
+                  addressSearch &&
+                  filteredSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredSuggestions.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-2 p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleSelectAddress(suggestion)}
+                        >
+                          <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {suggestion.street}
+                            </div>
+                            <div className="text-muted-foreground">
+                              {suggestion.city}, {suggestion.state}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+
+              {selectedAddress && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">
+                      Dirección escogida:
+                    </Label>
+                    <div className="text-sm flex gap-1">
+                      <span className="font-medium">País:</span>
+                      <span className="text-muted-foreground">
+                        {selectedAddress.country}
+                      </span>
+                    </div>
+                    <div className="text-sm flex gap-1">
+                      <span className="font-medium">Estado:</span>
+                      <span className="text-muted-foreground">
+                        {selectedAddress.state}
+                      </span>
+                    </div>
+                    <div className="text-sm flex gap-1">
+                      <span className="font-medium">Ciudad:</span>
+                      <span className="text-muted-foreground">
+                        {selectedAddress.city}
+                      </span>
+                    </div>
+                    <div className="text-sm flex gap-1">
+                      <span className="font-medium">Código postal:</span>
+                      <span className="text-muted-foreground">
+                        {selectedAddress.postalCode}
+                      </span>
+                    </div>
+                    <div className="text-sm flex gap-1">
+                      <span className="font-medium">Dirección:</span>
+                      <span className="text-muted-foreground">
+                        {selectedAddress.street}
+                      </span>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                  <div className="text-sm">
-                    <div>Cra. 152 #44-35</div>
-                    <div className="text-muted-foreground">
-                      Robledo, Medellín, Antioquia
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">
-                  Dirección escogida:
-                </Label>
-                <div className="text-sm flex gap-1">
-                  <span className="font-medium">País:</span>
-                  <span className="text-muted-foreground">Colombia</span>
-                </div>
-                <div className="text-sm flex gap-1">
-                  <span className="font-medium">Estado:</span>
-                  <span className="text-muted-foreground">Antioquia</span>
-                </div>
-                <div className="text-sm flex gap-1">
-                  <span className="font-medium">Ciudad:</span>
-                  <span className="text-muted-foreground">Medellín</span>
-                </div>
-                <div className="text-sm flex gap-1">
-                  <span className="font-medium">Código postal:</span>
-                  <span className="text-muted-foreground">05001</span>
-                </div>
-                <div className="text-sm flex gap-1">
-                  <span className="font-medium">Dirección:</span>
-                  <span className="text-muted-foreground">
-                    Cra. 35 #66-35, Villa...
-                  </span>
-                </div>
-              </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -501,32 +622,59 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
               <h2 className="text-lg font-semibold flex items-center justify-between">
                 <span>Manager</span>
                 <span className="text-sm font-normal text-muted-foreground">
-                  NO
+                  {selectedManagers.length > 0 ? "SÍ" : "NO"}
                 </span>
               </h2>
             </CardHeader>
-            <CardContent>
-              <Input placeholder="Buscar manager ó staff" />
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Juan Felipe</span>
-                  <Button variant="ghost" size="sm">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Jeff E</span>
-                  <Button variant="ghost" size="sm">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Emerson B</span>
-                  <Button variant="ghost" size="sm">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Input
+                  placeholder="Buscar manager ó staff"
+                  value={managerSearch}
+                  onChange={(e) => {
+                    setManagerSearch(e.target.value);
+                    setShowManagerSuggestions(true);
+                  }}
+                  onFocus={() => setShowManagerSuggestions(true)}
+                />
+
+                {/* Autocomplete Suggestions */}
+                {showManagerSuggestions &&
+                  managerSearch &&
+                  filteredManagers.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredManagers.map((manager) => (
+                        <div
+                          key={manager.id}
+                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleSelectManager(manager)}
+                        >
+                          <span className="text-sm">{manager.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
+
+              {/* Selected Managers Badges */}
+              {selectedManagers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedManagers.map((manager) => (
+                    <div
+                      key={manager.id}
+                      className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      <span>{manager.name}</span>
+                      <button
+                        onClick={() => handleRemoveManager(manager.id)}
+                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
