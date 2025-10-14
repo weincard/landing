@@ -9,8 +9,14 @@ import {
   UsersRepository,
   UsersRepositoryImpl,
 } from "@/modules/users/data/repositories/users.repository";
+import {
+  MerchantsRepository,
+  MerchantsRepositoryImpl,
+} from "@/modules/merchants/data/repositories/merchants.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
+import { GetAllMerchantsUseCase } from "@/modules/merchants/domain/use-cases/get-all-merchants.use-case";
+import { CreateMerchantUseCase } from "@/modules/merchants/domain/use-cases/create-merchant.use-case";
 import {
   LocalStorageProtocol,
   LocalStorageProtocolImpl,
@@ -22,13 +28,20 @@ const container = new Container();
 //     HttpClient: Symbol.for("HttpClient"),
 //     AuthRepository: Symbol.for("AuthRepository"),
 //     UsersRepository: Symbol.for("UsersRepository"),
+//     MerchantsRepository: Symbol.for("MerchantsRepository"),
 // };
 
 container.bind(HttpClient).to(AxiosHttpClient).inSingletonScope();
 container.bind(AuthRepository).to(AuthRepositoryImpl).inSingletonScope();
 container.bind("UsersRepository").to(UsersRepositoryImpl).inSingletonScope();
+container
+  .bind("MerchantsRepository")
+  .to(MerchantsRepositoryImpl)
+  .inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
+container.bind(GetAllMerchantsUseCase).toSelf().inSingletonScope();
+container.bind(CreateMerchantUseCase).toSelf().inSingletonScope();
 container
   .bind(LocalStorageProtocol)
   .to(LocalStorageProtocolImpl)

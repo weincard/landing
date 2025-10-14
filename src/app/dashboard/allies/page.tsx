@@ -1,12 +1,18 @@
-import { Suspense } from "react";
+import { CookiesKeysEnum } from "@/utilities";
 import { AlliesView } from "@/views/Allies/Allies";
+import { cookies } from "next/headers";
+import React, { Suspense } from "react";
 
 export default async function AlliesPage() {
+  const token = (await cookies()).get(CookiesKeysEnum.token)?.value;
+
+  if (!token) {
+    return <div>No access</div>;
+  }
+
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <div className="space-y-4">
-        <AlliesView />
-      </div>
+    <Suspense>
+      <AlliesView token={token} />
     </Suspense>
   );
 }

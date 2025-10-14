@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -20,6 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Plus,
   X,
   Trash2,
@@ -27,8 +34,15 @@ import {
   Camera,
   Image as ImageIcon,
   Search,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import type { IMerchant } from "@/data/interfaces/merchant.interface";
+import { IUser } from "@/data/interfaces/user.interface";
 
 interface Office {
   id: string;
@@ -40,16 +54,49 @@ interface Office {
 }
 
 interface CreateOrEditAllyProps {
+  token: string;
   allyId?: string;
+  user?: IUser;
 }
 
-export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
+export function CreateOrEditAlly({
+  token,
+  allyId,
+  user,
+}: CreateOrEditAllyProps) {
+  const router = useRouter();
+  const { createMerchant, loading, error: merchantError } = useMerchants();
+  const { getAllUsers, loading: loadingUsers } = useUsers();
+
   const [files, setFiles] = useState<string[]>([]);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [offices, setOffices] = useState<Office[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [ownerUsers, setOwnerUsers] = useState<IUser[]>([]);
 
-  // Mock de sucursales disponibles (en producción vendría de la API)
+  // Form fields
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [country, setCountry] = useState("");
+  const [state, setState] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+
+  // Cargar usuarios con rol "owner" al montar el componente
+  useEffect(() => {
+    const fetchOwnerUsers = async () => {
+      const response = await getAllUsers(
+        token,
+        { skip: 0, limit: 100 },
+        "owner"
+      );
+      if (response && response.users) {
+        setOwnerUsers(response.users);
+      }
+    };
+
+    fetchOwnerUsers();
+  }, [token, getAllUsers]); // Mock de sucursales disponibles (en producción vendría de la API)
   const availableBranches: Office[] = [
     {
       id: "1",
@@ -106,18 +153,78 @@ export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
-        const reader = new FileReader();
+        setLogoFile(file);
 
+        const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          setFiles([base64]); // Solo mantenemos una imagen
+          setFiles([base64]); // Solo mantenemos una imagen para preview
         };
-
         reader.readAsDataURL(file);
       }
     },
     []
   );
+
+  const handleCancel = () => {
+    router.push("/dashboard/allies");
+  };
+
+  const handleSave = async () => {
+    // Validación básica
+    if (!name.trim()) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+    if (!country.trim()) {
+      toast.error("El país es requerido");
+      return;
+    }
+    if (!state.trim()) {
+      toast.error("El estado es requerido");
+      return;
+    }
+    if (!selectedUserId) {
+      toast.error("Debe seleccionar un propietario");
+      return;
+    }
+    if (!logoFile) {
+      toast.error("Debes subir un logo para el aliado");
+      return;
+    }
+
+    try {
+      const merchantData: Partial<IMerchant> = {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        country: country.trim(),
+        state: state.trim(),
+        founder: false, // Valor por defecto
+        merchantUsers: [
+          {
+            userId: Number(selectedUserId),
+            merchantId: 0, // Se asignará en el backend
+          },
+        ],
+      };
+
+      const response = await createMerchant(merchantData, logoFile, token);
+
+      if (response) {
+        toast.success("Aliado creado exitosamente");
+        router.push("/dashboard/allies");
+      } else {
+        // Si no hay respuesta, mostrar el error del hook
+        const errorMessage = merchantError || "Error al crear el aliado";
+        toast.error(errorMessage);
+      }
+    } catch (error: any) {
+      console.error("Error creating merchant:", error);
+      const errorMessage =
+        error?.message || merchantError || "Error al crear el aliado";
+      toast.error(errorMessage);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -125,12 +232,16 @@ export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Aliado</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleCancel} disabled={loading}>
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button>
-            <Save className="h-4 w-4 mr-2" />
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
             Guardar
           </Button>
         </div>
@@ -141,6 +252,9 @@ export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
         <CardContent className="p-6">
           <div className="flex gap-6">
             <div className="relative group">
+              <label className="block text-sm text-muted-foreground mb-2">
+                Logo *
+              </label>
               <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-border">
                 {files[0] ? (
                   <Image
@@ -176,9 +290,50 @@ export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
                     htmlFor="name"
                     className="text-sm text-muted-foreground"
                   >
-                    Nombre
+                    Nombre *
                   </label>
-                  <Input id="name" placeholder="Nombre del aliado" />
+                  <Input
+                    id="name"
+                    placeholder="Nombre del aliado"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="owner"
+                    className="text-sm text-muted-foreground"
+                  >
+                    Propietario *
+                  </label>
+                  <Select
+                    value={selectedUserId}
+                    onValueChange={setSelectedUserId}
+                    disabled={loading || loadingUsers}
+                  >
+                    <SelectTrigger id="owner">
+                      <SelectValue
+                        placeholder={
+                          loadingUsers
+                            ? "Cargando..."
+                            : "Seleccionar propietario"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ownerUsers.map((user) => (
+                        <SelectItem
+                          key={user.idUsuario}
+                          value={String(user.idUsuario)}
+                        >
+                          {user.name ||
+                            user.email ||
+                            `Usuario ${user.idUsuario}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <label
@@ -191,25 +346,40 @@ export function CreateOrEditAlly({ allyId }: CreateOrEditAllyProps) {
                     id="description"
                     placeholder="Descripción del aliado"
                     rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor="owner"
+                    htmlFor="country"
                     className="text-sm text-muted-foreground"
                   >
-                    Propietario
+                    País *
                   </label>
-                  <Input id="owner" placeholder="Nombre del propietario" />
+                  <Input
+                    id="country"
+                    placeholder="País"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    disabled={loading}
+                  />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <label
-                    htmlFor="address"
+                    htmlFor="state"
                     className="text-sm text-muted-foreground"
                   >
-                    Dirección Principal
+                    Estado/Región *
                   </label>
-                  <Input id="address" placeholder="Dirección principal" />
+                  <Input
+                    id="state"
+                    placeholder="Estado o región"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    disabled={loading}
+                  />
                 </div>
               </div>
             </div>

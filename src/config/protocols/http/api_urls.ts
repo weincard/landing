@@ -1,9 +1,15 @@
 export const apiUrls = {
-  allies: {
-    create: "/allies/create",
-    update: "/allies/update",
-    getAll: "/allies",
-    delete: "/allies/delete",
+  merchants: {
+    create: "/merchants/create",
+    update: "/merchants/update",
+    getAll: "/merchants/all",
+    getOne: "/merchants/one",
+  },
+  branches: {
+    create: "/branches/create",
+    update: "/branches/update",
+    getByMerchant: "/branches/by-merchant",
+    getOne: "/branches/one",
   },
   auth: {
     loginByEmail: "/auth/login-by-email",

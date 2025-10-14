@@ -90,7 +90,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
     if (response) {
       console.log("User created successfully:", response);
       toast.success(`Usuario creado exitosamente: ${response.message}`);
-      router.push("/dashboard/usuarios"); // Redirigir a la lista de usuarios
+      router.push("/dashboard/users"); // Redirigir a la lista de usuarios
     } else if (error) {
       console.error("Error creating user:", error);
       toast.error(`Error al crear usuario: ${error}`);
