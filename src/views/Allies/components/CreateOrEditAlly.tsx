@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,6 +82,7 @@ export function CreateOrEditAlly({
   const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isFounder, setIsFounder] = useState<boolean>(false);
 
   // Cargar usuarios con rol "owner" al montar el componente
   useEffect(() => {
@@ -199,7 +201,7 @@ export function CreateOrEditAlly({
         description: description.trim() || undefined,
         country: country.trim(),
         state: state.trim(),
-        founder: false, // Valor por defecto
+        founder: isFounder,
         merchantUsers: [
           {
             userId: Number(selectedUserId),
@@ -381,6 +383,19 @@ export function CreateOrEditAlly({
                     disabled={loading}
                   />
                 </div>
+              </div>
+              <div className="space-y-2 flex items-center gap-2">
+                <Checkbox
+                  checked={isFounder}
+                  onCheckedChange={(checked) => setIsFounder(Boolean(checked))}
+                  id="founder"
+                />
+                <label
+                  htmlFor="founder"
+                  className="text-sm text-muted-foreground"
+                >
+                  Fundador
+                </label>
               </div>
             </div>
           </div>
