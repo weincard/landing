@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -14,18 +14,55 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Star, Upload, MapPin, X } from "lucide-react";
+import { Star, Upload, MapPin, X, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import type { IBranch } from "@/data/interfaces/merchant.interface";
 
 interface CreateOrEditBranchProps {
+  token: string;
   branchId?: string;
 }
 
-export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
-  const [logo, setLogo] = useState<string>("");
-  const [images, setImages] = useState<string[]>([]);
-  const [rating, setRating] = useState(4.5);
+export function CreateOrEditBranch({
+  token,
+  branchId,
+}: CreateOrEditBranchProps) {
+  const router = useRouter();
+  const {
+    createBranch,
+    getOneBranch,
+    updateBranch,
+    loading: branchLoading,
+  } = useBranches();
+  const { getAllMerchants, loading: merchantsLoading } = useMerchants();
+
+  // Form fields - Required
+  const [merchantId, setMerchantId] = useState<string>("");
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+
+  // Form fields - Optional
+  const [description, setDescription] = useState("");
+  const [howItWorks, setHowItWorks] = useState("");
+  const [website, setWebsite] = useState("");
+  const [note, setNote] = useState("");
   const [isActive, setIsActive] = useState(true);
+
+  // Files and images
+  const [logo, setLogo] = useState<string>("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+
+  // UI state
+  const [rating, setRating] = useState(4.5);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [addressSearch, setAddressSearch] = useState("");
@@ -42,6 +79,48 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
   const [selectedManagers, setSelectedManagers] = useState<
     Array<{ id: string; name: string }>
   >([]);
+
+  // Merchants list
+  const [merchants, setMerchants] = useState<any[]>([]);
+
+  // Load merchants for dropdown
+  useEffect(() => {
+    const fetchMerchants = async () => {
+      const response = await getAllMerchants(token, { skip: 0, limit: 100 });
+      if (response && response.merchants) {
+        setMerchants(response.merchants);
+      }
+    };
+
+    fetchMerchants();
+  }, [token, getAllMerchants]);
+
+  // Load branch data if editing
+  useEffect(() => {
+    if (branchId) {
+      const loadBranch = async () => {
+        const response = await getOneBranch(Number(branchId), token);
+        if (response && response.branch) {
+          const branch = response.branch;
+          setMerchantId(branch.merchantId?.toString() || "");
+          setName(branch.name || "");
+          setAddress(branch.address || "");
+          setCity(branch.city || "");
+          setCountry(branch.country || "");
+          setPhone(branch.phone || "");
+          setEmail(branch.email || "");
+          setDescription(branch.description || "");
+          setHowItWorks(branch.howItWorks || "");
+          setWebsite(branch.website || "");
+          setNote(branch.note || "");
+          setIsActive(branch.isActive ?? true);
+          if (branch.logoUrl) setLogo(branch.logoUrl);
+        }
+      };
+
+      loadBranch();
+    }
+  }, [branchId, token, getOneBranch]);
 
   // Mock de managers disponibles (en producción vendría de la API)
   const availableManagers = [
@@ -154,6 +233,7 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
+        setLogoFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
           setLogo(reader.result as string);
@@ -192,14 +272,109 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
     );
   };
 
+  const handleSave = async () => {
+    // Validación de campos requeridos
+    if (!merchantId) {
+      toast.error("Por favor selecciona un aliado");
+      return;
+    }
+    if (!name) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+    if (!address) {
+      toast.error("La dirección es requerida");
+      return;
+    }
+    if (!city) {
+      toast.error("La ciudad es requerida");
+      return;
+    }
+    if (!country) {
+      toast.error("El país es requerido");
+      return;
+    }
+    if (!phone) {
+      toast.error("El teléfono es requerido");
+      return;
+    }
+    if (!email) {
+      toast.error("El correo electrónico es requerido");
+      return;
+    }
+
+    const branchData: Partial<IBranch> = {
+      merchantId: Number(merchantId),
+      name,
+      address,
+      city,
+      country,
+      phone,
+      email,
+      description,
+      howItWorks,
+      website,
+      note,
+      isActive,
+    };
+
+    try {
+      let response;
+      if (branchId) {
+        // Update existing branch
+        response = await updateBranch(
+          Number(branchId),
+          branchData,
+          logoFile || undefined,
+          token
+        );
+      } else {
+        // Create new branch
+        response = await createBranch(branchData, logoFile || undefined, token);
+      }
+
+      if (response) {
+        toast.success(
+          response.message || branchId
+            ? "Sucursal actualizada exitosamente"
+            : "Sucursal creada exitosamente"
+        );
+        router.push("/dashboard/branches");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error al guardar la sucursal");
+    }
+  };
+
+  const handleCancel = () => {
+    router.push("/dashboard/branches");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Agregar sucursal</h1>
+        <h1 className="text-2xl font-semibold">
+          {branchId ? "Editar sucursal" : "Agregar sucursal"}
+        </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline">Cancel</Button>
-          <Button>Save</Button>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={branchLoading}
+          >
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={branchLoading}>
+            {branchLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              "Guardar"
+            )}
+          </Button>
         </div>
       </div>
 
@@ -259,21 +434,37 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground" htmlFor="name">
-                    Nombre de la sucursal
+                    Nombre de la sucursal *
                   </Label>
-                  <Input id="name" placeholder="Kielo Sushi" />
+                  <Input
+                    id="name"
+                    placeholder="Kielo Sushi"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="contact">
-                    Contacto
+                  <Label className="text-muted-foreground" htmlFor="phone">
+                    Contacto *
                   </Label>
-                  <Input id="contact" placeholder="+57237176267" />
+                  <Input
+                    id="phone"
+                    placeholder="+57237176267"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="code">
-                    Correo
+                  <Label className="text-muted-foreground" htmlFor="email">
+                    Correo *
                   </Label>
-                  <Input id="code" placeholder="+547237176267" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="sucursal@ejemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -283,19 +474,23 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
                 </Label>
                 <Textarea
                   id="description"
-                  placeholder="Descripción del aliado"
+                  placeholder="Descripción de la sucursal"
                   rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-muted-foreground" htmlFor="redemption">
+                <Label className="text-muted-foreground" htmlFor="howItWorks">
                   ¿Cómo funciona la redención?
                 </Label>
                 <Textarea
-                  id="redemption"
+                  id="howItWorks"
                   placeholder="Como funciona la redención en esta sucursal"
                   rows={3}
+                  value={howItWorks}
+                  onChange={(e) => setHowItWorks(e.target.value)}
                 />
               </div>
             </CardContent>
@@ -581,85 +776,58 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
           {/* Address Card */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Dirección</h2>
+              <h2 className="text-lg font-semibold">Dirección *</h2>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="relative">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground" htmlFor="address">
+                  Dirección
+                </Label>
                 <Input
-                  placeholder="Cra. 35 #58-35, Villa Flora, Medellín..."
-                  value={addressSearch}
-                  onChange={(e) => {
-                    setAddressSearch(e.target.value);
-                    setShowAddressSuggestions(true);
-                  }}
-                  onFocus={() => setShowAddressSuggestions(true)}
+                  id="address"
+                  placeholder="Cra. 35 #58-35"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                 />
-
-                {/* Autocomplete Suggestions */}
-                {showAddressSuggestions &&
-                  addressSearch &&
-                  filteredSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredSuggestions.map((suggestion, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-2 p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                          onClick={() => handleSelectAddress(suggestion)}
-                        >
-                          <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-                          <div className="text-sm">
-                            <div className="font-medium">
-                              {suggestion.street}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {suggestion.city}, {suggestion.state}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
               </div>
 
-              {selectedAddress && (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground">
-                      Dirección escogida:
-                    </Label>
-                    <div className="text-sm flex gap-1">
-                      <span className="font-medium">País:</span>
-                      <span className="text-muted-foreground">
-                        {selectedAddress.country}
-                      </span>
-                    </div>
-                    <div className="text-sm flex gap-1">
-                      <span className="font-medium">Estado:</span>
-                      <span className="text-muted-foreground">
-                        {selectedAddress.state}
-                      </span>
-                    </div>
-                    <div className="text-sm flex gap-1">
-                      <span className="font-medium">Ciudad:</span>
-                      <span className="text-muted-foreground">
-                        {selectedAddress.city}
-                      </span>
-                    </div>
-                    <div className="text-sm flex gap-1">
-                      <span className="font-medium">Código postal:</span>
-                      <span className="text-muted-foreground">
-                        {selectedAddress.postalCode}
-                      </span>
-                    </div>
-                    <div className="text-sm flex gap-1">
-                      <span className="font-medium">Dirección:</span>
-                      <span className="text-muted-foreground">
-                        {selectedAddress.street}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="city">
+                    Ciudad
+                  </Label>
+                  <Input
+                    id="city"
+                    placeholder="Medellín"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="country">
+                    País
+                  </Label>
+                  <Input
+                    id="country"
+                    placeholder="Colombia"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground" htmlFor="website">
+                  Sitio Web (opcional)
+                </Label>
+                <Input
+                  id="website"
+                  type="url"
+                  placeholder="https://ejemplo.com"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -669,7 +837,12 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
               <h2 className="text-lg font-semibold">Nota</h2>
             </CardHeader>
             <CardContent>
-              <Textarea placeholder="Nota" rows={3} />
+              <Textarea
+                placeholder="Nota"
+                rows={3}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
             </CardContent>
           </Card>
 
@@ -738,15 +911,26 @@ export function CreateOrEditBranch({ branchId }: CreateOrEditBranchProps) {
           {/* Ally Card */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Aliado</h2>
+              <h2 className="text-lg font-semibold">Aliado *</h2>
             </CardHeader>
             <CardContent>
-              <Select>
+              <Select
+                value={merchantId}
+                onValueChange={setMerchantId}
+                disabled={merchantsLoading}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Aliado" />
+                  <SelectValue placeholder="Selecciona un aliado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="friday">Friday Antioquia</SelectItem>
+                  {merchants.map((merchant) => (
+                    <SelectItem
+                      key={merchant.merchantId}
+                      value={merchant.merchantId?.toString() || ""}
+                    >
+                      {merchant.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>

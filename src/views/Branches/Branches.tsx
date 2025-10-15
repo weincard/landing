@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IBranch } from "@/data/interfaces/interfaces.interface";
+import type { IBranch } from "@/data/interfaces/merchant.interface";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -29,68 +29,111 @@ import {
   Trash2,
   Loader2,
   Search,
-  CheckCircle2,
-  XCircle,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import type { IUser } from "@/data/interfaces/user.interface";
 
-const allies: IBranch[] = [
-  {
-    branchId: 1,
-    name: "Sucursal 1",
-    slug: "sucursal-1",
-    address: "Dirección 1",
-    city: "Ciudad 1",
-    country: "País 1",
-    logoUrl: "/logo.png",
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    branchId: 2,
-    name: "Sucursal 2",
-    slug: "sucursal-2",
-    address: "Dirección 2",
-    city: "Ciudad 2",
-    country: "País 2",
-    isActive: false,
-    createdAt: new Date(),
-  },
-  {
-    branchId: 3,
-    name: "Sucursal 3",
-    slug: "sucursal-3",
-    address: "Dirección 3",
-    city: "Ciudad 3",
-    country: "País 3",
-    logoUrl: "/logo.png",
-    isActive: true,
-    createdAt: new Date(),
-  },
-];
+interface BranchesViewProps {
+  token: string;
+}
 
-interface BranchesViewProps {}
-
-export function BranchesView({}: BranchesViewProps) {
+export function BranchesView({ token }: BranchesViewProps) {
+  const { getAllBranches } = useBranches();
+  const { getAllUsers } = useUsers();
+  const [branches, setBranches] = useState<IBranch[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedAllies, setSelectedAllies] = useState<number[]>([]);
+  const [selectedMerchantId, setSelectedMerchantId] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const totalPages = Math.ceil(allies.length / pageSize);
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  // Fetch users (owners and staff) for merchant filter
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const managerResponse = await getAllUsers(token, undefined, "manager");
+
+        const allUsers = [...(managerResponse?.users || [])];
+        setUsers(allUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, [getAllUsers, token]);
+
+  const fetchBranches = useCallback(async () => {
+    setLoading(true);
+
+    if (!selectedMerchantId) {
+      setBranches([]);
+      setTotalItems(0);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const skip = (currentPage - 1) * pageSize;
+      const response = await getAllBranches(
+        Number(selectedMerchantId),
+        token,
+        {
+          skip,
+          limit: pageSize,
+        },
+        searchTerm ? { name: searchTerm } : undefined
+      );
+
+      if (response) {
+        setBranches(response.branches);
+        setTotalItems(response.count);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    getAllBranches,
+    token,
+    currentPage,
+    pageSize,
+    searchTerm,
+    selectedMerchantId,
+  ]);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   const handlePageChange = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Lógica para cargar los datos de la página correspondiente
   }, []);
 
   const handleSearch = useCallback(() => {
-    // Lógica de búsqueda aquí
-    console.log("Buscar:", searchTerm);
-  }, [searchTerm]);
+    setCurrentPage(1);
+    fetchBranches();
+  }, [fetchBranches]);
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  }, []);
 
   return (
     <div>
@@ -116,14 +159,46 @@ export function BranchesView({}: BranchesViewProps) {
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="w-full md:w-64">
               <Select
-              // value={selectedSpecieId}
-              // onValueChange={handleSpeciesChange}
-              // disabled={loading || species.length === 0}
+                value={selectedMerchantId}
+                onValueChange={(value) => {
+                  setSelectedMerchantId(value === "all" ? undefined : value);
+                  setCurrentPage(1);
+                }}
+                disabled={loading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtro" />
+                  <SelectValue placeholder="Filtrar por aliado" />
                 </SelectTrigger>
-                <SelectContent>{/*  */}</SelectContent>
+                <SelectContent>
+                  <SelectItem value="all">Todos los aliados</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem
+                      key={user.idUsuario || user.id}
+                      value={user.idUsuario?.toString() || user.id || ""}
+                    >
+                      {user.email} ({user.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-full md:w-64">
+              <Select
+                value={selectedCategoryId}
+                onValueChange={(value) => {
+                  setSelectedCategoryId(value === "all" ? undefined : value);
+                  setCurrentPage(1);
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las categorías</SelectItem>
+                  {/* TODO: Agregar categorías cuando estén disponibles */}
+                </SelectContent>
               </Select>
             </div>
 
@@ -154,19 +229,19 @@ export function BranchesView({}: BranchesViewProps) {
                   <TableHead className="w-[50px]">
                     <Checkbox
                       checked={
-                        selectedAllies.length === allies.length &&
-                        allies.length > 0
+                        selectedBranches.length === branches.length &&
+                        branches.length > 0
                       }
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setSelectedAllies(
-                            allies.map((ally) => ally.branchId)
+                          setSelectedBranches(
+                            branches.map((branch) => branch.branchId || 0)
                           );
                         } else {
-                          setSelectedAllies([]);
+                          setSelectedBranches([]);
                         }
                       }}
-                      disabled={loading || allies.length === 0}
+                      disabled={loading || branches.length === 0}
                     />
                   </TableHead>
                   <TableHead>Sucursal</TableHead>
@@ -191,7 +266,7 @@ export function BranchesView({}: BranchesViewProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : allies.length === 0 ? (
+                ) : branches.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={9}
@@ -201,21 +276,23 @@ export function BranchesView({}: BranchesViewProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  allies.map((ally) => (
-                    <TableRow key={ally.branchId}>
+                  branches.map((branch) => (
+                    <TableRow key={branch.branchId}>
                       <TableCell>
                         <Checkbox
-                          checked={selectedAllies.includes(ally.branchId)}
+                          checked={selectedBranches.includes(
+                            branch.branchId || 0
+                          )}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setSelectedAllies([
-                                ...selectedAllies,
-                                ally.branchId,
+                              setSelectedBranches([
+                                ...selectedBranches,
+                                branch.branchId || 0,
                               ]);
                             } else {
-                              setSelectedAllies(
-                                selectedAllies.filter(
-                                  (id) => id !== ally.branchId
+                              setSelectedBranches(
+                                selectedBranches.filter(
+                                  (id) => id !== branch.branchId
                                 )
                               );
                             }
@@ -225,38 +302,44 @@ export function BranchesView({}: BranchesViewProps) {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 relative rounded-md overflow-hidden bg-muted flex items-center justify-center">
-                            {ally.logoUrl ? (
+                            {branch.logoUrl ? (
                               <Image
-                                src={ally.logoUrl}
-                                alt={ally.name || ""}
+                                src={branch.logoUrl}
+                                alt={branch.name || ""}
                                 fill
                                 className="object-cover"
                               />
                             ) : (
                               <span className="text-xs font-bold text-muted-foreground">
-                                {ally.name?.substring(0, 2).toUpperCase()}
+                                {branch.name?.substring(0, 2).toUpperCase()}
                               </span>
                             )}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium">{ally.name}</span>
+                            <span className="font-medium">{branch.name}</span>
                             <span className="font-light text-sm text-muted-foreground">
-                              {ally.slug}
+                              {branch.slug}
                             </span>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{ally.city || "N/A"}</TableCell>
+                      <TableCell>{branch.city || "N/A"}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
-                          Temático
+                          {branch.category?.name || "Sin categoría"}
                         </span>
                       </TableCell>
                       <TableCell>24</TableCell>
                       <TableCell>2x1</TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center rounded-full bg-purple-600 px-3 py-1 text-xs font-medium text-white">
-                          Sí
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                            branch.isActive
+                              ? "bg-purple-600 text-white"
+                              : "bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {branch.isActive ? "Sí" : "No"}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -267,7 +350,7 @@ export function BranchesView({}: BranchesViewProps) {
                             className="h-8 w-8"
                           >
                             <Link
-                              href={`/dashboard/branches/${ally.branchId}/edit`}
+                              href={`/dashboard/branches/${branch.branchId}/edit`}
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>
@@ -292,13 +375,13 @@ export function BranchesView({}: BranchesViewProps) {
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               Mostrando
-              {allies.length === 0 ? " 0 " : ` ${1} - ${allies.length} `}
-              de {allies.length} aliados
+              {branches.length === 0 ? " 0 " : ` ${1} - ${branches.length} `}
+              de {totalItems} sucursales
             </div>
             <div className="flex items-center gap-2">
               <Select
-              // value={pageSize.toString()}
-              // onValueChange={(value) => handlePageSizeChange(Number(value))}
+                value={pageSize.toString()}
+                onValueChange={(value) => handlePageSizeChange(Number(value))}
               >
                 <SelectTrigger className="w-[100px]">
                   <SelectValue placeholder="10 por página" />
@@ -403,8 +486,8 @@ export function BranchesView({}: BranchesViewProps) {
 
               <Button
                 variant="outline"
-                // disabled={currentPage >= totalPages || loading}
-                // onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages || loading}
+                onClick={() => handlePageChange(currentPage + 1)}
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-1" />

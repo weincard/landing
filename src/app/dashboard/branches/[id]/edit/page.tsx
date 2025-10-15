@@ -1,10 +1,23 @@
 import { CreateOrEditBranch } from "@/views/Branches/components/CreateOrEditBranch";
-import React from "react";
+import { CookiesKeysEnum } from "@/utilities";
+import { cookies } from "next/headers";
+import React, { Suspense } from "react";
 
 export default async function EditBranchPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <CreateOrEditBranch branchId={params.id} />;
+  const token = (await cookies()).get(CookiesKeysEnum.token)?.value;
+  const { id } = await params;
+
+  if (!token) {
+    return <div>No access</div>;
+  }
+
+  return (
+    <Suspense>
+      <CreateOrEditBranch token={token} branchId={id} />
+    </Suspense>
+  );
 }
