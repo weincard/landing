@@ -10,8 +10,8 @@ export class GetAllCategoriesUseCase {
     private categoriesRepository: CategoriesRepository
   ) {}
 
-  async execute(): Promise<ICategoria[]> {
-    const response = await this.categoriesRepository.getAll();
+  async execute(token: string): Promise<ICategoria[]> {
+    const response = await this.categoriesRepository.getAll(token);
     return allCategoriesResponseAdapter(response);
   }
 }

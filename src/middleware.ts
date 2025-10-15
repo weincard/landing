@@ -32,11 +32,8 @@ export async function middleware(request: NextRequest) {
       }
     );
 
-    console.log("POPOP:", response);
-
     const user = userAdapter(response.data); // Adaptar la respuesta al modelo de usuario
     const { role } = user as { role: UserRole };
-    // console.log('XXXXX:',user)
 
     const userEncoded = Buffer.from(JSON.stringify(user)).toString("base64"); // Convertir a Base64
     await res.cookies.set("user", userEncoded, { httpOnly: true, path: "/" }); // Guardar como cookie

@@ -15,12 +15,12 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getAllCategories = async (): Promise<ICategoria[]> => {
+  const getAllCategories = async (token: string): Promise<ICategoria[]> => {
     setLoading(true);
     setError(null);
     try {
       const useCase = container.get(GetAllCategoriesUseCase);
-      const categories = await useCase.execute();
+      const categories = await useCase.execute(token);
       return categories;
     } catch (err: any) {
       setError(err.message || "Error al obtener las categorías");

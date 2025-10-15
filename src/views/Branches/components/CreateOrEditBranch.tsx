@@ -113,7 +113,7 @@ export function CreateOrEditBranch({
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
-        const categoriesList = await getAllCategories();
+        const categoriesList = await getAllCategories(token);
         setCategories(categoriesList);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -123,7 +123,7 @@ export function CreateOrEditBranch({
     };
 
     fetchCategories();
-  }, [getAllCategories]);
+  }, [getAllCategories, token]);
 
   const handleOpenCategoryModal = (categoryId?: number) => {
     setEditingCategoryId(categoryId);
@@ -138,7 +138,7 @@ export function CreateOrEditBranch({
   const handleCategorySuccess = async () => {
     // Reload categories after creating/editing
     try {
-      const categoriesList = await getAllCategories();
+      const categoriesList = await getAllCategories(token);
       setCategories(categoriesList);
     } catch (error) {
       console.error("Error reloading categories:", error);

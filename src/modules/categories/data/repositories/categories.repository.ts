@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { apiUrls } from "@/config/protocols/http/api_urls";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -14,15 +15,17 @@ export interface UpdateCategoryData {
   parentCategory?: number | null;
 }
 
+@injectable()
 export class CategoriesRepository {
   /**
-   * Get all categories (no auth required according to API)
+   * Get all categories (requires authentication)
    */
-  async getAll(): Promise<any> {
+  async getAll(token: string): Promise<any> {
     const response = await fetch(`${API_URL}${apiUrls.categories.getAll}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 

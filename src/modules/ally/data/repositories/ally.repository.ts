@@ -22,7 +22,6 @@ import {
 export abstract class AllyRepository {
   abstract create(allyParams: IAlly, imageFile?: File): Promise<AllyResponse>;
   abstract update(allyParams: IAlly, imageFile?: File): Promise<AllyResponse>;
-  abstract delete(id: string): Promise<string>;
   abstract getAll(
     token?: string,
     paginationParams?: IPaginationParams
@@ -59,7 +58,7 @@ export class AllyRepositoryImpl implements AllyRepository {
         formData.append("file", imageFile);
 
         const uploadParams: UploadFileParams = {
-          url: apiUrls.allies.create,
+          url: apiUrls.merchants.create,
           method: "post",
           formData: formData,
         };
@@ -84,7 +83,7 @@ export class AllyRepositoryImpl implements AllyRepository {
       } else {
         // Use regular request method when no image is provided
         const axiosRequest = await this.httpClient.request({
-          url: apiUrls.allies.create,
+          url: apiUrls.merchants.create,
           method: "post",
           body: JSON.stringify(allyParams),
           isAuth: true,
@@ -133,7 +132,7 @@ export class AllyRepositoryImpl implements AllyRepository {
         formData.append("file", imageFile);
 
         const uploadParams: UploadFileParams = {
-          url: `${apiUrls.allies.update}/${allyParams.idAlly}`,
+          url: `${apiUrls.merchants.update}/${allyParams.idAlly}`,
           method: "patch",
           formData: formData,
         };
@@ -169,7 +168,7 @@ export class AllyRepositoryImpl implements AllyRepository {
 
         // Use regular request method when no image is provided
         const axiosRequest = await this.httpClient.request({
-          url: `${apiUrls.allies.update}/${allyParams.idAlly}`,
+          url: `${apiUrls.merchants.update}/${allyParams.idAlly}`,
           method: "patch",
           body: formData,
           isAuth: true,
@@ -209,7 +208,7 @@ export class AllyRepositoryImpl implements AllyRepository {
 
     try {
       // Build query parameters if pagination is provided
-      let url = apiUrls.allies.getAll;
+      let url = apiUrls.merchants.getAll;
 
       if (paginationParams) {
         const queryParams = new URLSearchParams();
@@ -257,31 +256,6 @@ export class AllyRepositoryImpl implements AllyRepository {
     } catch (error) {
       console.error("Error in get method:", error);
       // Rethrow to be handled by the component
-      throw error;
-    }
-  }
-
-  /////////////////////////////////DELETE////////////////////////////////////////////////
-  async delete(id: string): Promise<string> {
-    try {
-      const axiosRequest = await this.httpClient.request({
-        url: `${apiUrls.allies.delete}/${id}`,
-        method: "delete",
-        isAuth: true,
-      });
-
-      if (
-        axiosRequest.statusCode === HttpStatusCode.ok ||
-        axiosRequest.statusCode === HttpStatusCode.created
-      ) {
-        return axiosRequest.body?.message || "Ally deleted successfully";
-      } else {
-        throw new CustomError(
-          axiosRequest.body?.message || "Error al eliminar aliado"
-        );
-      }
-    } catch (error) {
-      console.error("Error in delete method:", error);
       throw error;
     }
   }
