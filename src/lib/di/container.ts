@@ -26,6 +26,7 @@ import { GetAllBranchesUseCase } from "@/modules/branches/domain/use-cases/get-a
 import { GetOneBranchUseCase } from "@/modules/branches/domain/use-cases/get-one-branch.use-case";
 import { CreateBranchUseCase } from "@/modules/branches/domain/use-cases/create-branch.use-case";
 import { UpdateBranchUseCase } from "@/modules/branches/domain/use-cases/update-branch.use-case";
+import { DeleteBranchUseCase } from "@/modules/branches/domain/use-cases/delete-branch.use-case";
 import { GetAllCategoriesUseCase } from "@/modules/categories/domain/use-cases/get-all-categories.use-case";
 import { GetOneCategoryUseCase } from "@/modules/categories/domain/use-cases/get-one-category.use-case";
 import { CreateCategoryUseCase } from "@/modules/categories/domain/use-cases/create-category.use-case";
@@ -65,6 +66,7 @@ container.bind(GetAllBranchesUseCase).toSelf().inSingletonScope();
 container.bind(GetOneBranchUseCase).toSelf().inSingletonScope();
 container.bind(CreateBranchUseCase).toSelf().inSingletonScope();
 container.bind(UpdateBranchUseCase).toSelf().inSingletonScope();
+container.bind(DeleteBranchUseCase).toSelf().inSingletonScope();
 container.bind(GetAllCategoriesUseCase).toSelf().inSingletonScope();
 container.bind(GetOneCategoryUseCase).toSelf().inSingletonScope();
 container.bind(CreateCategoryUseCase).toSelf().inSingletonScope();

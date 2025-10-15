@@ -19,6 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
 import Image from "next/image";
 import {
@@ -36,13 +46,14 @@ import Link from "next/link";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import type { IMerchant } from "@/data/interfaces/merchant.interface";
+import { toast } from "sonner";
 
 interface BranchesViewProps {
   token: string;
 }
 
 export function BranchesView({ token }: BranchesViewProps) {
-  const { getAllBranches } = useBranches();
+  const { getAllBranches, deleteBranch } = useBranches();
   const { getAllMerchants } = useMerchants();
   const [branches, setBranches] = useState<IBranch[]>([]);
   const [merchants, setMerchants] = useState<IMerchant[]>([]);
@@ -56,6 +67,10 @@ export function BranchesView({ token }: BranchesViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+
+  // Delete confirmation modal state
+  const [branchToDelete, setBranchToDelete] = useState<IBranch | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
@@ -141,6 +156,33 @@ export function BranchesView({ token }: BranchesViewProps) {
     setPageSize(newSize);
     setCurrentPage(1);
   }, []);
+
+  const handleDeleteClick = (branch: IBranch) => {
+    setBranchToDelete(branch);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!branchToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await deleteBranch(branchToDelete.branchId || 0, token);
+      if (response) {
+        toast.success(response.message || "Sucursal eliminada exitosamente");
+        setBranchToDelete(null);
+        // Recargar la lista de sucursales
+        fetchBranches();
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Error al eliminar la sucursal");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setBranchToDelete(null);
+  };
 
   return (
     <div>
@@ -380,6 +422,7 @@ export function BranchesView({ token }: BranchesViewProps) {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteClick(branch)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -518,6 +561,46 @@ export function BranchesView({ token }: BranchesViewProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog
+        open={!!branchToDelete}
+        onOpenChange={(open) => !open && handleCancelDelete()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente
+              la sucursal{" "}
+              <span className="font-semibold">{branchToDelete?.name}</span> de
+              nuestros servidores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={handleCancelDelete}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { GetAllBranchesUseCase } from "../use-cases/get-all-branches.use-case";
 import { GetOneBranchUseCase } from "../use-cases/get-one-branch.use-case";
 import { CreateBranchUseCase } from "../use-cases/create-branch.use-case";
 import { UpdateBranchUseCase } from "../use-cases/update-branch.use-case";
+import { DeleteBranchUseCase } from "../use-cases/delete-branch.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllBranchesResponse,
@@ -130,11 +131,36 @@ export const useBranches = () => {
     []
   );
 
+  const deleteBranch = useCallback(
+    async (
+      branchId: number,
+      token?: string
+    ): Promise<{ message: string } | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const deleteBranchUseCase = container.get(DeleteBranchUseCase);
+        const response = await deleteBranchUseCase.execute(branchId, token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al eliminar sucursal";
+        setError(errorMessage);
+        console.error("Error deleting branch:", err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     getAllBranches,
     getOneBranch,
     createBranch,
     updateBranch,
+    deleteBranch,
     loading,
     error,
   };

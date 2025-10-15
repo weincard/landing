@@ -39,6 +39,10 @@ export abstract class BranchesRepository {
     logoFile?: File,
     token?: string
   ): Promise<BranchResponse>;
+  abstract delete(
+    branchId: number,
+    token?: string
+  ): Promise<{ message: string }>;
 }
 
 @injectable()
@@ -255,6 +259,31 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     } else {
       throw new CustomError(
         axiosRequest.body.message || "Error al actualizar sucursal"
+      );
+    }
+  }
+
+  async delete(branchId: number, token?: string): Promise<{ message: string }> {
+    const axiosRequest = await this.httpClient.request({
+      url: `${apiUrls.branches.delete}/${branchId}`,
+      method: "delete",
+      body: {},
+      isAuth: true,
+      token,
+    });
+
+    console.log("Delete Branch Response:", axiosRequest.body);
+
+    if (
+      axiosRequest.statusCode === HttpStatusCode.ok ||
+      axiosRequest.statusCode === HttpStatusCode.created
+    ) {
+      return {
+        message: axiosRequest.body.message || "Sucursal eliminada exitosamente",
+      };
+    } else {
+      throw new CustomError(
+        axiosRequest.body.message || "Error al eliminar sucursal"
       );
     }
   }
