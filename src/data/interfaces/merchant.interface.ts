@@ -25,6 +25,7 @@ export interface IBranch {
   branchId?: number;
   merchantId?: number;
   categoryId?: number;
+  userId?: number; // Manager/User ID
   name: string;
   slug?: string;
   description?: string;

@@ -57,10 +57,10 @@ export const CreateOrEditCategoryModal: React.FC<
       setLoadingCategory(true);
       getOneCategory(categoryId, token)
         .then((category) => {
-          setName(category.nombre);
-          setDescription(category.descripcion || "");
-          setParentCategoryId(category.idCategoriaPadre || null);
-          setExistingImageUrl(category.imagen || null);
+          setName(category.name);
+          setDescription(category.description || "");
+          setParentCategoryId(category.parentCategory?.categoryId || null);
+          setExistingImageUrl(category.image || null);
         })
         .catch((error) => {
           toast.error(error.message || "Error al cargar la categoría");
@@ -153,7 +153,7 @@ export const CreateOrEditCategoryModal: React.FC<
 
   // Filter out current category from parent selection to avoid circular reference
   const availableParentCategories = allCategories.filter(
-    (cat) => cat.idCategoria !== categoryId
+    (cat) => cat.categoryId !== categoryId
   );
 
   return (
@@ -217,10 +217,10 @@ export const CreateOrEditCategoryModal: React.FC<
                   <SelectItem value="none">Sin categoría padre</SelectItem>
                   {availableParentCategories.map((category) => (
                     <SelectItem
-                      key={category.idCategoria}
-                      value={category.idCategoria.toString()}
+                      key={category.categoryId}
+                      value={category.categoryId.toString()}
                     >
-                      {category.nombre}
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

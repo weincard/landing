@@ -1,43 +1,64 @@
 export interface CategoryResponse {
-  id: number;
+  categoryId: number;
   name: string;
   description?: string | null;
-  parentCategory?: number | null;
-  image?: string;
-  createdAt: string;
-  updatedAt: string;
+  image?: string | null;
+  slug?: string;
+  parentCategory?: {
+    categoryId: number;
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    slug?: string;
+  } | null;
+  children?: CategoryResponse[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryCreateResponse {
-  id: number;
+  categoryId: number;
   name: string;
   description?: string | null;
-  parentCategory?: number | null;
-  image: string;
-  createdAt: string;
-  updatedAt: string;
+  image?: string | null;
+  slug?: string;
+  parentCategory?: {
+    categoryId: number;
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    slug?: string;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryUpdateResponse {
-  id: number;
+  categoryId: number;
   name: string;
   description?: string | null;
-  parentCategory?: number | null;
-  image: string;
-  createdAt: string;
-  updatedAt: string;
+  image?: string | null;
+  slug?: string;
+  parentCategory?: {
+    categoryId: number;
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    slug?: string;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryDeleteResponse {
   message: string;
   deletedCategory: {
-    id: number;
+    categoryId: number;
     name: string;
   };
 }
 
 export interface AllCategoriesResponse {
-  categories?: CategoryResponse[];
-  // If API returns array directly
-  [key: number]: CategoryResponse;
+  count: number;
+  categories: CategoryResponse[];
 }

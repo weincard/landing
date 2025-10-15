@@ -19,10 +19,12 @@ import Image from "next/image";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useCategories } from "@/modules/categories/domain/hooks/use-categories";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
+import type { IUser } from "@/data/interfaces/user.interface";
 import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
 
 interface CreateOrEditBranchProps {
@@ -43,16 +45,20 @@ export function CreateOrEditBranch({
   } = useBranches();
   const { getAllMerchants, loading: merchantsLoading } = useMerchants();
   const { getAllCategories } = useCategories();
+  const { getAllUsers } = useUsers();
 
   // Form fields - Required
   const [merchantId, setMerchantId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
+  const [userId, setUserId] = useState<string>(""); // Manager/User ID
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
 
   // Form fields - Optional
   const [description, setDescription] = useState("");
@@ -89,6 +95,8 @@ export function CreateOrEditBranch({
   const [merchants, setMerchants] = useState<any[]>([]);
   const [categories, setCategories] = useState<ICategoria[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [managers, setManagers] = useState<IUser[]>([]);
+  const [loadingManagers, setLoadingManagers] = useState(true);
 
   // Category modal state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -123,7 +131,31 @@ export function CreateOrEditBranch({
     };
 
     fetchCategories();
-  }, [getAllCategories, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // Load managers (users with role "manager") for dropdown
+  useEffect(() => {
+    const fetchManagers = async () => {
+      setLoadingManagers(true);
+      try {
+        const response = await getAllUsers(
+          token,
+          { skip: 0, limit: 100 },
+          "manager"
+        );
+        if (response && response.users) {
+          setManagers(response.users);
+        }
+      } catch (error) {
+        console.error("Error fetching managers:", error);
+      } finally {
+        setLoadingManagers(false);
+      }
+    };
+
+    fetchManagers();
+  }, [token, getAllUsers]);
 
   const handleOpenCategoryModal = (categoryId?: number) => {
     setEditingCategoryId(categoryId);
@@ -154,12 +186,15 @@ export function CreateOrEditBranch({
           const branch = response.branch;
           setMerchantId(branch.merchantId?.toString() || "");
           setCategoryId(branch.category?.categoryId?.toString() || "");
+          setUserId(branch.userId?.toString() || "");
           setName(branch.name || "");
           setAddress(branch.address || "");
           setCity(branch.city || "");
           setCountry(branch.country || "");
           setPhone(branch.phone || "");
           setEmail(branch.email || "");
+          setLatitude(branch.latitude?.toString() || "");
+          setLongitude(branch.longitude?.toString() || "");
           setDescription(branch.description || "");
           setHowItWorks(branch.howItWorks || "");
           setWebsite(branch.website || "");
@@ -333,6 +368,10 @@ export function CreateOrEditBranch({
       toast.error("Por favor selecciona una categoría");
       return;
     }
+    if (!userId) {
+      toast.error("Por favor selecciona un manager");
+      return;
+    }
     if (!name) {
       toast.error("El nombre es requerido");
       return;
@@ -349,6 +388,14 @@ export function CreateOrEditBranch({
       toast.error("El país es requerido");
       return;
     }
+    if (!latitude) {
+      toast.error("La latitud es requerida");
+      return;
+    }
+    if (!longitude) {
+      toast.error("La longitud es requerida");
+      return;
+    }
     if (!phone) {
       toast.error("El teléfono es requerido");
       return;
@@ -357,14 +404,21 @@ export function CreateOrEditBranch({
       toast.error("El correo electrónico es requerido");
       return;
     }
+    if (!howItWorks) {
+      toast.error("Debes describir cómo funciona la redención");
+      return;
+    }
 
     const branchData: Partial<IBranch> = {
       merchantId: Number(merchantId),
       categoryId: Number(categoryId),
+      userId: Number(userId),
       name,
       address,
       city,
       country,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
       phone,
       email,
       description,
@@ -539,7 +593,7 @@ export function CreateOrEditBranch({
 
               <div className="space-y-2">
                 <Label className="text-muted-foreground" htmlFor="howItWorks">
-                  ¿Cómo funciona la redención?
+                  ¿Cómo funciona la redención? *
                 </Label>
                 <Textarea
                   id="howItWorks"
@@ -812,10 +866,10 @@ export function CreateOrEditBranch({
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem
-                      key={category.idCategoria}
-                      value={category.idCategoria.toString()}
+                      key={category.categoryId}
+                      value={category.categoryId.toString()}
                     >
-                      {category.nombre}
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -855,7 +909,7 @@ export function CreateOrEditBranch({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground" htmlFor="city">
-                    Ciudad
+                    Ciudad *
                   </Label>
                   <Input
                     id="city"
@@ -866,13 +920,42 @@ export function CreateOrEditBranch({
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground" htmlFor="country">
-                    País
+                    País *
                   </Label>
                   <Input
                     id="country"
                     placeholder="Colombia"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="latitude">
+                    Latitud *
+                  </Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="6.244203"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground" htmlFor="longitude">
+                    Longitud *
+                  </Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="-75.581215"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
                   />
                 </div>
               </div>
@@ -910,62 +993,34 @@ export function CreateOrEditBranch({
           {/* Manager Card */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold flex items-center justify-between">
-                <span>Manager</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  {selectedManagers.length > 0 ? "SÍ" : "NO"}
-                </span>
-              </h2>
+              <h2 className="text-lg font-semibold">Manager *</h2>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Input
-                  placeholder="Buscar manager ó staff"
-                  value={managerSearch}
-                  onChange={(e) => {
-                    setManagerSearch(e.target.value);
-                    setShowManagerSuggestions(true);
-                  }}
-                  onFocus={() => setShowManagerSuggestions(true)}
-                />
-
-                {/* Autocomplete Suggestions */}
-                {showManagerSuggestions &&
-                  managerSearch &&
-                  filteredManagers.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredManagers.map((manager) => (
-                        <div
-                          key={manager.id}
-                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                          onClick={() => handleSelectManager(manager)}
-                        >
-                          <span className="text-sm">{manager.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              </div>
-
-              {/* Selected Managers Badges */}
-              {selectedManagers.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedManagers.map((manager) => (
-                    <div
-                      key={manager.id}
-                      className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+            <CardContent>
+              <Select
+                value={userId}
+                onValueChange={setUserId}
+                disabled={loadingManagers}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  {managers.map((manager) => (
+                    <SelectItem
+                      key={manager.id || manager.idUsuario}
+                      value={
+                        manager.id?.toString() ||
+                        manager.idUsuario?.toString() ||
+                        ""
+                      }
                     >
-                      <span>{manager.name}</span>
-                      <button
-                        onClick={() => handleRemoveManager(manager.id)}
-                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
+                      {manager.email ||
+                        manager.phone ||
+                        `${manager.name} ${manager.lastName}`}
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
 

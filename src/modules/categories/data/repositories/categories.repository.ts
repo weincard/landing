@@ -73,7 +73,8 @@ export class CategoriesRepository {
     if (data.description) {
       formData.append("description", data.description);
     }
-    if (data.parentCategory !== undefined && data.parentCategory !== null) {
+    // Only add parentCategory if it's a valid number (not null/undefined)
+    if (data.parentCategory !== null && data.parentCategory !== undefined) {
       formData.append("parentCategory", data.parentCategory.toString());
     }
     formData.append("file", file);
@@ -112,9 +113,11 @@ export class CategoriesRepository {
       formData.append("description", data.description || "");
     }
     if (data.parentCategory !== undefined) {
+      // Send parentCategory only if it's a valid number, otherwise omit it
       if (data.parentCategory !== null) {
         formData.append("parentCategory", data.parentCategory.toString());
       }
+      // If it's null, we simply don't include it in the FormData
     }
     if (file) {
       formData.append("file", file);

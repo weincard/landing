@@ -298,22 +298,28 @@ export interface IEspecie {
 
 // Update the ICategoria interface
 export interface ICategoria {
-  idCategoria: number;
-  idCategoriaPadre?: number | null;
-  nombre: string;
-  descripcion?: string;
-  imagen?: string | null;
+  categoryId: number;
+  name: string;
+  description?: string | null;
+  image?: string | null;
   slug?: string;
-  subcategorias?: ICategoria[]; // Explicitly define subcategorias here
   parentCategory?: {
-    categoryId?: number;
-    name?: string;
-    description?: string;
-    image?: string;
+    categoryId: number;
+    name: string;
+    description?: string | null;
+    image?: string | null;
     slug?: string;
   } | null;
+  children?: ICategoria[]; // Subcategorías
+  depth?: number; // Profundidad en el árbol de categorías (opcional)
+
+  // Backward compatibility (deprecated, mantener por si acaso)
+  idCategoria?: number;
+  nombre?: string;
+  imagen?: string;
+  idCategoriaPadre?: number | null;
+  subcategorias?: ICategoria[];
   productos?: any[];
-  depth?: number; // Añadir la propiedad depth como opcional
 }
 
 export interface IMarca {

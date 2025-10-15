@@ -117,6 +117,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     // Required fields
     if (branchData.merchantId)
       formData.append("merchantId", String(branchData.merchantId));
+    if (branchData.userId) formData.append("userId", String(branchData.userId));
     if (branchData.name) formData.append("name", branchData.name);
     if (branchData.address) formData.append("address", branchData.address);
     if (branchData.city) formData.append("city", branchData.city);
@@ -195,6 +196,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     // Optional update fields
     if (branchData.merchantId)
       formData.append("merchantId", String(branchData.merchantId));
+    if (branchData.userId) formData.append("userId", String(branchData.userId));
     if (branchData.name) formData.append("name", branchData.name);
     if (branchData.address) formData.append("address", branchData.address);
     if (branchData.city) formData.append("city", branchData.city);
