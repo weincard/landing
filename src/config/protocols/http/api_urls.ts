@@ -11,6 +11,13 @@ export const apiUrls = {
     getByMerchant: "/branches/by-merchant",
     getOne: "/branches/one",
   },
+  categories: {
+    create: "/categories/create",
+    update: "/categories/update",
+    getAll: "/categories/all",
+    getOne: "/categories/one",
+    delete: "/categories/delete",
+  },
   auth: {
     loginByEmail: "/auth/login-by-email",
     me: "/auth/me",

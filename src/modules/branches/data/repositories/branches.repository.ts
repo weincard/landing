@@ -154,7 +154,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       });
     }
 
-    if (logoFile) formData.append("file", logoFile);
+    if (logoFile) formData.append("logoFile", logoFile);
 
     const axiosRequest = await this.httpClient.request({
       url: apiUrls.branches.create,

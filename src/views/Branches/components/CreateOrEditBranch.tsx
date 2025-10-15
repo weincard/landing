@@ -14,13 +14,16 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Star, Upload, MapPin, X, Loader2 } from "lucide-react";
+import { Star, Upload, MapPin, X, Loader2, Plus } from "lucide-react";
 import Image from "next/image";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { useCategories } from "@/modules/categories/domain/hooks/use-categories";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
+import type { ICategoria } from "@/data/interfaces/interfaces.interface";
+import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
 
 interface CreateOrEditBranchProps {
   token: string;
@@ -39,9 +42,11 @@ export function CreateOrEditBranch({
     loading: branchLoading,
   } = useBranches();
   const { getAllMerchants, loading: merchantsLoading } = useMerchants();
+  const { getAllCategories } = useCategories();
 
   // Form fields - Required
   const [merchantId, setMerchantId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -82,6 +87,14 @@ export function CreateOrEditBranch({
 
   // Merchants list
   const [merchants, setMerchants] = useState<any[]>([]);
+  const [categories, setCategories] = useState<ICategoria[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Category modal state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<
+    number | undefined
+  >(undefined);
 
   // Load merchants for dropdown
   useEffect(() => {
@@ -95,6 +108,43 @@ export function CreateOrEditBranch({
     fetchMerchants();
   }, [token, getAllMerchants]);
 
+  // Load categories for dropdown
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const categoriesList = await getAllCategories();
+        setCategories(categoriesList);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, [getAllCategories]);
+
+  const handleOpenCategoryModal = (categoryId?: number) => {
+    setEditingCategoryId(categoryId);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setEditingCategoryId(undefined);
+  };
+
+  const handleCategorySuccess = async () => {
+    // Reload categories after creating/editing
+    try {
+      const categoriesList = await getAllCategories();
+      setCategories(categoriesList);
+    } catch (error) {
+      console.error("Error reloading categories:", error);
+    }
+  };
+
   // Load branch data if editing
   useEffect(() => {
     if (branchId) {
@@ -103,6 +153,7 @@ export function CreateOrEditBranch({
         if (response && response.branch) {
           const branch = response.branch;
           setMerchantId(branch.merchantId?.toString() || "");
+          setCategoryId(branch.category?.categoryId?.toString() || "");
           setName(branch.name || "");
           setAddress(branch.address || "");
           setCity(branch.city || "");
@@ -278,6 +329,10 @@ export function CreateOrEditBranch({
       toast.error("Por favor selecciona un aliado");
       return;
     }
+    if (!categoryId) {
+      toast.error("Por favor selecciona una categoría");
+      return;
+    }
     if (!name) {
       toast.error("El nombre es requerido");
       return;
@@ -305,6 +360,7 @@ export function CreateOrEditBranch({
 
     const branchData: Partial<IBranch> = {
       merchantId: Number(merchantId),
+      categoryId: Number(categoryId),
       name,
       address,
       city,
@@ -742,34 +798,39 @@ export function CreateOrEditBranch({
           {/* Categories Card */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Categorías</h2>
+              <h2 className="text-lg font-semibold">Categoría *</h2>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {[
-                  "Restaurante",
-                  "Étnico",
-                  "De autor",
-                  "Alimento natural",
-                  "Café",
-                  "Cinema",
-                  "Pizza",
-                  "Retail",
-                ].map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <input type="checkbox" id={category} />
-                    <Label
-                      className="text-muted-foreground cursor-pointer"
-                      htmlFor={category}
+            <CardContent className="space-y-4">
+              <Select
+                value={categoryId}
+                onValueChange={setCategoryId}
+                disabled={loadingCategories}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem
+                      key={category.idCategoria}
+                      value={category.idCategoria.toString()}
                     >
-                      {category}
-                    </Label>
-                  </div>
-                ))}
-                <Button variant="link" className="p-0 h-auto text-blue-600">
-                  Crear nueva
-                </Button>
-              </div>
+                      {category.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenCategoryModal()}
+                disabled={loadingCategories}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Crear nueva categoría
+              </Button>
             </CardContent>
           </Card>
 
@@ -956,6 +1017,16 @@ export function CreateOrEditBranch({
           </Card>
         </div>
       </div>
+
+      {/* Category Modal */}
+      <CreateOrEditCategoryModal
+        token={token}
+        isOpen={isCategoryModalOpen}
+        onClose={handleCloseCategoryModal}
+        onSuccess={handleCategorySuccess}
+        categoryId={editingCategoryId}
+        allCategories={categories}
+      />
     </div>
   );
 }
