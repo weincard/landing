@@ -34,8 +34,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
-import { useUsers } from "@/modules/users/domain/hooks/use-users";
-import type { IUser } from "@/data/interfaces/user.interface";
+import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import type { IMerchant } from "@/data/interfaces/merchant.interface";
 
 interface BranchesViewProps {
   token: string;
@@ -43,9 +43,9 @@ interface BranchesViewProps {
 
 export function BranchesView({ token }: BranchesViewProps) {
   const { getAllBranches } = useBranches();
-  const { getAllUsers } = useUsers();
+  const { getAllMerchants } = useMerchants();
   const [branches, setBranches] = useState<IBranch[]>([]);
-  const [users, setUsers] = useState<IUser[]>([]);
+  const [merchants, setMerchants] = useState<IMerchant[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMerchantId, setSelectedMerchantId] = useState<
@@ -61,21 +61,19 @@ export function BranchesView({ token }: BranchesViewProps) {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Fetch users (owners and staff) for merchant filter
+  // Fetch merchants for filter
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchMerchants = async () => {
       try {
-        const managerResponse = await getAllUsers(token, undefined, "manager");
-
-        const allUsers = [...(managerResponse?.users || [])];
-        setUsers(allUsers);
+        const response = await getAllMerchants(token, { skip: 0, limit: 100 });
+        setMerchants(response?.merchants || []);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching merchants:", error);
       }
     };
 
-    fetchUsers();
-  }, [getAllUsers, token]);
+    fetchMerchants();
+  }, [getAllMerchants, token]);
 
   const fetchBranches = useCallback(async () => {
     setLoading(true);
@@ -171,12 +169,12 @@ export function BranchesView({ token }: BranchesViewProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los aliados</SelectItem>
-                  {users.map((user) => (
+                  {merchants.map((merchant) => (
                     <SelectItem
-                      key={user.idUsuario || user.id}
-                      value={user.idUsuario?.toString() || user.id || ""}
+                      key={merchant.merchantId}
+                      value={merchant.merchantId?.toString() || ""}
                     >
-                      {user.email} ({user.role})
+                      {merchant.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

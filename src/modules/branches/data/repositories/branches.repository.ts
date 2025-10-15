@@ -62,7 +62,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
 
     const axiosRequest = await this.httpClient.request({
       url,
-      method: "post",
+      method: "get",
       body: filters || {},
       isAuth: true,
       token,
