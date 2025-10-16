@@ -49,14 +49,9 @@ const mainItems = [
     icon: Users,
   },
   {
-    title: "Reportes",
-    href: "/dashboard/reports",
-    icon: ChartColumnBigIcon,
-  },
-  {
-    title: "Banners",
-    href: "/dashboard/banners",
-    icon: ImageIcon,
+    title: "Cupones",
+    href: "/dashboard/coupons",
+    icon: CreditCard,
   },
 ];
 

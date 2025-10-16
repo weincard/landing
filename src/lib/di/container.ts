@@ -17,6 +17,10 @@ import {
   BranchesRepository,
   BranchesRepositoryImpl,
 } from "@/modules/branches/data/repositories/branches.repository";
+import {
+  CouponsRepository,
+  CouponsRepositoryImpl,
+} from "@/modules/coupons/data/repositories/coupons.repository";
 import { CategoriesRepository } from "@/modules/categories/data/repositories/categories.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
@@ -32,6 +36,11 @@ import { GetOneCategoryUseCase } from "@/modules/categories/domain/use-cases/get
 import { CreateCategoryUseCase } from "@/modules/categories/domain/use-cases/create-category.use-case";
 import { UpdateCategoryUseCase } from "@/modules/categories/domain/use-cases/update-category.use-case";
 import { DeleteCategoryUseCase } from "@/modules/categories/domain/use-cases/delete-category.use-case";
+import { GetAllCouponsUseCase } from "@/modules/coupons/domain/use-cases/get-all-coupons.use-case";
+import { GetOneCouponUseCase } from "@/modules/coupons/domain/use-cases/get-one-coupon.use-case";
+import { CreateCouponUseCase } from "@/modules/coupons/domain/use-cases/create-coupon.use-case";
+import { UpdateCouponUseCase } from "@/modules/coupons/domain/use-cases/update-coupon.use-case";
+import { DeleteCouponUseCase } from "@/modules/coupons/domain/use-cases/delete-coupon.use-case";
 import {
   LocalStorageProtocol,
   LocalStorageProtocolImpl,
@@ -57,6 +66,10 @@ container
   .bind("BranchesRepository")
   .to(BranchesRepositoryImpl)
   .inSingletonScope();
+container
+  .bind("CouponsRepository")
+  .to(CouponsRepositoryImpl)
+  .inSingletonScope();
 container.bind(CategoriesRepository).toSelf().inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
@@ -72,6 +85,11 @@ container.bind(GetOneCategoryUseCase).toSelf().inSingletonScope();
 container.bind(CreateCategoryUseCase).toSelf().inSingletonScope();
 container.bind(UpdateCategoryUseCase).toSelf().inSingletonScope();
 container.bind(DeleteCategoryUseCase).toSelf().inSingletonScope();
+container.bind(GetAllCouponsUseCase).toSelf().inSingletonScope();
+container.bind(GetOneCouponUseCase).toSelf().inSingletonScope();
+container.bind(CreateCouponUseCase).toSelf().inSingletonScope();
+container.bind(UpdateCouponUseCase).toSelf().inSingletonScope();
+container.bind(DeleteCouponUseCase).toSelf().inSingletonScope();
 container
   .bind(LocalStorageProtocol)
   .to(LocalStorageProtocolImpl)

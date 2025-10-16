@@ -13,17 +13,11 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   mainItems,
   otherInformationItems,
   settingsItems,
 } from "./sideBarItems";
 import { CustomMenuItem } from "./CustomMenuItem";
-import { ChevronDown } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
