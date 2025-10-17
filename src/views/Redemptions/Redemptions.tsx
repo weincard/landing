@@ -86,20 +86,7 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Redenciones</h1>
-        <Button
-        // onClick={handleAddRaza}
-        >
-          <Link href="/dashboard/allies/create">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary text-white hover:bg-primary/90"></div>
-              <Plus className="h-4 w-4" />
-              Agregar
-            </div>
-          </Link>
-        </Button>
-      </div>
+      <h1 className="text-xl font-semibold">Redenciones</h1>
 
       <Card className="mt-4">
         <CardContent className="p-6 space-y-4">
