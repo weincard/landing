@@ -1,21 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Star, Upload, MapPin, X, Loader2, Plus } from "lucide-react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useCategories } from "@/modules/categories/domain/hooks/use-categories";
@@ -26,6 +11,20 @@ import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
 import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
+import {
+  BranchHeader,
+  InformationCard,
+  LogoCard,
+  ImagesCard,
+  OfferCard,
+  AvailabilityCard,
+  CategoryCard,
+  AddressCard,
+  NotesCard,
+  ManagerCard,
+  AllyCard,
+  ActiveCard,
+} from "./CreateOrEditBranch/index";
 
 interface CreateOrEditBranchProps {
   token: string;
@@ -50,7 +49,7 @@ export function CreateOrEditBranch({
   // Form fields - Required
   const [merchantId, setMerchantId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
-  const [userId, setUserId] = useState<string>(""); // Manager/User ID
+  const [userId, setUserId] = useState<string>("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -76,22 +75,8 @@ export function CreateOrEditBranch({
   const [rating, setRating] = useState(4.5);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
-  const [addressSearch, setAddressSearch] = useState("");
-  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<{
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-  } | null>(null);
-  const [managerSearch, setManagerSearch] = useState("");
-  const [showManagerSuggestions, setShowManagerSuggestions] = useState(false);
-  const [selectedManagers, setSelectedManagers] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
 
-  // Merchants list
+  // Data lists
   const [merchants, setMerchants] = useState<any[]>([]);
   const [categories, setCategories] = useState<ICategoria[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -104,7 +89,7 @@ export function CreateOrEditBranch({
     number | undefined
   >(undefined);
 
-  // Load merchants for dropdown
+  // Load merchants
   useEffect(() => {
     const fetchMerchants = async () => {
       const response = await getAllMerchants(token, { skip: 0, limit: 100 });
@@ -112,11 +97,10 @@ export function CreateOrEditBranch({
         setMerchants(response.merchants);
       }
     };
-
     fetchMerchants();
   }, [token, getAllMerchants]);
 
-  // Load categories for dropdown
+  // Load categories
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
@@ -129,12 +113,11 @@ export function CreateOrEditBranch({
         setLoadingCategories(false);
       }
     };
-
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // Load managers (users with role "manager") for dropdown
+  // Load managers
   useEffect(() => {
     const fetchManagers = async () => {
       setLoadingManagers(true);
@@ -153,29 +136,8 @@ export function CreateOrEditBranch({
         setLoadingManagers(false);
       }
     };
-
     fetchManagers();
   }, [token, getAllUsers]);
-
-  const handleOpenCategoryModal = (categoryId?: number) => {
-    setEditingCategoryId(categoryId);
-    setIsCategoryModalOpen(true);
-  };
-
-  const handleCloseCategoryModal = () => {
-    setIsCategoryModalOpen(false);
-    setEditingCategoryId(undefined);
-  };
-
-  const handleCategorySuccess = async () => {
-    // Reload categories after creating/editing
-    try {
-      const categoriesList = await getAllCategories(token);
-      setCategories(categoriesList);
-    } catch (error) {
-      console.error("Error reloading categories:", error);
-    }
-  };
 
   // Load branch data if editing
   useEffect(() => {
@@ -203,149 +165,40 @@ export function CreateOrEditBranch({
           if (branch.logoUrl) setLogo(branch.logoUrl);
         }
       };
-
       loadBranch();
     }
   }, [branchId, token, getOneBranch]);
 
-  // Mock de managers disponibles (en producción vendría de la API)
-  const availableManagers = [
-    { id: "1", name: "Juan Felipe" },
-    { id: "2", name: "Jeff E" },
-    { id: "3", name: "Emerson Benavides" },
-    { id: "4", name: "María García" },
-    { id: "5", name: "Carlos Rodríguez" },
-  ];
-
-  const filteredManagers = availableManagers.filter(
-    (manager) =>
-      manager.name.toLowerCase().includes(managerSearch.toLowerCase()) &&
-      !selectedManagers.some((selected) => selected.id === manager.id)
-  );
-
-  // Mock de direcciones sugeridas (en producción vendría de una API de geocoding)
-  const addressSuggestions = [
-    {
-      street: "Cra. 35 #66-35",
-      city: "Medellín",
-      state: "Antioquia",
-      country: "Colombia",
-      postalCode: "05001",
-      fullAddress: "Cra. 35 #66-35, Villa Flora, Medellín, Antioquia",
-    },
-    {
-      street: "Cra. 152 #44-35",
-      city: "Medellín",
-      state: "Antioquia",
-      country: "Colombia",
-      postalCode: "05001",
-      fullAddress: "Cra. 152 #44-35, Robledo, Medellín, Antioquia",
-    },
-    {
-      street: "Cra. 43 #1 Sur-25",
-      city: "Medellín",
-      state: "Antioquia",
-      country: "Colombia",
-      postalCode: "05001",
-      fullAddress: "Cra. 43 #1 Sur-25, El Poblado, Medellín, Antioquia",
-    },
-    {
-      street: "Cra. 80C #44-35",
-      city: "Medellín",
-      state: "Antioquia",
-      country: "Colombia",
-      postalCode: "05001",
-      fullAddress: "Cra. 80C #44-35, Santa Monica, Medellín, Antioquia",
-    },
-  ];
-
-  const filteredSuggestions = addressSuggestions.filter((suggestion) =>
-    suggestion.fullAddress.toLowerCase().includes(addressSearch.toLowerCase())
-  );
-
-  const handleSelectAddress = (suggestion: (typeof addressSuggestions)[0]) => {
-    setSelectedAddress({
-      street: suggestion.street,
-      city: suggestion.city,
-      state: suggestion.state,
-      country: suggestion.country,
-      postalCode: suggestion.postalCode,
-    });
-    setAddressSearch(suggestion.fullAddress);
-    setShowAddressSuggestions(false);
+  // Category modal handlers
+  const handleOpenCategoryModal = () => {
+    setIsCategoryModalOpen(true);
   };
 
-  const handleSelectManager = (manager: { id: string; name: string }) => {
-    setSelectedManagers([...selectedManagers, manager]);
-    setManagerSearch("");
-    setShowManagerSuggestions(false);
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setEditingCategoryId(undefined);
   };
 
-  const handleRemoveManager = (managerId: string) => {
-    setSelectedManagers(
-      selectedManagers.filter((manager) => manager.id !== managerId)
-    );
-  };
-
-  // Función para manejar el click en las estrellas (permite medias estrellas)
-  const handleStarClick = (
-    starPosition: number,
-    event: React.MouseEvent<SVGSVGElement>
-  ) => {
-    const target = event.currentTarget;
-    const rect = target.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const starWidth = rect.width;
-
-    // Si el click fue en la primera mitad, asignar .5, si fue en la segunda mitad, asignar entero
-    const isFirstHalf = clickX < starWidth / 2;
-    const newRating = isFirstHalf ? starPosition - 0.5 : starPosition;
-
-    setRating(newRating);
-  };
-
-  // Función para determinar cómo mostrar cada estrella
-  const getStarFill = (starPosition: number) => {
-    if (rating >= starPosition) {
-      return "full"; // Estrella completamente llena
-    } else if (rating >= starPosition - 0.5) {
-      return "half"; // Media estrella
-    } else {
-      return "empty"; // Estrella vacía
+  const handleCategorySuccess = async () => {
+    try {
+      const categoriesList = await getAllCategories(token);
+      setCategories(categoriesList);
+    } catch (error) {
+      console.error("Error reloading categories:", error);
     }
   };
 
-  const handleLogoUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        setLogoFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setLogo(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-    []
-  );
+  // Image handlers
+  const handleLogoChange = (file: File, base64: string) => {
+    setLogoFile(file);
+    setLogo(base64);
+  };
 
-  const handleImagesUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        const filesArray = Array.from(e.target.files);
-        filesArray.forEach((file) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setImages((prev) => [...prev, reader.result as string]);
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-    },
-    []
-  );
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
+  };
 
+  // Toggle handlers
   const toggleDay = (day: string) => {
     setSelectedDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
@@ -358,6 +211,7 @@ export function CreateOrEditBranch({
     );
   };
 
+  // Save handler
   const handleSave = async () => {
     // Validación de campos requeridos
     if (!merchantId) {
@@ -431,7 +285,6 @@ export function CreateOrEditBranch({
     try {
       let response;
       if (branchId) {
-        // Update existing branch
         response = await updateBranch(
           Number(branchId),
           branchData,
@@ -439,7 +292,6 @@ export function CreateOrEditBranch({
           token
         );
       } else {
-        // Create new branch
         response = await createBranch(branchData, logoFile || undefined, token);
       }
 
@@ -463,613 +315,103 @@ export function CreateOrEditBranch({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          {branchId ? "Editar sucursal" : "Agregar sucursal"}
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={branchLoading}
-          >
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={branchLoading}>
-            {branchLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              "Guardar"
-            )}
-          </Button>
-        </div>
-      </div>
+      <BranchHeader
+        isEditing={!!branchId}
+        isLoading={branchLoading}
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
 
       <div className="grid grid-cols-3 gap-6">
         {/* Left Column - Main Information */}
         <div className="col-span-2 space-y-6">
           {/* Information Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex">
-                <h2 className="text-lg font-semibold">Información</h2>
-                <div className="flex items-center gap-1 ml-auto">
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const fillType = getStarFill(star);
-                    return (
-                      <div key={star} className="relative cursor-pointer">
-                        {fillType === "half" ? (
-                          // Media estrella - usa un SVG con gradient
-                          <svg
-                            onClick={(e) => handleStarClick(star, e)}
-                            className="h-5 w-5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <defs>
-                              <linearGradient id={`half-${star}`}>
-                                <stop offset="50%" stopColor="#facc15" />
-                                <stop offset="50%" stopColor="#e5e7eb" />
-                              </linearGradient>
-                            </defs>
-                            <path
-                              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                              fill={`url(#half-${star})`}
-                              stroke="#facc15"
-                              strokeWidth="1"
-                            />
-                          </svg>
-                        ) : (
-                          // Estrella completa o vacía
-                          <Star
-                            onClick={(e) => handleStarClick(star, e)}
-                            className={`h-5 w-5 ${
-                              fillType === "full"
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "fill-gray-200 text-gray-200"
-                            }`}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="name">
-                    Nombre de la sucursal *
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="Kielo Sushi"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="phone">
-                    Contacto *
-                  </Label>
-                  <Input
-                    id="phone"
-                    placeholder="+57237176267"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="email">
-                    Correo *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="sucursal@ejemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground" htmlFor="description">
-                  Descripción
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Descripción de la sucursal"
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground" htmlFor="howItWorks">
-                  ¿Cómo funciona la redención? *
-                </Label>
-                <Textarea
-                  id="howItWorks"
-                  placeholder="Como funciona la redención en esta sucursal"
-                  rows={3}
-                  value={howItWorks}
-                  onChange={(e) => setHowItWorks(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <InformationCard
+            name={name}
+            phone={phone}
+            email={email}
+            description={description}
+            howItWorks={howItWorks}
+            rating={rating}
+            onNameChange={setName}
+            onPhoneChange={setPhone}
+            onEmailChange={setEmail}
+            onDescriptionChange={setDescription}
+            onHowItWorksChange={setHowItWorks}
+            onRatingChange={setRating}
+          />
 
           {/* Logo Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Logo</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                {logo ? (
-                  <div className="relative w-32 h-32 mx-auto">
-                    <Image
-                      src={logo}
-                      alt="Logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <div className="text-sm text-muted-foreground">
-                      Arrastra una imagen aquí
-                    </div>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  id="logo-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                />
-                <Button
-                  variant="link"
-                  className="mt-2"
-                  onClick={() =>
-                    document.getElementById("logo-upload")?.click()
-                  }
-                >
-                  Agregar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <LogoCard logo={logo} onLogoChange={handleLogoChange} />
 
           {/* Images Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Imágenes</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                {images.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-4">
-                    {images.map((img, idx) => (
-                      <div key={idx} className="relative aspect-square">
-                        <Image
-                          src={img}
-                          alt={`Image ${idx + 1}`}
-                          fill
-                          className="object-cover rounded"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <div className="text-sm text-muted-foreground">
-                      Arrastra varias imágenes aquí
-                    </div>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  id="images-upload"
-                  className="hidden"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImagesUpload}
-                />
-                <Button
-                  variant="link"
-                  className="mt-2"
-                  onClick={() =>
-                    document.getElementById("images-upload")?.click()
-                  }
-                >
-                  Agregar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ImagesCard images={images} onImagesChange={handleImagesChange} />
 
           {/* Offer Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Oferta</h2>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">
-                    Tipo de oferta
-                  </Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Cantidad de comensales" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="comensales">
-                        Cantidad de comensales
-                      </SelectItem>
-                      <SelectItem value="porcentaje">Porcentaje</SelectItem>
-                      <SelectItem value="monto">Monto fijo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">
-                    Tipo de membresía
-                  </Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wein card premium" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="premium">Wein card premium</SelectItem>
-                      <SelectItem value="basic">Wein card basic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">
-                  Establece la cantidad de comensales
-                </Label>
-                <Input placeholder="2×1" />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">
-                  Detalles de la promoción
-                </Label>
-                <Input placeholder="Qué productos" />
-              </div>
-
-              <Button variant="link" className="p-0 h-auto text-blue-600">
-                Agregar otra oferta
-              </Button>
-            </CardContent>
-          </Card>
+          <OfferCard
+            selectedDays={selectedDays}
+            selectedTimes={selectedTimes}
+            onToggleDay={toggleDay}
+            onToggleTime={toggleTime}
+          />
 
           {/* Availability Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Disponibilidad</h2>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Tipo</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Días" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dias">Días</SelectItem>
-                    <SelectItem value="horas">Horas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Tipo</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Hora" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hora">Hora</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Valores</Label>
-                <div className="flex flex-wrap gap-2">
-                  {["Sábado", "Domingo"].map((day) => (
-                    <Button
-                      key={day}
-                      variant={
-                        selectedDays.includes(day) ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => toggleDay(day)}
-                    >
-                      {day}
-                      {selectedDays.includes(day) && (
-                        <X className="h-3 w-3 ml-1" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Valores</Label>
-                <div className="flex flex-wrap gap-2">
-                  {["14h", "15h", "16h"].map((time) => (
-                    <Button
-                      key={time}
-                      variant={
-                        selectedTimes.includes(time) ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => toggleTime(time)}
-                    >
-                      {time}
-                      {selectedTimes.includes(time) && (
-                        <X className="h-3 w-3 ml-1" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col items-start">
-                <Button variant="link" className="p-0 h-auto text-blue-600">
-                  Agregar otra disponibilidad
-                </Button>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto text-blue-600 mt-4"
-                >
-                  Agregar nuevo beneficio
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <AvailabilityCard
+            selectedDays={selectedDays}
+            selectedTimes={selectedTimes}
+            onToggleDay={toggleDay}
+            onToggleTime={toggleTime}
+          />
         </div>
 
-        {/* Right Column - Categories, Address, Manager, Ally, Active */}
+        {/* Right Column */}
         <div className="space-y-6">
-          {/* Categories Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Categoría *</h2>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select
-                value={categoryId}
-                onValueChange={setCategoryId}
-                disabled={loadingCategories}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem
-                      key={category.categoryId}
-                      value={category.categoryId.toString()}
-                    >
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenCategoryModal()}
-                disabled={loadingCategories}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Crear nueva categoría
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Category Card */}
+          <CategoryCard
+            categoryId={categoryId}
+            categories={categories}
+            loadingCategories={loadingCategories}
+            onCategoryChange={setCategoryId}
+            onCreateCategory={handleOpenCategoryModal}
+          />
 
           {/* Address Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Dirección *</h2>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground" htmlFor="address">
-                  Dirección
-                </Label>
-                <Input
-                  id="address"
-                  placeholder="Cra. 35 #58-35"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="city">
-                    Ciudad *
-                  </Label>
-                  <Input
-                    id="city"
-                    placeholder="Medellín"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="country">
-                    País *
-                  </Label>
-                  <Input
-                    id="country"
-                    placeholder="Colombia"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="latitude">
-                    Latitud *
-                  </Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    placeholder="6.244203"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground" htmlFor="longitude">
-                    Longitud *
-                  </Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    placeholder="-75.581215"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground" htmlFor="website">
-                  Sitio Web (opcional)
-                </Label>
-                <Input
-                  id="website"
-                  type="url"
-                  placeholder="https://ejemplo.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <AddressCard
+            address={address}
+            city={city}
+            country={country}
+            latitude={latitude}
+            longitude={longitude}
+            website={website}
+            onAddressChange={setAddress}
+            onCityChange={setCity}
+            onCountryChange={setCountry}
+            onLatitudeChange={setLatitude}
+            onLongitudeChange={setLongitude}
+            onWebsiteChange={setWebsite}
+          />
 
           {/* Notes Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Nota</h2>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Nota"
-                rows={3}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </CardContent>
-          </Card>
+          <NotesCard note={note} onNoteChange={setNote} />
 
           {/* Manager Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Manager *</h2>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={userId}
-                onValueChange={setUserId}
-                disabled={loadingManagers}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  {managers.map((manager) => (
-                    <SelectItem
-                      key={manager.id || manager.idUsuario}
-                      value={
-                        manager.id?.toString() ||
-                        manager.idUsuario?.toString() ||
-                        ""
-                      }
-                    >
-                      {manager.email ||
-                        manager.phone ||
-                        `${manager.name} ${manager.lastName}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          <ManagerCard
+            userId={userId}
+            managers={managers}
+            loadingManagers={loadingManagers}
+            onManagerChange={setUserId}
+          />
 
           {/* Ally Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Aliado *</h2>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={merchantId}
-                onValueChange={setMerchantId}
-                disabled={merchantsLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un aliado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {merchants.map((merchant) => (
-                    <SelectItem
-                      key={merchant.merchantId}
-                      value={merchant.merchantId?.toString() || ""}
-                    >
-                      {merchant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          <AllyCard
+            merchantId={merchantId}
+            merchants={merchants}
+            merchantsLoading={merchantsLoading}
+            onMerchantChange={setMerchantId}
+          />
 
           {/* Active Card */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Activo</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <Label className="text-muted-foreground" htmlFor="active">
-                  Sí
-                </Label>
-                <Switch
-                  id="active"
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <ActiveCard isActive={isActive} onActiveChange={setIsActive} />
         </div>
       </div>
 
