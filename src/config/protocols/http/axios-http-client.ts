@@ -9,6 +9,8 @@ import {
 import { getCookie } from "cookies-next";
 import "reflect-metadata";
 import { injectable } from "inversify";
+import { toast } from "sonner";
+import { axiosInterceptorConfig } from "./axios-interceptor.config";
 
 @injectable()
 export class AxiosHttpClient implements HttpClient {
@@ -22,6 +24,105 @@ export class AxiosHttpClient implements HttpClient {
         Accept: "*/*",
       },
     });
+
+    // Request interceptor
+    this.axiosInstance.interceptors.request.use(
+      (config) => {
+        // Puedes agregar lógica aquí si necesitas hacer algo antes de cada request
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor
+    this.axiosInstance.interceptors.response.use(
+      (response) => {
+        // Manejar respuestas exitosas
+        const { status, data, config } = response;
+        const method = config.method?.toUpperCase();
+        const url = config.url || "";
+
+        // Verificar si la ruta está excluida
+        if (axiosInterceptorConfig.isExcludedRoute(url)) {
+          return response;
+        }
+
+        // Solo mostrar toast de éxito si está habilitado y cumple las condiciones
+        if (
+          axiosInterceptorConfig.enableSuccessToast &&
+          axiosInterceptorConfig.successStatusCodes.includes(status) &&
+          method &&
+          axiosInterceptorConfig.successMethods.includes(method)
+        ) {
+          const message = data?.message;
+          if (message && typeof message === "string") {
+            toast.success(message);
+          }
+        }
+
+        return response;
+      },
+      (error) => {
+        // Manejar errores
+        if (!axiosInterceptorConfig.enableErrorToast) {
+          return Promise.reject(error);
+        }
+
+        const url = error.config?.url || "";
+
+        // Verificar si la ruta está excluida
+        if (axiosInterceptorConfig.isExcludedRoute(url)) {
+          return Promise.reject(error);
+        }
+
+        if (error.response) {
+          const { status, data } = error.response;
+          const message =
+            data?.message || data?.error || "Ha ocurrido un error";
+
+          // Diferentes tipos de errores
+          switch (status) {
+            case 400:
+              toast.error(message || "Solicitud incorrecta");
+              break;
+            case 401:
+              toast.error(message || "No autorizado. Por favor, inicia sesión");
+              break;
+            case 403:
+              toast.error(
+                message || "No tienes permisos para realizar esta acción"
+              );
+              break;
+            case 404:
+              toast.error(message || "Recurso no encontrado");
+              break;
+            case 409:
+              toast.error(message || "Conflicto con el recurso existente");
+              break;
+            case 422:
+              toast.error(message || "Datos de validación incorrectos");
+              break;
+            case 500:
+              toast.error(message || "Error interno del servidor");
+              break;
+            default:
+              if (status >= 400) {
+                toast.error(message);
+              }
+          }
+        } else if (error.request) {
+          // La petición fue hecha pero no se recibió respuesta
+          toast.error("No se pudo conectar con el servidor");
+        } else {
+          // Algo pasó al configurar la petición
+          toast.error("Error al procesar la solicitud");
+        }
+
+        return Promise.reject(error);
+      }
+    );
   }
 
   async request(data: HttpRequest): Promise<HttpResponse> {
