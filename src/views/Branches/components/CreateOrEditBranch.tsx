@@ -230,6 +230,10 @@ export function CreateOrEditBranch({
       toast.error("El nombre es requerido");
       return;
     }
+    if (!logo && !logoFile) {
+      toast.error("El logo es requerido");
+      return;
+    }
     if (!address) {
       toast.error("La dirección es requerida");
       return;
