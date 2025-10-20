@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MapPin, Loader2 } from "lucide-react";
+import { loadGoogleMaps } from "@/lib/google-maps-loader";
 
 interface AddressCardProps {
   address: string;
@@ -105,88 +106,100 @@ export function AddressCard({
     [extractAddressComponents]
   );
 
-  // Initialize Google Maps
+  // Initialize Google Maps (once) using singleton loader
   useEffect(() => {
-    const initMap = () => {
-      if (!mapRef.current || !window.google) return;
+    let isCancelled = false;
 
-      const lat = parseFloat(latitude) || 6.244203;
-      const lng = parseFloat(longitude) || -75.581215;
+    const initialize = async () => {
+      try {
+        await loadGoogleMaps();
+        if (isCancelled || !mapRef.current || !window.google) return;
 
-      const mapInstance = new google.maps.Map(mapRef.current, {
-        center: { lat, lng },
-        zoom: 15,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-      });
+        const lat = parseFloat(latitude) || 6.244203;
+        const lng = parseFloat(longitude) || -75.581215;
 
-      const markerInstance = new google.maps.Marker({
-        position: { lat, lng },
-        map: mapInstance,
-        draggable: true,
-      });
+        const mapInstance = new google.maps.Map(mapRef.current, {
+          center: { lat, lng },
+          zoom: 15,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        });
 
-      // Update coordinates when marker is dragged
-      markerInstance.addListener("dragend", () => {
-        const position = markerInstance.getPosition();
-        if (position) {
-          onLatitudeChange(position.lat().toString());
-          onLongitudeChange(position.lng().toString());
-          reverseGeocode(position.lat(), position.lng());
-        }
-      });
+        const markerInstance = new google.maps.Marker({
+          position: { lat, lng },
+          map: mapInstance,
+          draggable: true,
+        });
 
-      mapInstanceRef.current = mapInstance;
-      markerInstanceRef.current = markerInstance;
-
-      // Initialize autocomplete
-      if (addressInputRef.current) {
-        const autocompleteInstance = new google.maps.places.Autocomplete(
-          addressInputRef.current,
-          {
-            fields: ["formatted_address", "geometry", "address_components"],
-          }
-        );
-
-        autocompleteInstance.addListener("place_changed", () => {
-          const place = autocompleteInstance.getPlace();
-          if (place.geometry?.location) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-
-            onLatitudeChange(lat.toString());
-            onLongitudeChange(lng.toString());
-            mapInstance.setCenter({ lat, lng });
-            markerInstance.setPosition({ lat, lng });
-
-            // Extract address components
-            if (place.address_components) {
-              extractAddressComponents(
-                place.address_components,
-                place.formatted_address || ""
-              );
-            }
+        // Update coordinates when marker is dragged
+        markerInstance.addListener("dragend", () => {
+          const position = markerInstance.getPosition();
+          if (position) {
+            onLatitudeChange(position.lat().toString());
+            onLongitudeChange(position.lng().toString());
+            reverseGeocode(position.lat(), position.lng());
           }
         });
 
-        autocompleteInstanceRef.current = autocompleteInstance;
-      }
+        mapInstanceRef.current = mapInstance;
+        markerInstanceRef.current = markerInstance;
 
-      setIsMapLoaded(true);
+        // Initialize autocomplete
+        if (addressInputRef.current) {
+          const autocompleteInstance = new google.maps.places.Autocomplete(
+            addressInputRef.current,
+            {
+              fields: ["formatted_address", "geometry", "address_components"],
+            }
+          );
+
+          autocompleteInstance.addListener("place_changed", () => {
+            const place = autocompleteInstance.getPlace();
+            if (place.geometry?.location) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+
+              onLatitudeChange(lat.toString());
+              onLongitudeChange(lng.toString());
+              mapInstance.setCenter({ lat, lng });
+              markerInstance.setPosition({ lat, lng });
+
+              // Extract address components
+              if (place.address_components) {
+                extractAddressComponents(
+                  place.address_components,
+                  place.formatted_address || ""
+                );
+              }
+            }
+          });
+
+          autocompleteInstanceRef.current = autocompleteInstance;
+        }
+
+        setIsMapLoaded(true);
+      } catch (e) {
+        console.error("Failed to load Google Maps:", e);
+      }
     };
 
-    // Load Google Maps script if not already loaded
-    if (!window.google) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initMap;
-      document.head.appendChild(script);
-    } else {
-      initMap();
-    }
+    initialize();
+
+    return () => {
+      isCancelled = true;
+      if (markerInstanceRef.current && window.google) {
+        google.maps.event.clearInstanceListeners(markerInstanceRef.current);
+      }
+      if (autocompleteInstanceRef.current && window.google) {
+        google.maps.event.clearInstanceListeners(
+          autocompleteInstanceRef.current
+        );
+      }
+    };
+    // Dependencies intentionally exclude latitude/longitude to avoid re-init
+    // We include latitude/longitude to satisfy exhaustive-deps, but initialization
+    // is idempotent and further coordinate changes are handled by the separate effect below.
   }, [
     latitude,
     longitude,

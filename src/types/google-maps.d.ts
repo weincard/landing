@@ -3,6 +3,7 @@
 declare global {
   interface Window {
     google: typeof google;
+    __googleMapsScriptLoadingPromise?: Promise<typeof google>;
   }
 }
 
