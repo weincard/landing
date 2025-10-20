@@ -27,16 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Plus,
-  X,
-  Trash2,
-  Save,
-  Camera,
-  Image as ImageIcon,
-  Search,
-  Loader2,
-} from "lucide-react";
+import { Plus, X, Trash2, Save, Search, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
@@ -253,11 +244,9 @@ export function CreateOrEditAlly({
       <Card>
         <CardContent className="p-6">
           <div className="flex gap-6">
-            <div className="relative group">
-              <label className="block text-sm text-muted-foreground mb-2">
-                Logo *
-              </label>
-              <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-border">
+            {/* Logo Section */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center">
                 {files[0] ? (
                   <Image
                     src={files[0]}
@@ -266,136 +255,133 @@ export function CreateOrEditAlly({
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <ImageIcon className="h-12 w-12 text-muted-foreground" />
-                  </div>
+                  <span className="text-5xl font-semibold text-muted-foreground select-none">
+                    {(name && name.charAt(0).toUpperCase()) || "A"}
+                  </span>
                 )}
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer rounded-full transition-opacity"
+              </div>
+              <label htmlFor="avatar-upload">
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() =>
+                    document.getElementById("avatar-upload")?.click()
+                  }
+                  disabled={loading}
                 >
-                  <Camera className="h-8 w-8 text-white" />
-                </label>
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
+                  Actualizar
+                </Button>
+              </label>
+              <input
+                type="file"
+                id="avatar-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
             </div>
-            <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="name"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Nombre *
-                  </label>
-                  <Input
-                    id="name"
-                    placeholder="Nombre del aliado"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="owner"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Propietario *
-                  </label>
-                  <Select
-                    value={selectedUserId}
-                    onValueChange={setSelectedUserId}
-                    disabled={loading || loadingUsers}
-                  >
-                    <SelectTrigger id="owner">
-                      <SelectValue
-                        placeholder={
-                          loadingUsers
-                            ? "Cargando..."
-                            : "Seleccionar propietario"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ownerUsers.map((user) => (
-                        <SelectItem
-                          key={user.idUsuario}
-                          value={String(user.idUsuario)}
-                        >
-                          {user.name ||
-                            user.email ||
-                            `Usuario ${user.idUsuario}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="description"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Descripción
-                  </label>
-                  <Textarea
-                    id="description"
-                    placeholder="Descripción del aliado"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="country"
-                    className="text-sm text-muted-foreground"
-                  >
-                    País *
-                  </label>
-                  <Input
-                    id="country"
-                    placeholder="País"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <label
-                    htmlFor="state"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Estado/Región *
-                  </label>
-                  <Input
-                    id="state"
-                    placeholder="Estado o región"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 flex items-center gap-2">
-                <Checkbox
-                  checked={isFounder}
-                  onCheckedChange={(checked) => setIsFounder(Boolean(checked))}
-                  id="founder"
+
+            {/* Form Fields */}
+            <div className="flex-1 grid grid-cols-4 gap-x-6 gap-y-4">
+              {/* Nombre */}
+              <div className="space-y-2 col-span-2">
+                <label htmlFor="name" className="text-sm text-muted-foreground">
+                  Nombre
+                </label>
+                <Input
+                  id="name"
+                  placeholder="Nombre del aliado"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
                 />
+              </div>
+
+              {/* Descripción */}
+              <div className="space-y-2 col-span-2">
                 <label
-                  htmlFor="founder"
+                  htmlFor="description"
                   className="text-sm text-muted-foreground"
                 >
-                  Fundador
+                  Descripción
                 </label>
+                <Textarea
+                  id="description"
+                  placeholder="Descripción del aliado"
+                  rows={5}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={loading}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Owner */}
+              <div className="space-y-2 col-span-2">
+                <label
+                  htmlFor="owner"
+                  className="text-sm text-muted-foreground"
+                >
+                  Owner
+                </label>
+                <Select
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                  disabled={loading || loadingUsers}
+                >
+                  <SelectTrigger id="owner">
+                    <SelectValue
+                      placeholder={
+                        loadingUsers ? "Cargando..." : "Seleccionar propietario"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ownerUsers.map((user) => (
+                      <SelectItem
+                        key={user.idUsuario}
+                        value={String(user.idUsuario)}
+                      >
+                        {user.name || user.email || `Usuario ${user.idUsuario}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* País */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="country"
+                  className="text-sm text-muted-foreground"
+                >
+                  País
+                </label>
+                <Input
+                  id="country"
+                  placeholder="Colombia"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Estado / Departamento */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="state"
+                  className="text-sm text-muted-foreground"
+                >
+                  Estado / Departamento
+                </label>
+                <Input
+                  id="state"
+                  placeholder="Antioquia"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  disabled={loading}
+                />
               </div>
             </div>
           </div>
