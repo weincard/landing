@@ -55,30 +55,4 @@ const mainItems = [
   },
 ];
 
-const otherInformationItems = [
-  {
-    title: "Base de conocimiento",
-    href: "/dashboard/knowledge_base",
-    icon: MessageCircleQuestion,
-  },
-  {
-    title: "Product Updates",
-    href: "/dashboard/product_updates",
-    icon: Medal,
-  },
-];
-
-const settingsItems = [
-  {
-    title: "Ajustes",
-    href: "/dashboard/settings",
-    icon: User,
-  },
-  {
-    title: "Global Settings",
-    href: "/dashboard/global_settings",
-    icon: Settings,
-  },
-];
-
-export { mainItems, otherInformationItems, settingsItems };
+export { mainItems };

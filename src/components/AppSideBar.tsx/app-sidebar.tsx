@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { LogOut } from "lucide-react";
+import { deleteCookie } from "cookies-next";
+import { useRouter } from "next-nprogress-bar";
 import {
   Sidebar,
   SidebarContent,
@@ -11,18 +14,23 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarFooter,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import {
-  mainItems,
-  otherInformationItems,
-  settingsItems,
-} from "./sideBarItems";
+import { mainItems } from "./sideBarItems";
 import { CustomMenuItem } from "./CustomMenuItem";
+import { CookiesKeysEnum } from "@/utilities/enums";
+import { routes } from "@/config/routes/routes";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Función para determinar si una ruta debe mostrarse en rojo
+  function logout() {
+    deleteCookie(CookiesKeysEnum.token);
+    router.replace(routes.auth.login);
+  }
 
   return (
     <Sidebar
@@ -52,37 +60,23 @@ export function AppSidebar() {
             />
           ))}
         </SidebarMenu>
-        <SidebarGroup>
-          <SidebarGroupLabel>Other Information</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {otherInformationItems.map((item) => (
-                <CustomMenuItem
-                  key={item.href}
-                  title={item.title}
-                  href={item.href}
-                  icon={item.icon}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <CustomMenuItem
-                  key={item.href}
-                  title={item.title}
-                  href={item.href}
-                  icon={item.icon}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
+
+      {/* Footer con botón de logout */}
+      <SidebarFooter className="px-4 pb-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={logout}
+              className="w-full text-white hover:bg-white/10 transition-colors"
+              tooltip="Cerrar sesión"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Cerrar sesión</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
