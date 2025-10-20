@@ -136,11 +136,11 @@ export function AlliesView({ token }: AlliesViewProps) {
                     />
                   </TableHead>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>País</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>Dirección</TableHead>
                   <TableHead>Descripción</TableHead>
+                  <TableHead>Sucursales</TableHead>
                   <TableHead>Fundador</TableHead>
-                  <TableHead>Usuarios</TableHead>
+                  <TableHead>Redenciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -206,24 +206,18 @@ export function AlliesView({ token }: AlliesViewProps) {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {merchant.country}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {merchant.state}
+                        {merchant.state}, {merchant.country}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {merchant.description || "-"}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {merchant.founder ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
                         {merchant.merchantUsers?.length || 0}
                       </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {merchant.founder ? "Sí" : "No"}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">0</TableCell>
                     </TableRow>
                   ))
                 )}
