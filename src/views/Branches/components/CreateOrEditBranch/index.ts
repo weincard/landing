@@ -5,6 +5,7 @@ export { ImagesCard } from "./ImagesCard";
 export { OfferCard } from "./OfferCard";
 export { AvailabilityCard } from "./AvailabilityCard";
 export { CategoryCard } from "./CategoryCard";
+export { CategoryRadioGroup } from "./CategoryRadioGroup";
 export { AddressCard } from "./AddressCard";
 export { NotesCard } from "./NotesCard";
 export { ManagerCard } from "./ManagerCard";

@@ -1,14 +1,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
+import { CategoryRadioGroup } from "./CategoryRadioGroup";
 
 interface CategoryCardProps {
   categoryId: string;
@@ -31,25 +25,17 @@ export function CategoryCard({
         <h2 className="text-lg font-semibold">Categoría *</h2>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Select
-          value={categoryId}
-          onValueChange={onCategoryChange}
-          disabled={loadingCategories}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona una categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem
-                key={category.categoryId}
-                value={category.categoryId.toString()}
-              >
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {loadingCategories ? (
+          <div className="text-sm text-muted-foreground">
+            Cargando categorías...
+          </div>
+        ) : (
+          <CategoryRadioGroup
+            categoryId={categoryId}
+            categories={categories}
+            onCategoryChange={onCategoryChange}
+          />
+        )}
 
         <Button
           variant="outline"

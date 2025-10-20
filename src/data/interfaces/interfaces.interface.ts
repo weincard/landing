@@ -295,8 +295,6 @@ export interface IEspecie {
 }
 
 // Update the ICategoria interface
-
-// Update the ICategoria interface
 export interface ICategoria {
   categoryId: number;
   name: string;
@@ -310,16 +308,7 @@ export interface ICategoria {
     image?: string | null;
     slug?: string;
   } | null;
-  children?: ICategoria[]; // Subcategorías
-  depth?: number; // Profundidad en el árbol de categorías (opcional)
-
-  // Backward compatibility (deprecated, mantener por si acaso)
-  idCategoria?: number;
-  nombre?: string;
-  imagen?: string;
-  idCategoriaPadre?: number | null;
-  subcategorias?: ICategoria[];
-  productos?: any[];
+  children?: ICategoria[];
 }
 
 export interface IMarca {

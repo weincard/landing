@@ -43,6 +43,7 @@ export const createCategoryResponseAdapter = (
     image: response.image ?? null,
     slug: response.slug,
     parentCategory: response.parentCategory ?? null,
+    children: [],
   };
 };
 
