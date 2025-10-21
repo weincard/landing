@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,11 +11,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, X, Save } from "lucide-react";
+import { Loader2, X, Save, CalendarIcon } from "lucide-react";
 import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { ICoupon } from "@/data/interfaces/coupon.interface";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface CreateOrEditCouponProps {
   token: string;
@@ -46,10 +54,14 @@ export function CreateOrEditCoupon({
   // Form fields
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [planId, setPlanId] = useState<string>("");
   const [maxRedemptions, setMaxRedemptions] = useState<string>("30");
   const [renewalCount, setRenewalCount] = useState<string>("2");
+  const [renewalType, setRenewalType] = useState<string>("percentage");
   const [isActive, setIsActive] = useState(true);
+  const [couponImport, setCouponImport] = useState<string>("");
+  const [expirationDate, setExpirationDate] = useState<Date>();
 
   // Load coupon data if editing
   useEffect(() => {
@@ -162,12 +174,12 @@ export function CreateOrEditCoupon({
           <h2 className="text-lg font-semibold">Información del cupón</h2>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-4 gap-6">
             {/* Código */}
-            <div className="space-y-2">
-              <Label htmlFor="code">
+            <div className="space-y-2 col-span-2">
+              <label htmlFor="code" className="text-sm text-muted-foreground">
                 Código <span className="text-red-500">*</span>
-              </Label>
+              </label>
               <Input
                 id="code"
                 placeholder="Ej: 121KSA"
@@ -177,11 +189,29 @@ export function CreateOrEditCoupon({
               />
             </div>
 
+            <div className="space-y-2 col-span-2 row-span-2">
+              <label
+                htmlFor="description"
+                className="text-sm text-muted-foreground"
+              >
+                Descripción
+              </label>
+              <Textarea
+                id="description"
+                placeholder="Descripción del aliado"
+                rows={5}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={loading}
+                className="resize-none"
+              />
+            </div>
+
             {/* Nombre del cupón */}
-            <div className="space-y-2">
-              <Label htmlFor="name">
+            <div className="space-y-2 col-span-2">
+              <label htmlFor="name" className="text-sm text-muted-foreground">
                 Nombre del cupón <span className="text-red-500">*</span>
-              </Label>
+              </label>
               <Input
                 id="name"
                 placeholder="Ej: Premio weih"
@@ -191,11 +221,11 @@ export function CreateOrEditCoupon({
               />
             </div>
 
-            {/* Plan aplicado */}
-            <div className="space-y-2">
-              <Label htmlFor="plan">
-                Plan aplicado <span className="text-red-500">*</span>
-              </Label>
+            {/* Memebresía aplicada */}
+            <div className="space-y-2 col-span-2">
+              <label htmlFor="plan" className="text-sm text-muted-foreground">
+                Memebresía aplicada <span className="text-red-500">*</span>
+              </label>
               <Select
                 value={planId}
                 onValueChange={setPlanId}
@@ -219,9 +249,12 @@ export function CreateOrEditCoupon({
 
             {/* Máximo # redenciones */}
             <div className="space-y-2">
-              <Label htmlFor="maxRedemptions">
+              <label
+                htmlFor="maxRedemptions"
+                className="text-sm text-muted-foreground"
+              >
                 Máximo # redenciones <span className="text-red-500">*</span>
-              </Label>
+              </label>
               <Select
                 value={maxRedemptions}
                 onValueChange={setMaxRedemptions}
@@ -240,11 +273,60 @@ export function CreateOrEditCoupon({
               </Select>
             </div>
 
-            {/* Cantidad de renovaciones */}
+            <div />
+
+            <div className="space-y-2 col-span-2">
+              <label
+                htmlFor="renewalType"
+                className="text-sm text-muted-foreground"
+              >
+                Tipo de importe
+              </label>
+              <Select
+                value={renewalType}
+                onValueChange={setRenewalType}
+                disabled={loading}
+                defaultValue="percentage"
+              >
+                <SelectTrigger id="renewalType">
+                  <SelectValue placeholder="Selecciona cantidad" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem key="fixed" value="fixed">
+                    Monto fijo
+                  </SelectItem>
+                  <SelectItem key="percentage" value="percentage">
+                    Porcentaje
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="renewalCount">
+              <label
+                htmlFor="coupon_import"
+                className="text-sm text-muted-foreground"
+              >
+                Importe del cupón
+              </label>
+              <Input
+                id="coupon_import"
+                placeholder="Ej: 121KSA"
+                value={couponImport}
+                onChange={(e) => setCouponImport(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div />
+
+            {/* Cantidad de renovaciones */}
+            <div className="space-y-2 col-span-2">
+              <label
+                htmlFor="renewalCount"
+                className="text-sm text-muted-foreground"
+              >
                 Cantidad de renovaciones <span className="text-red-500">*</span>
-              </Label>
+              </label>
               <Select
                 value={renewalCount}
                 onValueChange={setRenewalCount}
@@ -261,6 +343,42 @@ export function CreateOrEditCoupon({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Fecha de expiración */}
+            <div className="space-y-2">
+              <label
+                htmlFor="expirationDate"
+                className="text-sm text-muted-foreground"
+              >
+                Fecha de expiración <span className="text-red-500">*</span>
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !expirationDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {expirationDate ? (
+                      format(expirationDate, "PPP")
+                    ) : (
+                      <span>Selecciona una fecha</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={expirationDate}
+                    onSelect={setExpirationDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardContent>
