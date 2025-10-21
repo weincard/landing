@@ -335,7 +335,7 @@ export function CreateOrEditCoupon({
                         <span className="font-medium">{plan.name}</span>
                         <span className="text-xs text-muted-foreground">
                           ${plan.price} -{" "}
-                          {plan.duration === "monthly"
+                          {plan.duration.toLocaleLowerCase() === "monthly"
                             ? "Mensual"
                             : plan.duration === "quarterly"
                             ? "Trimestral"

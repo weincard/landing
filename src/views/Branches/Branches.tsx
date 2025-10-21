@@ -79,7 +79,7 @@ export function BranchesView({ token }: BranchesViewProps) {
     const fetchMerchants = async () => {
       setLoadingMerchants(true);
       try {
-        // Cargar TODOS los aliados sin límite
+        // Cargar TODOS los sucursales sin límite
         const response = await getAllMerchants(token, { skip: 0, limit: 1000 });
         const merchantsList = response?.merchants || [];
         setMerchants(merchantsList);
@@ -205,7 +205,7 @@ export function BranchesView({ token }: BranchesViewProps) {
           <CardContent className="p-12">
             <div className="flex flex-col items-center justify-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Cargando aliados...</p>
+              <p className="text-muted-foreground">Cargando sucursales...</p>
             </div>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ export function BranchesView({ token }: BranchesViewProps) {
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">
-                  No hay aliados disponibles
+                  No hay sucursales disponibles
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
                   Para crear sucursales, primero debes crear al menos un aliado.
