@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,17 +20,7 @@ import {
 } from "@/components/ui/select";
 import type { IMerchant } from "@/data/interfaces/merchant.interface";
 import Image from "next/image";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Trash2,
-  Loader2,
-  Search,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -139,7 +128,7 @@ export function AlliesView({ token }: AlliesViewProps) {
                   <TableHead>Dirección</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead>Sucursales</TableHead>
-                  <TableHead>Fundador</TableHead>
+                  <TableHead>Activo</TableHead>
                   <TableHead>Redenciones</TableHead>
                 </TableRow>
               </TableHeader>

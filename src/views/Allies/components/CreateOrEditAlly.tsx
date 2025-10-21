@@ -323,7 +323,7 @@ export function CreateOrEditAlly({
                   htmlFor="owner"
                   className="text-sm text-muted-foreground"
                 >
-                  Owner
+                  Propietario
                 </label>
                 <Select
                   value={selectedUserId}
