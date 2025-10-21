@@ -135,7 +135,9 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
                 {user?.email || "correo@ejemplo.com"}
               </div>
             </div>
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
+              Perfil
+            </DropdownMenuItem>
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             {/* Mostrar notificaciones en el menú en móvil muy pequeño */}
             <div className="sm:hidden">

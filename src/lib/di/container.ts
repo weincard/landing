@@ -44,6 +44,7 @@ import { DeleteCouponUseCase } from "@/modules/coupons/domain/use-cases/delete-c
 import { MembershipPlansRepository } from "@/modules/membership-plans/data/repositories/membership-plans.repository";
 import { GetAllMembershipPlansUseCase } from "@/modules/membership-plans/domain/use-cases/get-all-membership-plans.use-case";
 import { GetOneMembershipPlanUseCase } from "@/modules/membership-plans/domain/use-cases/get-one-membership-plan.use-case";
+import { GetMeUseCase } from "@/modules/auth/domain/use-cases/get-me.use-case";
 import {
   LocalStorageProtocol,
   LocalStorageProtocolImpl,
@@ -96,6 +97,7 @@ container.bind(DeleteCouponUseCase).toSelf().inSingletonScope();
 container.bind(MembershipPlansRepository).toSelf().inSingletonScope();
 container.bind(GetAllMembershipPlansUseCase).toSelf().inSingletonScope();
 container.bind(GetOneMembershipPlanUseCase).toSelf().inSingletonScope();
+container.bind(GetMeUseCase).toSelf().inSingletonScope();
 container
   .bind(LocalStorageProtocol)
   .to(LocalStorageProtocolImpl)
