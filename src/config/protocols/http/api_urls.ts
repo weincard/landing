@@ -35,4 +35,11 @@ export const apiUrls = {
     getAll: "/memberships/plans/all",
     getOne: "/memberships/plans/one",
   },
+  coupons: {
+    create: "/coupons/create",
+    getAll: "/coupons/all",
+    getOne: "/coupons/one",
+    update: "/coupons/update",
+    delete: "/coupons/delete",
+  },
 };

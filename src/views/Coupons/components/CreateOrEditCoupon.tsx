@@ -86,9 +86,38 @@ export function CreateOrEditCoupon({
           const coupon = response.coupon;
           setCode(coupon.code || "");
           setName(coupon.name || "");
-          setPlanId(coupon.planId?.toString() || "");
+          setDescription(coupon.description || "");
+          setPlanId(
+            (coupon.membershipPlanId || coupon.planId)?.toString() || ""
+          );
           setMaxRedemptions(coupon.maxRedemptions?.toString() || "30");
           setRenewalCount(coupon.renewalCount?.toString() || "2");
+
+          // Determinar el tipo de descuento basado en qué campo tiene valor
+          if (
+            coupon.discountPercentage !== undefined &&
+            coupon.discountPercentage !== null
+          ) {
+            setRenewalType("percentage");
+            setCouponImport(coupon.discountPercentage.toString());
+          } else if (
+            coupon.discountAmount !== undefined &&
+            coupon.discountAmount !== null
+          ) {
+            setRenewalType("fixed");
+            setCouponImport(coupon.discountAmount.toString());
+          } else if (
+            coupon.discountValue !== undefined &&
+            coupon.discountValue !== null
+          ) {
+            // Fallback para compatibilidad
+            setRenewalType(coupon.discountType || "percentage");
+            setCouponImport(coupon.discountValue.toString());
+          }
+
+          if (coupon.expirationDate) {
+            setExpirationDate(new Date(coupon.expirationDate));
+          }
           setIsActive(coupon.isActive ?? true);
         }
       };
@@ -107,6 +136,10 @@ export function CreateOrEditCoupon({
       toast.error("El nombre del cupón es requerido");
       return;
     }
+    if (!description.trim()) {
+      toast.error("La descripción es requerida");
+      return;
+    }
     if (!planId) {
       toast.error("Debe seleccionar un plan");
       return;
@@ -119,15 +152,53 @@ export function CreateOrEditCoupon({
       toast.error("Debe seleccionar la cantidad de renovaciones");
       return;
     }
+    if (!couponImport.trim()) {
+      toast.error("El importe del cupón es requerido");
+      return;
+    }
 
-    const couponData: Partial<ICoupon> = {
+    const discountValueNumber = Number(couponImport);
+
+    // Validar porcentaje si es tipo percentage
+    if (renewalType === "percentage") {
+      if (
+        isNaN(discountValueNumber) ||
+        discountValueNumber < 1 ||
+        discountValueNumber > 100
+      ) {
+        toast.error("El porcentaje debe ser un número entre 1 y 100");
+        return;
+      }
+    } else {
+      // Validar que sea un número positivo para monto fijo
+      if (isNaN(discountValueNumber) || discountValueNumber <= 0) {
+        toast.error("El monto debe ser un número positivo");
+        return;
+      }
+    }
+
+    if (!expirationDate) {
+      toast.error("La fecha de expiración es requerida");
+      return;
+    }
+
+    const couponData: any = {
       code: code.trim(),
       name: name.trim(),
-      planId: Number(planId),
+      description: description.trim(),
+      membershipPlanId: Number(planId),
       maxRedemptions: Number(maxRedemptions),
       renewalCount: Number(renewalCount),
+      expirationDate: expirationDate.toISOString(),
       isActive,
     };
+
+    // Agregar el campo correcto según el tipo de descuento
+    if (renewalType === "percentage") {
+      couponData.discountPercentage = discountValueNumber;
+    } else {
+      couponData.discountAmount = discountValueNumber;
+    }
 
     try {
       let response;
@@ -340,11 +411,22 @@ export function CreateOrEditCoupon({
               </label>
               <Input
                 id="coupon_import"
-                placeholder="Ej: 121KSA"
+                placeholder={
+                  renewalType === "percentage" ? "Ej: 15 (%)" : "Ej: 100 ($)"
+                }
                 value={couponImport}
                 onChange={(e) => setCouponImport(e.target.value)}
                 disabled={loading}
+                type="number"
+                min={renewalType === "percentage" ? "1" : "0"}
+                max={renewalType === "percentage" ? "100" : undefined}
+                step={renewalType === "percentage" ? "1" : "0.01"}
               />
+              {renewalType === "percentage" && (
+                <p className="text-xs text-muted-foreground">
+                  El porcentaje debe estar entre 1 y 100
+                </p>
+              )}
             </div>
 
             <div />
