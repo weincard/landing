@@ -30,4 +30,9 @@ export const apiUrls = {
     delete: "/users/delete",
     getByRole: "/users/by-role",
   },
+  membershipPlans: {
+    create: "/memberships/plans/create",
+    getAll: "/memberships/plans/all",
+    getOne: "/memberships/plans/one",
+  },
 };

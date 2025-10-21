@@ -41,6 +41,9 @@ import { GetOneCouponUseCase } from "@/modules/coupons/domain/use-cases/get-one-
 import { CreateCouponUseCase } from "@/modules/coupons/domain/use-cases/create-coupon.use-case";
 import { UpdateCouponUseCase } from "@/modules/coupons/domain/use-cases/update-coupon.use-case";
 import { DeleteCouponUseCase } from "@/modules/coupons/domain/use-cases/delete-coupon.use-case";
+import { MembershipPlansRepository } from "@/modules/membership-plans/data/repositories/membership-plans.repository";
+import { GetAllMembershipPlansUseCase } from "@/modules/membership-plans/domain/use-cases/get-all-membership-plans.use-case";
+import { GetOneMembershipPlanUseCase } from "@/modules/membership-plans/domain/use-cases/get-one-membership-plan.use-case";
 import {
   LocalStorageProtocol,
   LocalStorageProtocolImpl,
@@ -90,6 +93,9 @@ container.bind(GetOneCouponUseCase).toSelf().inSingletonScope();
 container.bind(CreateCouponUseCase).toSelf().inSingletonScope();
 container.bind(UpdateCouponUseCase).toSelf().inSingletonScope();
 container.bind(DeleteCouponUseCase).toSelf().inSingletonScope();
+container.bind(MembershipPlansRepository).toSelf().inSingletonScope();
+container.bind(GetAllMembershipPlansUseCase).toSelf().inSingletonScope();
+container.bind(GetOneMembershipPlanUseCase).toSelf().inSingletonScope();
 container
   .bind(LocalStorageProtocol)
   .to(LocalStorageProtocolImpl)

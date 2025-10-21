@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/select";
 import { Loader2, X, Save, CalendarIcon } from "lucide-react";
 import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
+import { useMembershipPlans } from "@/modules/membership-plans/domain/hooks/use-membership-plans";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { ICoupon } from "@/data/interfaces/coupon.interface";
+import type { IMembershipPlan } from "@/data/interfaces/membership-plan.interface";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
@@ -31,13 +33,6 @@ interface CreateOrEditCouponProps {
   couponId?: string;
 }
 
-// Mock plans data
-const mockPlans = [
-  { planId: 1, name: "Wein card mensual", price: 29.99 },
-  { planId: 2, name: "Wein card anual", price: 299.99 },
-  { planId: 3, name: "Wein card premium", price: 49.99 },
-];
-
 // Mock redemption limits
 const redemptionLimits = [10, 20, 30, 40, 50, 100];
 
@@ -50,6 +45,8 @@ export function CreateOrEditCoupon({
 }: CreateOrEditCouponProps) {
   const router = useRouter();
   const { createCoupon, getOneCoupon, updateCoupon, loading } = useCoupons();
+  const { getAllMembershipPlans, loading: loadingMembershipPlans } =
+    useMembershipPlans();
 
   // Form fields
   const [code, setCode] = useState("");
@@ -62,6 +59,23 @@ export function CreateOrEditCoupon({
   const [isActive, setIsActive] = useState(true);
   const [couponImport, setCouponImport] = useState<string>("");
   const [expirationDate, setExpirationDate] = useState<Date>();
+
+  // Membership plans
+  const [membershipPlans, setMembershipPlans] = useState<IMembershipPlan[]>([]);
+
+  // Load membership plans
+  useEffect(() => {
+    const fetchMembershipPlans = async () => {
+      try {
+        const plans = await getAllMembershipPlans(token);
+        setMembershipPlans(plans);
+      } catch (error) {
+        console.error("Error fetching membership plans:", error);
+      }
+    };
+    fetchMembershipPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // Load coupon data if editing
   useEffect(() => {
@@ -229,18 +243,34 @@ export function CreateOrEditCoupon({
               <Select
                 value={planId}
                 onValueChange={setPlanId}
-                disabled={loading}
+                disabled={loading || loadingMembershipPlans}
               >
                 <SelectTrigger id="plan">
-                  <SelectValue placeholder="Selecciona un plan" />
+                  <SelectValue
+                    placeholder={
+                      loadingMembershipPlans
+                        ? "Cargando planes..."
+                        : "Selecciona un plan"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockPlans.map((plan) => (
+                  {membershipPlans.map((plan) => (
                     <SelectItem
-                      key={plan.planId}
-                      value={plan.planId.toString()}
+                      key={plan.membershipPlanId}
+                      value={plan.membershipPlanId.toString()}
                     >
-                      {plan.name}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{plan.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ${plan.price} -{" "}
+                          {plan.duration === "monthly"
+                            ? "Mensual"
+                            : plan.duration === "quarterly"
+                            ? "Trimestral"
+                            : "Anual"}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
