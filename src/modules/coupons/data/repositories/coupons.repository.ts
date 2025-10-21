@@ -59,7 +59,7 @@ export class CouponsRepositoryImpl implements CouponsRepository {
 
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.coupons.getAll}?limit=${limit}&skip=${skip}`,
-      method: "post",
+      method: "get",
       body: filters || {},
       isAuth: true,
       token,
