@@ -192,7 +192,7 @@ export function CreateOrEditCoupon({
             {/* Código */}
             <div className="space-y-2 col-span-2">
               <label htmlFor="code" className="text-sm text-muted-foreground">
-                Código <span className="text-red-500">*</span>
+                Código
               </label>
               <Input
                 id="code"
@@ -224,7 +224,7 @@ export function CreateOrEditCoupon({
             {/* Nombre del cupón */}
             <div className="space-y-2 col-span-2">
               <label htmlFor="name" className="text-sm text-muted-foreground">
-                Nombre del cupón <span className="text-red-500">*</span>
+                Nombre del cupón
               </label>
               <Input
                 id="name"
@@ -238,7 +238,7 @@ export function CreateOrEditCoupon({
             {/* Memebresía aplicada */}
             <div className="space-y-2 col-span-2">
               <label htmlFor="plan" className="text-sm text-muted-foreground">
-                Memebresía aplicada <span className="text-red-500">*</span>
+                Memebresía aplicada
               </label>
               <Select
                 value={planId}
@@ -283,7 +283,7 @@ export function CreateOrEditCoupon({
                 htmlFor="maxRedemptions"
                 className="text-sm text-muted-foreground"
               >
-                Máximo # redenciones <span className="text-red-500">*</span>
+                Máximo # redenciones
               </label>
               <Select
                 value={maxRedemptions}
@@ -355,7 +355,7 @@ export function CreateOrEditCoupon({
                 htmlFor="renewalCount"
                 className="text-sm text-muted-foreground"
               >
-                Cantidad de renovaciones <span className="text-red-500">*</span>
+                Cantidad de renovaciones
               </label>
               <Select
                 value={renewalCount}
@@ -381,7 +381,7 @@ export function CreateOrEditCoupon({
                 htmlFor="expirationDate"
                 className="text-sm text-muted-foreground"
               >
-                Fecha de expiración <span className="text-red-500">*</span>
+                Fecha de expiración
               </label>
               <Popover>
                 <PopoverTrigger asChild>
