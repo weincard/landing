@@ -11,7 +11,7 @@ export class GetAllBranchesUseCase {
   ) {}
 
   async execute(
-    merchantId: number,
+    merchantId?: number,
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { name?: string }

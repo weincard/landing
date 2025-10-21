@@ -18,7 +18,7 @@ export const useBranches = () => {
 
   const getAllBranches = useCallback(
     async (
-      merchantId: number,
+      merchantId?: number,
       token?: string,
       paginationParams?: IPaginationParams,
       filters?: { name?: string }

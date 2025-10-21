@@ -27,7 +27,7 @@ export abstract class BranchesRepository {
     token?: string
   ): Promise<BranchResponse>;
   abstract getAll(
-    merchantId: number,
+    merchantId?: number,
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { name?: string }
@@ -54,25 +54,38 @@ export class BranchesRepositoryImpl implements BranchesRepository {
   }
 
   async getAll(
-    merchantId: number,
+    merchantId?: number,
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { name?: string }
   ): Promise<AllBranchesResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
-    // If merchantId is provided, use the by-merchant endpoint
-    const url = `${apiUrls.branches.getByMerchant}/${merchantId}?limit=${limit}&skip=${skip}`;
+    // Use the new search endpoint with POST method
+    const requestBody: {
+      merchantId?: number;
+      search?: string;
+    } = {};
+
+    // Only add merchantId if it's defined (not undefined)
+    if (merchantId !== undefined) {
+      requestBody.merchantId = merchantId;
+    }
+
+    // Add search term if provided
+    if (filters?.name) {
+      requestBody.search = filters.name;
+    }
 
     const axiosRequest = await this.httpClient.request({
-      url,
-      method: "get",
-      body: filters || {},
+      url: apiUrls.branches.search,
+      method: "post",
+      body: requestBody,
       isAuth: true,
       token,
     });
 
-    console.log("Get All Branches Response:", axiosRequest.body);
+    console.log("Search Branches Response:", axiosRequest.body);
 
     if (
       axiosRequest.statusCode === HttpStatusCode.ok ||

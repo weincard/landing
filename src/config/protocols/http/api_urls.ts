@@ -9,6 +9,7 @@ export const apiUrls = {
     create: "/branches/create",
     update: "/branches/update",
     getByMerchant: "/branches/by-merchant",
+    search: "/branches/search",
     getOne: "/branches/one",
     delete: "/branches/delete",
   },

@@ -39,7 +39,7 @@ interface UsersViewProps {
 export default function UsersView({ token }: UsersViewProps) {
   const { getAllUsers, loading, error } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState<UserRole>("client");
+  const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -52,7 +52,11 @@ export default function UsersView({ token }: UsersViewProps) {
     const skip = (currentPage - 1) * pageSize;
     const paginationParams = { limit: pageSize, skip };
 
-    const response = await getAllUsers(token, paginationParams, selectedRole);
+    const response = await getAllUsers(
+      token,
+      paginationParams,
+      selectedRole === "all" ? undefined : selectedRole
+    );
     if (response) {
       setUsers(response.users || []);
       setTotalCount(response.count || 0);

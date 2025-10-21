@@ -60,9 +60,7 @@ export function BranchesView({ token }: BranchesViewProps) {
   const [loadingMerchants, setLoadingMerchants] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMerchantId, setSelectedMerchantId] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string>("all");
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -83,11 +81,6 @@ export function BranchesView({ token }: BranchesViewProps) {
         const response = await getAllMerchants(token, { skip: 0, limit: 1000 });
         const merchantsList = response?.merchants || [];
         setMerchants(merchantsList);
-
-        // Seleccionar el primer aliado por defecto si existe
-        if (merchantsList.length > 0) {
-          setSelectedMerchantId(merchantsList[0].merchantId?.toString());
-        }
       } catch (error) {
         console.error("Error fetching merchants:", error);
       } finally {
@@ -102,17 +95,16 @@ export function BranchesView({ token }: BranchesViewProps) {
   const fetchBranches = useCallback(async () => {
     setLoading(true);
 
-    if (!selectedMerchantId) {
-      setBranches([]);
-      setTotalItems(0);
-      setLoading(false);
-      return;
-    }
-
     try {
       const skip = (currentPage - 1) * pageSize;
+
+      // If "all" is selected, pass undefined for merchantId to get all branches
+      // Otherwise, pass the specific merchantId
+      const merchantIdFilter =
+        selectedMerchantId === "all" ? undefined : Number(selectedMerchantId);
+
       const response = await getAllBranches(
-        Number(selectedMerchantId),
+        merchantIdFilter,
         token,
         {
           skip,
@@ -127,6 +119,8 @@ export function BranchesView({ token }: BranchesViewProps) {
       }
     } catch (error) {
       console.error("Error fetching branches:", error);
+      setBranches([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -253,6 +247,7 @@ export function BranchesView({ token }: BranchesViewProps) {
                     <SelectValue placeholder="Selecciona un aliado" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">Todos los Aliados</SelectItem>
                     {merchants.map((merchant) => (
                       <SelectItem
                         key={merchant.merchantId}
