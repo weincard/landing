@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -33,11 +33,143 @@ interface CreateOrEditCouponProps {
   couponId?: string;
 }
 
-// Mock redemption limits
-const redemptionLimits = [10, 20, 30, 40, 50, 100];
+// Constants
+const REDEMPTION_LIMITS = [10, 20, 30, 40, 50, 100];
+const RENEWAL_COUNTS = Array.from({ length: 12 }, (_, i) => i + 1);
+const DISCOUNT_TYPES = [
+  { value: "fixed", label: "Monto fijo" },
+  { value: "percentage", label: "Porcentaje" },
+] as const;
 
-// Mock renewal counts
-const renewalCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// Helper functions
+const validateForm = (data: {
+  code: string;
+  name: string;
+  description: string;
+  planId: string;
+  maxRedemptions: string;
+  renewalCount: string;
+  couponImport: string;
+  expirationDate?: Date;
+  renewalType: string;
+}) => {
+  const {
+    code,
+    name,
+    description,
+    planId,
+    maxRedemptions,
+    renewalCount,
+    couponImport,
+    expirationDate,
+    renewalType,
+  } = data;
+
+  if (!code.trim()) return "El código es requerido";
+  if (!name.trim()) return "El nombre del cupón es requerido";
+  if (!description.trim()) return "La descripción es requerida";
+  if (!planId) return "Debe seleccionar un plan";
+  if (!maxRedemptions) return "Debe seleccionar el máximo de redenciones";
+  if (!renewalCount) return "Debe seleccionar la cantidad de renovaciones";
+  if (!couponImport.trim()) return "El importe del cupón es requerido";
+
+  const discountValue = Number(couponImport);
+  if (renewalType === "percentage") {
+    if (isNaN(discountValue) || discountValue < 1 || discountValue > 100) {
+      return "El porcentaje debe ser un número entre 1 y 100";
+    }
+  } else {
+    if (isNaN(discountValue) || discountValue <= 0) {
+      return "El monto debe ser un número positivo";
+    }
+  }
+
+  if (!expirationDate) return "La fecha de expiración es requerida";
+
+  return null;
+};
+
+const buildCouponData = (formData: {
+  code: string;
+  name: string;
+  description: string;
+  planId: string;
+  maxRedemptions: string;
+  renewalCount: string;
+  couponImport: string;
+  expirationDate: Date;
+  isActive: boolean;
+  renewalType: string;
+}) => {
+  const {
+    code,
+    name,
+    description,
+    planId,
+    maxRedemptions,
+    renewalCount,
+    couponImport,
+    expirationDate,
+    isActive,
+    renewalType,
+  } = formData;
+
+  const discountValue = Number(couponImport);
+  const baseCouponData = {
+    code: code.trim(),
+    name: name.trim(),
+    description: description.trim(),
+    membershipPlanId: Number(planId),
+    maxRedemptions: Number(maxRedemptions),
+    renewalCount: Number(renewalCount),
+    expirationDate: expirationDate.toISOString(),
+    isActive,
+  };
+
+  // Siempre enviamos discountPercentage
+  // Si es monto fijo, enviamos 100% y agregamos discountAmount
+  if (renewalType === "percentage") {
+    return {
+      ...baseCouponData,
+      discountPercentage: discountValue,
+    };
+  }
+
+  return {
+    ...baseCouponData,
+    discountPercentage: 100,
+    discountAmount: discountValue,
+  };
+};
+
+const getDurationLabel = (duration: string) => {
+  const durationMap: Record<string, string> = {
+    monthly: "Mensual",
+    quarterly: "Trimestral",
+    yearly: "Anual",
+  };
+  return durationMap[duration.toLowerCase()] || duration;
+};
+
+// Form field component
+const FormField = ({
+  label,
+  htmlFor,
+  children,
+  className = "",
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={cn("space-y-2", className)}>
+    <label htmlFor={htmlFor} className="text-sm text-muted-foreground">
+      {label}
+    </label>
+    {children}
+  </div>
+);
 
 export function CreateOrEditCoupon({
   token,
@@ -48,20 +180,25 @@ export function CreateOrEditCoupon({
   const { getAllMembershipPlans, loading: loadingMembershipPlans } =
     useMembershipPlans();
 
-  // Form fields
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [planId, setPlanId] = useState<string>("");
-  const [maxRedemptions, setMaxRedemptions] = useState<string>("30");
-  const [renewalCount, setRenewalCount] = useState<string>("2");
-  const [renewalType, setRenewalType] = useState<string>("percentage");
-  const [isActive, setIsActive] = useState(true);
-  const [couponImport, setCouponImport] = useState<string>("");
+  // Form state
+  const [formData, setFormData] = useState({
+    code: "",
+    name: "",
+    description: "",
+    planId: "",
+    maxRedemptions: "30",
+    renewalCount: "2",
+    renewalType: "percentage",
+    couponImport: "",
+    isActive: true,
+  });
   const [expirationDate, setExpirationDate] = useState<Date>();
-
-  // Membership plans
   const [membershipPlans, setMembershipPlans] = useState<IMembershipPlan[]>([]);
+
+  // Generic handler for form fields
+  const updateFormField = useCallback((field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
   // Load membership plans
   useEffect(() => {
@@ -74,157 +211,81 @@ export function CreateOrEditCoupon({
       }
     };
     fetchMembershipPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, getAllMembershipPlans]);
 
   // Load coupon data if editing
   useEffect(() => {
-    if (couponId) {
-      const loadCoupon = async () => {
-        const response = await getOneCoupon(Number(couponId), token);
-        if (response && response.coupon) {
-          const coupon = response.coupon;
-          setCode(coupon.code || "");
-          setName(coupon.name || "");
-          setDescription(coupon.description || "");
-          setPlanId(
-            (coupon.membershipPlanId || coupon.planId)?.toString() || ""
-          );
-          setMaxRedemptions(coupon.maxRedemptions?.toString() || "30");
-          setRenewalCount(coupon.renewalCount?.toString() || "2");
+    if (!couponId) return;
 
-          // Determinar el tipo de descuento basado en qué campo tiene valor
-          if (
-            coupon.discountPercentage !== undefined &&
-            coupon.discountPercentage !== null
-          ) {
-            setRenewalType("percentage");
-            setCouponImport(coupon.discountPercentage.toString());
-          } else if (
-            coupon.discountAmount !== undefined &&
-            coupon.discountAmount !== null
-          ) {
-            setRenewalType("fixed");
-            setCouponImport(coupon.discountAmount.toString());
-          } else if (
-            coupon.discountValue !== undefined &&
-            coupon.discountValue !== null
-          ) {
-            // Fallback para compatibilidad
-            setRenewalType(coupon.discountType || "percentage");
-            setCouponImport(coupon.discountValue.toString());
-          }
+    const loadCoupon = async () => {
+      const response = await getOneCoupon(Number(couponId), token);
+      if (!response?.coupon) return;
 
-          if (coupon.expirationDate) {
-            setExpirationDate(new Date(coupon.expirationDate));
-          }
-          setIsActive(coupon.isActive ?? true);
-        }
-      };
+      const coupon = response.coupon;
 
-      loadCoupon();
-    }
+      // Determinar el tipo de descuento y su valor
+      let renewalType = "percentage";
+      let couponImport = "";
+
+      if (coupon.discountAmount) {
+        renewalType = "fixed";
+        couponImport = coupon.discountAmount.toString();
+      } else if (coupon.discountPercentage) {
+        renewalType = "percentage";
+        couponImport = coupon.discountPercentage.toString();
+      } else if (coupon.discountValue) {
+        // Fallback para compatibilidad
+        renewalType = coupon.discountType || "percentage";
+        couponImport = coupon.discountValue.toString();
+      }
+
+      setFormData({
+        code: coupon.code || "",
+        name: coupon.name || "",
+        description: coupon.description || "",
+        planId: (coupon.membershipPlanId || coupon.planId)?.toString() || "",
+        maxRedemptions: coupon.maxRedemptions?.toString() || "30",
+        renewalCount: coupon.renewalCount?.toString() || "2",
+        renewalType,
+        couponImport,
+        isActive: coupon.isActive ?? true,
+      });
+
+      if (coupon.expirationDate) {
+        setExpirationDate(new Date(coupon.expirationDate));
+      }
+    };
+
+    loadCoupon();
   }, [couponId, token, getOneCoupon]);
 
   const handleSave = async () => {
-    // Validation
-    if (!code.trim()) {
-      toast.error("El código es requerido");
-      return;
-    }
-    if (!name.trim()) {
-      toast.error("El nombre del cupón es requerido");
-      return;
-    }
-    if (!description.trim()) {
-      toast.error("La descripción es requerida");
-      return;
-    }
-    if (!planId) {
-      toast.error("Debe seleccionar un plan");
-      return;
-    }
-    if (!maxRedemptions) {
-      toast.error("Debe seleccionar el máximo de redenciones");
-      return;
-    }
-    if (!renewalCount) {
-      toast.error("Debe seleccionar la cantidad de renovaciones");
-      return;
-    }
-    if (!couponImport.trim()) {
-      toast.error("El importe del cupón es requerido");
+    const validationError = validateForm({
+      ...formData,
+      expirationDate,
+    });
+
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
-    const discountValueNumber = Number(couponImport);
-
-    // Validar porcentaje si es tipo percentage
-    if (renewalType === "percentage") {
-      if (
-        isNaN(discountValueNumber) ||
-        discountValueNumber < 1 ||
-        discountValueNumber > 100
-      ) {
-        toast.error("El porcentaje debe ser un número entre 1 y 100");
-        return;
-      }
-    } else {
-      // Validar que sea un número positivo para monto fijo
-      if (isNaN(discountValueNumber) || discountValueNumber <= 0) {
-        toast.error("El monto debe ser un número positivo");
-        return;
-      }
-    }
-
-    if (!expirationDate) {
-      toast.error("La fecha de expiración es requerida");
-      return;
-    }
-
-    // Construir objeto base sin campos de descuento
-    const baseCouponData = {
-      code: code.trim(),
-      name: name.trim(),
-      description: description.trim(),
-      membershipPlanId: Number(planId),
-      maxRedemptions: Number(maxRedemptions),
-      renewalCount: Number(renewalCount),
-      expirationDate: expirationDate.toISOString(),
-      isActive,
-    };
-
-    // Crear el objeto final
-    // Siempre enviamos discountPercentage
-    // Si es monto fijo, enviamos 100% y agregamos discountAmount
-    let couponData: any;
-    if (renewalType === "percentage") {
-      couponData = {
-        ...baseCouponData,
-        discountPercentage: discountValueNumber,
-      };
-    } else {
-      // Monto fijo: 100% de descuento con monto específico
-      couponData = {
-        ...baseCouponData,
-        discountPercentage: 100,
-        discountAmount: discountValueNumber,
-      };
-    }
+    const couponData = buildCouponData({
+      ...formData,
+      expirationDate: expirationDate!,
+    });
 
     try {
-      let response;
-      if (couponId) {
-        response = await updateCoupon(Number(couponId), couponData, token);
-      } else {
-        response = await createCoupon(couponData, token);
-      }
+      const response = couponId
+        ? await updateCoupon(Number(couponId), couponData, token)
+        : await createCoupon(couponData, token);
 
       if (response) {
         toast.success(
-          response.message || couponId
-            ? "Cupón actualizado exitosamente"
-            : "Cupón creado exitosamente"
+          response.message ||
+            (couponId
+              ? "Cupón actualizado exitosamente"
+              : "Cupón creado exitosamente")
         );
         router.push("/dashboard/coupons");
       }
@@ -273,59 +334,57 @@ export function CreateOrEditCoupon({
         <CardContent className="space-y-6">
           <div className="grid grid-cols-4 gap-6">
             {/* Código */}
-            <div className="space-y-2 col-span-2">
-              <label htmlFor="code" className="text-sm text-muted-foreground">
-                Código
-              </label>
+            <FormField label="Código" htmlFor="code" className="col-span-2">
               <Input
                 id="code"
                 placeholder="Ej: 121KSA"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                onChange={(e) => updateFormField("code", e.target.value)}
                 disabled={loading}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2 col-span-2 row-span-2">
-              <label
-                htmlFor="description"
-                className="text-sm text-muted-foreground"
-              >
-                Descripción
-              </label>
+            {/* Descripción */}
+            <FormField
+              label="Descripción"
+              htmlFor="description"
+              className="col-span-2 row-span-2"
+            >
               <Textarea
                 id="description"
-                placeholder="Descripción del aliado"
+                placeholder="Descripción del cupón"
                 rows={5}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                onChange={(e) => updateFormField("description", e.target.value)}
                 disabled={loading}
                 className="resize-none"
               />
-            </div>
+            </FormField>
 
             {/* Nombre del cupón */}
-            <div className="space-y-2 col-span-2">
-              <label htmlFor="name" className="text-sm text-muted-foreground">
-                Nombre del cupón
-              </label>
+            <FormField
+              label="Nombre del cupón"
+              htmlFor="name"
+              className="col-span-2"
+            >
               <Input
                 id="name"
                 placeholder="Ej: Premio weih"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                onChange={(e) => updateFormField("name", e.target.value)}
                 disabled={loading}
               />
-            </div>
+            </FormField>
 
-            {/* Memebresía aplicada */}
-            <div className="space-y-2 col-span-2">
-              <label htmlFor="plan" className="text-sm text-muted-foreground">
-                Memebresía aplicada
-              </label>
+            {/* Membresía aplicada */}
+            <FormField
+              label="Membresía aplicada"
+              htmlFor="plan"
+              className="col-span-2"
+            >
               <Select
-                value={planId}
-                onValueChange={setPlanId}
+                value={formData.planId}
+                onValueChange={(value) => updateFormField("planId", value)}
                 disabled={loading || loadingMembershipPlans}
               >
                 <SelectTrigger id="plan">
@@ -346,137 +405,119 @@ export function CreateOrEditCoupon({
                       <div className="flex flex-col">
                         <span className="font-medium">{plan.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          ${plan.price} -{" "}
-                          {plan.duration.toLocaleLowerCase() === "monthly"
-                            ? "Mensual"
-                            : plan.duration === "quarterly"
-                            ? "Trimestral"
-                            : "Anual"}
+                          ${plan.price} - {getDurationLabel(plan.duration)}
                         </span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
 
             {/* Máximo # redenciones */}
-            <div className="space-y-2">
-              <label
-                htmlFor="maxRedemptions"
-                className="text-sm text-muted-foreground"
-              >
-                Máximo # redenciones
-              </label>
+            <FormField label="Máximo # redenciones" htmlFor="maxRedemptions">
               <Select
-                value={maxRedemptions}
-                onValueChange={setMaxRedemptions}
+                value={formData.maxRedemptions}
+                onValueChange={(value) =>
+                  updateFormField("maxRedemptions", value)
+                }
                 disabled={loading}
               >
                 <SelectTrigger id="maxRedemptions">
                   <SelectValue placeholder="Selecciona el límite" />
                 </SelectTrigger>
                 <SelectContent>
-                  {redemptionLimits.map((limit) => (
+                  {REDEMPTION_LIMITS.map((limit) => (
                     <SelectItem key={limit} value={limit.toString()}>
                       {limit}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
 
             <div />
 
-            <div className="space-y-2 col-span-2">
-              <label
-                htmlFor="renewalType"
-                className="text-sm text-muted-foreground"
-              >
-                Tipo de importe
-              </label>
+            {/* Tipo de importe */}
+            <FormField
+              label="Tipo de importe"
+              htmlFor="renewalType"
+              className="col-span-2"
+            >
               <Select
-                value={renewalType}
-                onValueChange={setRenewalType}
+                value={formData.renewalType}
+                onValueChange={(value) => updateFormField("renewalType", value)}
                 disabled={loading}
-                defaultValue="percentage"
               >
                 <SelectTrigger id="renewalType">
-                  <SelectValue placeholder="Selecciona cantidad" />
+                  <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key="fixed" value="fixed">
-                    Monto fijo
-                  </SelectItem>
-                  <SelectItem key="percentage" value="percentage">
-                    Porcentaje
-                  </SelectItem>
+                  {DISCOUNT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="coupon_import"
-                className="text-sm text-muted-foreground"
-              >
-                Importe del cupón
-              </label>
+            </FormField>
+
+            {/* Importe del cupón */}
+            <FormField label="Importe del cupón" htmlFor="coupon_import">
               <Input
                 id="coupon_import"
                 placeholder={
-                  renewalType === "percentage" ? "Ej: 15 (%)" : "Ej: 100 ($)"
+                  formData.renewalType === "percentage"
+                    ? "Ej: 15 (%)"
+                    : "Ej: 100 ($)"
                 }
-                value={couponImport}
-                onChange={(e) => setCouponImport(e.target.value)}
+                value={formData.couponImport}
+                onChange={(e) =>
+                  updateFormField("couponImport", e.target.value)
+                }
                 disabled={loading}
                 type="number"
-                min={renewalType === "percentage" ? "1" : "0"}
-                max={renewalType === "percentage" ? "100" : undefined}
-                step={renewalType === "percentage" ? "1" : "0.01"}
+                min={formData.renewalType === "percentage" ? "1" : "0"}
+                max={formData.renewalType === "percentage" ? "100" : undefined}
+                step={formData.renewalType === "percentage" ? "1" : "0.01"}
               />
-              {renewalType === "percentage" && (
+              {formData.renewalType === "percentage" && (
                 <p className="text-xs text-muted-foreground">
                   El porcentaje debe estar entre 1 y 100
                 </p>
               )}
-            </div>
+            </FormField>
 
             <div />
 
             {/* Cantidad de renovaciones */}
-            <div className="space-y-2 col-span-2">
-              <label
-                htmlFor="renewalCount"
-                className="text-sm text-muted-foreground"
-              >
-                Cantidad de renovaciones
-              </label>
+            <FormField
+              label="Cantidad de renovaciones"
+              htmlFor="renewalCount"
+              className="col-span-2"
+            >
               <Select
-                value={renewalCount}
-                onValueChange={setRenewalCount}
+                value={formData.renewalCount}
+                onValueChange={(value) =>
+                  updateFormField("renewalCount", value)
+                }
                 disabled={loading}
               >
                 <SelectTrigger id="renewalCount">
                   <SelectValue placeholder="Selecciona cantidad" />
                 </SelectTrigger>
                 <SelectContent>
-                  {renewalCounts.map((count) => (
+                  {RENEWAL_COUNTS.map((count) => (
                     <SelectItem key={count} value={count.toString()}>
                       {count}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
 
             {/* Fecha de expiración */}
-            <div className="space-y-2">
-              <label
-                htmlFor="expirationDate"
-                className="text-sm text-muted-foreground"
-              >
-                Fecha de expiración
-              </label>
+            <FormField label="Fecha de expiración" htmlFor="expirationDate">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -503,7 +544,7 @@ export function CreateOrEditCoupon({
                   />
                 </PopoverContent>
               </Popover>
-            </div>
+            </FormField>
           </div>
         </CardContent>
       </Card>
