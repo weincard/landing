@@ -182,7 +182,8 @@ export function CreateOrEditCoupon({
       return;
     }
 
-    const couponData: any = {
+    // Construir objeto base sin campos de descuento
+    const baseCouponData = {
       code: code.trim(),
       name: name.trim(),
       description: description.trim(),
@@ -193,11 +194,22 @@ export function CreateOrEditCoupon({
       isActive,
     };
 
-    // Agregar el campo correcto según el tipo de descuento
+    // Crear el objeto final
+    // Siempre enviamos discountPercentage
+    // Si es monto fijo, enviamos 100% y agregamos discountAmount
+    let couponData: any;
     if (renewalType === "percentage") {
-      couponData.discountPercentage = discountValueNumber;
+      couponData = {
+        ...baseCouponData,
+        discountPercentage: discountValueNumber,
+      };
     } else {
-      couponData.discountAmount = discountValueNumber;
+      // Monto fijo: 100% de descuento con monto específico
+      couponData = {
+        ...baseCouponData,
+        discountPercentage: 100,
+        discountAmount: discountValueNumber,
+      };
     }
 
     try {

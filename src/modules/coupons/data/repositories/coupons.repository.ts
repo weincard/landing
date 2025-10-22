@@ -106,6 +106,9 @@ export class CouponsRepositoryImpl implements CouponsRepository {
     couponData: Partial<ICoupon>,
     token?: string
   ): Promise<CouponResponse> {
+    console.log("Repository - Coupon data received:", couponData);
+    console.log("Repository - Keys:", Object.keys(couponData));
+
     const axiosRequest = await this.httpClient.request({
       url: apiUrls.coupons.create,
       method: "post",
