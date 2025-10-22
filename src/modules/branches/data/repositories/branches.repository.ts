@@ -61,7 +61,9 @@ export class BranchesRepositoryImpl implements BranchesRepository {
   ): Promise<AllBranchesResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
-    // Use the new search endpoint with POST method
+    // Use the new search endpoint with POST method and pagination as query params
+    const url = `${apiUrls.branches.search}?limit=${limit}&skip=${skip}`;
+
     const requestBody: {
       merchantId?: number;
       search?: string;
@@ -78,7 +80,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     }
 
     const axiosRequest = await this.httpClient.request({
-      url: apiUrls.branches.search,
+      url,
       method: "post",
       body: requestBody,
       isAuth: true,
