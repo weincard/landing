@@ -213,7 +213,6 @@ export function CouponsView({ token }: CouponsViewProps) {
                   </TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Descripción</TableHead>
-                  <TableHead>Sucursales</TableHead>
                   <TableHead>Activo</TableHead>
                   <TableHead>Redenciones</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -271,7 +270,6 @@ export function CouponsView({ token }: CouponsViewProps) {
                       <TableCell className="max-w-xs truncate">
                         {coupon.description}
                       </TableCell>
-                      <TableCell>{coupon.branches?.length || 0}</TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
@@ -317,8 +315,9 @@ export function CouponsView({ token }: CouponsViewProps) {
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               Mostrando
-              {coupons.length === 0 ? " 0 " : ` ${1} - ${coupons.length} `}de{" "}
-              {totalItems} cupones
+              {coupons.length === 0
+                ? " 0 "
+                : ` ${1} - ${coupons.length} `}de {totalItems} cupones
             </div>
             <div className="flex items-center gap-2">
               <Select
