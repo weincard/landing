@@ -2,6 +2,8 @@ import { useCallback, useState } from "react";
 import container from "@/lib/di/container";
 import { GetAllMerchantsUseCase } from "../use-cases/get-all-merchants.use-case";
 import { CreateMerchantUseCase } from "../use-cases/create-merchant.use-case";
+import { GetMerchantByIdUseCase } from "../use-cases/get-merchant-by-id.use-case";
+import { UpdateMerchantUseCase } from "../use-cases/update-merchant.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllMerchantsResponse,
@@ -71,9 +73,69 @@ export const useMerchants = () => {
     []
   );
 
+  const getMerchantById = useCallback(
+    async (
+      merchantId: number,
+      token?: string
+    ): Promise<MerchantResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getMerchantByIdUseCase = container.get(GetMerchantByIdUseCase);
+        const response = await getMerchantByIdUseCase.execute(
+          merchantId,
+          token
+        );
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al cargar merchant";
+        setError(errorMessage);
+        console.error("Error getting merchant:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const updateMerchant = useCallback(
+    async (
+      merchantId: number,
+      merchantData: Partial<IMerchant>,
+      logoFile?: File,
+      token?: string
+    ): Promise<MerchantResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const updateMerchantUseCase = container.get(UpdateMerchantUseCase);
+        const response = await updateMerchantUseCase.execute(
+          merchantId,
+          merchantData,
+          logoFile,
+          token
+        );
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al actualizar merchant";
+        setError(errorMessage);
+        console.error("Error updating merchant:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     getAllMerchants,
+    getMerchantById,
     createMerchant,
+    updateMerchant,
     loading,
     error,
   };

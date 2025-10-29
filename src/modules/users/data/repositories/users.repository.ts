@@ -28,6 +28,8 @@ export abstract class UsersRepository {
     paginationParams?: IPaginationParams,
     role?: UserRole
   ): Promise<AllUsersResponse>;
+  abstract getOne(userId: number, token?: string): Promise<UserResponse>;
+  abstract update(userParams: IUser, token?: string): Promise<UserResponse>;
   abstract delete(id: string): Promise<UserResponse>;
 }
 
@@ -105,15 +107,42 @@ export class UsersRepositoryImpl implements UsersRepository {
     }
   }
 
+  /////////////////////////////////GET ONE USER////////////////////////////////////////////////
+  async getOne(userId: number, token?: string): Promise<UserResponse> {
+    console.log("Get User ID:", userId);
+
+    const axiosRequest = await this.httpClient.request({
+      url: `${apiUrls.users.getAll}/${userId}`,
+      method: "get",
+      body: {},
+      isAuth: true,
+      token,
+    });
+
+    console.log("Get User Response:", axiosRequest.body);
+
+    if (
+      axiosRequest.statusCode === HttpStatusCode.ok ||
+      axiosRequest.statusCode === HttpStatusCode.created
+    ) {
+      return createUserResponseAdapter(axiosRequest.body);
+    } else {
+      throw new CustomError(
+        axiosRequest.body.message || "Error al obtener usuario"
+      );
+    }
+  }
+
   /////////////////////////////////UPDATE USER////////////////////////////////////////////////
-  async update(userParams: IUser): Promise<UserResponse> {
+  async update(userParams: IUser, token?: string): Promise<UserResponse> {
     console.log("Update User Params:", userParams);
 
     const axiosRequest = await this.httpClient.request({
-      url: `${apiUrls.users.update}/${userParams.id}`,
+      url: `${apiUrls.users.update}/${userParams.idUsuario}`,
       method: "patch",
       body: userParams,
       isAuth: true,
+      token,
     });
 
     console.log("Update User Response:", axiosRequest.body);

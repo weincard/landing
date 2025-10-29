@@ -2,6 +2,8 @@ import { useCallback, useState } from "react";
 import container from "@/lib/di/container";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
+import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by-id.use-case";
+import { UpdateUserUseCase } from "@/modules/users/domain/use-cases/update-user.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllUsersResponse,
@@ -63,9 +65,53 @@ export const useUsers = () => {
     []
   );
 
+  const getUserById = useCallback(
+    async (userId: number, token?: string): Promise<UserResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getUserByIdUseCase = container.get(GetUserByIdUseCase);
+        const response = await getUserByIdUseCase.execute(userId, token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al cargar usuario";
+        setError(errorMessage);
+        console.error("Error getting user:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const updateUser = useCallback(
+    async (userParams: IUser, token?: string): Promise<UserResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const updateUserUseCase = container.get(UpdateUserUseCase);
+        const response = await updateUserUseCase.execute(userParams, token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al actualizar usuario";
+        setError(errorMessage);
+        console.error("Error updating user:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     getAllUsers,
+    getUserById,
     createUser,
+    updateUser,
     loading,
     error,
   };

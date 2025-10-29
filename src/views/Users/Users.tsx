@@ -27,6 +27,7 @@ import {
   Loader2,
   Search,
   User,
+  Pencil,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -165,13 +166,14 @@ export default function UsersView({ token }: UsersViewProps) {
                   <TableHead>Rol</TableHead>
                   <TableHead>Verificado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-8 text-gray-500"
                     >
                       <div className="flex justify-center items-center">
@@ -183,7 +185,7 @@ export default function UsersView({ token }: UsersViewProps) {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-8 text-red-500"
                     >
                       {error}
@@ -192,7 +194,7 @@ export default function UsersView({ token }: UsersViewProps) {
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-8 text-gray-500"
                     >
                       No se encontraron usuarios
@@ -257,6 +259,22 @@ export default function UsersView({ token }: UsersViewProps) {
                         {user.createdAt
                           ? new Date(user.createdAt).toLocaleDateString()
                           : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                          >
+                            <Link
+                              href={`/dashboard/users/${user.idUsuario}/edit`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

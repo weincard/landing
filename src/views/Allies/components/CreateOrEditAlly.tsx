@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,7 +56,13 @@ export function CreateOrEditAlly({
   user,
 }: CreateOrEditAllyProps) {
   const router = useRouter();
-  const { createMerchant, loading, error: merchantError } = useMerchants();
+  const {
+    createMerchant,
+    getMerchantById,
+    updateMerchant,
+    loading,
+    error: merchantError,
+  } = useMerchants();
   const { getAllUsers, loading: loadingUsers } = useUsers();
 
   const [files, setFiles] = useState<string[]>([]);
@@ -66,6 +71,7 @@ export function CreateOrEditAlly({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [ownerUsers, setOwnerUsers] = useState<IUser[]>([]);
+  const [loadingMerchant, setLoadingMerchant] = useState(false);
 
   // Form fields
   const [name, setName] = useState("");
@@ -74,6 +80,43 @@ export function CreateOrEditAlly({
   const [state, setState] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isFounder, setIsFounder] = useState<boolean>(false);
+
+  // Load existing merchant data when editing
+  useEffect(() => {
+    const loadMerchantData = async () => {
+      if (allyId) {
+        setLoadingMerchant(true);
+        try {
+          const response = await getMerchantById(Number(allyId), token);
+          if (response && response.merchant) {
+            const merchant = response.merchant;
+            setName(merchant.name || "");
+            setDescription(merchant.description || "");
+            setCountry(merchant.country || "");
+            setState(merchant.state || "");
+            setIsFounder(merchant.founder || false);
+
+            // Set owner user if exists
+            if (merchant.merchantUsers && merchant.merchantUsers.length > 0) {
+              setSelectedUserId(String(merchant.merchantUsers[0].userId));
+            }
+
+            // Set logo if exists
+            if (merchant.logoUrl) {
+              setFiles([merchant.logoUrl]);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading merchant:", error);
+          toast.error("Error al cargar los datos del aliado");
+        } finally {
+          setLoadingMerchant(false);
+        }
+      }
+    };
+
+    loadMerchantData();
+  }, [allyId, token, getMerchantById]);
 
   // Cargar usuarios con rol "owner" al montar el componente
   useEffect(() => {
@@ -181,7 +224,9 @@ export function CreateOrEditAlly({
       toast.error("Debe seleccionar un propietario");
       return;
     }
-    if (!logoFile) {
+
+    // For create operations, logo file is required
+    if (!allyId && !logoFile) {
       toast.error("Debes subir un logo para el aliado");
       return;
     }
@@ -193,28 +238,55 @@ export function CreateOrEditAlly({
         country: country.trim(),
         state: state.trim(),
         founder: isFounder,
-        merchantUsers: [
+      };
+
+      // Only add merchantUsers for create operation
+      if (!allyId) {
+        merchantData.merchantUsers = [
           {
             userId: Number(selectedUserId),
             merchantId: 0, // Se asignará en el backend
           },
-        ],
-      };
+        ];
+      }
 
-      const response = await createMerchant(merchantData, logoFile, token);
+      let response;
+      if (allyId) {
+        // Update existing merchant
+        response = await updateMerchant(
+          Number(allyId),
+          merchantData,
+          logoFile || undefined,
+          token
+        );
+      } else {
+        // Create new merchant
+        response = await createMerchant(merchantData, logoFile!, token);
+      }
 
       if (response) {
-        toast.success("Aliado creado exitosamente");
+        toast.success(
+          allyId
+            ? "Aliado actualizado exitosamente"
+            : "Aliado creado exitosamente"
+        );
         router.push("/dashboard/allies");
       } else {
         // Si no hay respuesta, mostrar el error del hook
-        const errorMessage = merchantError || "Error al crear el aliado";
+        const errorMessage =
+          merchantError ||
+          `Error al ${allyId ? "actualizar" : "crear"} el aliado`;
         toast.error(errorMessage);
       }
     } catch (error: any) {
-      console.error("Error creating merchant:", error);
+      console.error(
+        `Error ${allyId ? "updating" : "creating"} merchant:`,
+        error
+      );
       const errorMessage =
-        error?.message || merchantError || "Error al crear el aliado";
+        error?.message ||
+        merchantError ||
+        `Error al ${allyId ? "actualizar" : "crear"} el aliado`;
       toast.error(errorMessage);
     }
   };
@@ -223,19 +295,25 @@ export function CreateOrEditAlly({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Aliado</h1>
+        <h1 className="text-xl font-semibold">
+          {allyId ? "Editar Aliado" : "Crear Aliado"}
+        </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleCancel} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={loading || loadingMerchant}
+          >
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? (
+          <Button onClick={handleSave} disabled={loading || loadingMerchant}>
+            {loading || loadingMerchant ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Guardar
+            {allyId ? "Actualizar" : "Guardar"}
           </Button>
         </div>
       </div>
@@ -268,7 +346,7 @@ export function CreateOrEditAlly({
                   onClick={() =>
                     document.getElementById("avatar-upload")?.click()
                   }
-                  disabled={loading}
+                  disabled={loading || loadingMerchant}
                 >
                   Actualizar
                 </Button>
@@ -294,7 +372,7 @@ export function CreateOrEditAlly({
                   placeholder="Nombre del aliado"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || loadingMerchant}
                 />
               </div>
 
@@ -312,7 +390,7 @@ export function CreateOrEditAlly({
                   rows={5}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || loadingMerchant}
                   className="resize-none"
                 />
               </div>
@@ -328,7 +406,7 @@ export function CreateOrEditAlly({
                 <Select
                   value={selectedUserId}
                   onValueChange={setSelectedUserId}
-                  disabled={loading || loadingUsers}
+                  disabled={loading || loadingUsers || loadingMerchant}
                 >
                   <SelectTrigger id="owner">
                     <SelectValue
@@ -363,7 +441,7 @@ export function CreateOrEditAlly({
                   placeholder="Colombia"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || loadingMerchant}
                 />
               </div>
 
@@ -380,7 +458,7 @@ export function CreateOrEditAlly({
                   placeholder="Antioquia"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || loadingMerchant}
                 />
               </div>
             </div>

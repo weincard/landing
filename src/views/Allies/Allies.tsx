@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import type { IMerchant } from "@/data/interfaces/merchant.interface";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Loader2, Pencil } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -130,25 +130,26 @@ export function AlliesView({ token }: AlliesViewProps) {
                   <TableHead>Sucursales</TableHead>
                   <TableHead>Activo</TableHead>
                   <TableHead>Redenciones</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                        Cargando Aliados...
+                        Cargando aliados...
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : merchants.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       No se encontraron Aliados
@@ -207,6 +208,22 @@ export function AlliesView({ token }: AlliesViewProps) {
                         {merchant.founder ? "Sí" : "No"}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">0</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                          >
+                            <Link
+                              href={`/dashboard/allies/${merchant.merchantId}/edit`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

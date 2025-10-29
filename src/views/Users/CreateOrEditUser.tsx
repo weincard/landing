@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +20,15 @@ import { toast } from "sonner";
 
 interface CreateOrEditUserProps {
   token?: string;
+  userId?: string;
 }
 
-export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
+export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
   const router = useRouter();
-  const { createUser, loading, error } = useUsers();
+  const { createUser, getUserById, updateUser, loading, error } = useUsers();
   const [avatar, setAvatar] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("client");
+  const [loadingUser, setLoadingUser] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,6 +42,44 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
     city: "",
     shippingPhone: "",
   });
+
+  // Load existing user data when editing
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (userId && token) {
+        setLoadingUser(true);
+        try {
+          const response = await getUserById(Number(userId), token);
+          if (response && response.user) {
+            const user = response.user;
+            setFormData({
+              name: user.name || "",
+              email: user.email || "",
+              phone: user.phone || "",
+              document: user.document || "",
+              documentType: user.documentType || "CC",
+              address: "",
+              apartment: "",
+              country: "",
+              city: "",
+              shippingPhone: "",
+            });
+            setSelectedRole(user.role || "client");
+
+            // Avatar handling would be implemented if the backend supports it
+            // For now, we'll use the user's name initial as avatar
+          }
+        } catch (error) {
+          console.error("Error loading user:", error);
+          toast.error("Error al cargar los datos del usuario");
+        } finally {
+          setLoadingUser(false);
+        }
+      }
+    };
+
+    loadUserData();
+  }, [userId, token, getUserById]);
 
   const handleAvatarChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,8 +111,9 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
       return;
     }
 
-    // Preparar datos para enviar al backend (solo los campos requeridos)
+    // Preparar datos para enviar al backend
     const userParams = {
+      idUsuario: userId ? Number(userId) : undefined,
       name: formData.name,
       lastName: "", // La API espera lastName pero el formulario no lo tiene separado
       email: formData.email,
@@ -85,15 +126,40 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
 
     console.log("Sending user data:", userParams);
 
-    const response = await createUser(userParams);
+    try {
+      let response;
+      if (userId) {
+        // Update existing user
+        response = await updateUser(userParams, token);
+      } else {
+        // Create new user
+        response = await createUser(userParams);
+      }
 
-    if (response) {
-      console.log("User created successfully:", response);
-      toast.success(`Usuario creado exitosamente: ${response.message}`);
-      router.push("/dashboard/users"); // Redirigir a la lista de usuarios
-    } else if (error) {
-      console.error("Error creating user:", error);
-      toast.error(`Error al crear usuario: ${error}`);
+      if (response) {
+        console.log(
+          `User ${userId ? "updated" : "created"} successfully:`,
+          response
+        );
+        toast.success(
+          `Usuario ${userId ? "actualizado" : "creado"} exitosamente: ${
+            response.message
+          }`
+        );
+        router.push("/dashboard/users");
+      } else if (error) {
+        console.error(`Error ${userId ? "updating" : "creating"} user:`, error);
+        toast.error(
+          `Error al ${userId ? "actualizar" : "crear"} usuario: ${error}`
+        );
+      }
+    } catch (err: any) {
+      console.error(`Error ${userId ? "updating" : "creating"} user:`, err);
+      toast.error(
+        `Error al ${userId ? "actualizar" : "crear"} usuario: ${
+          err.message || "Error desconocido"
+        }`
+      );
     }
   };
 
@@ -101,19 +167,29 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Agregar Usuario</h1>
+        <h1 className="text-xl font-semibold">
+          {userId ? "Editar Usuario" : "Agregar Usuario"}
+        </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={loading || loadingUser}
+          >
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? (
+          <Button onClick={handleSave} disabled={loading || loadingUser}>
+            {loading || loadingUser ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {loading ? "Guardando..." : "Guardar"}
+            {loading || loadingUser
+              ? "Guardando..."
+              : userId
+              ? "Actualizar"
+              : "Guardar"}
           </Button>
         </div>
       </div>
@@ -162,6 +238,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 <Select
                   value={selectedRole}
                   onValueChange={(value: UserRole) => setSelectedRole(value)}
+                  disabled={loading || loadingUser}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Seleccionar rol" />
@@ -204,6 +281,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 placeholder="Ingrese nombres"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
+                disabled={loading || loadingUser}
               />
             </div>
 
@@ -220,6 +298,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 onValueChange={(value: "CC" | "NIT") =>
                   handleInputChange("documentType", value)
                 }
+                disabled={loading || loadingUser}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="CC" />
@@ -244,6 +323,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 placeholder="Número de documento"
                 value={formData.document}
                 onChange={(e) => handleInputChange("document", e.target.value)}
+                disabled={loading || loadingUser}
               />
             </div>
 
@@ -261,6 +341,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 placeholder="correo@ejemplo.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
+                disabled={loading || loadingUser}
               />
             </div>
 
@@ -277,6 +358,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 placeholder="+57 300 123 4567"
                 value={formData.phone}
                 onChange={(e) => handleInputChange("phone", e.target.value)}
+                disabled={loading || loadingUser}
               />
             </div>
           </div>
@@ -301,6 +383,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                   placeholder="Ingrese la dirección"
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
+                  disabled={loading || loadingUser}
                 />
               </div>
 
@@ -319,6 +402,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                   onChange={(e) =>
                     handleInputChange("apartment", e.target.value)
                   }
+                  disabled={loading || loadingUser}
                 />
               </div>
 
@@ -333,6 +417,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                 <Select
                   value={formData.country}
                   onValueChange={(value) => handleInputChange("country", value)}
+                  disabled={loading || loadingUser}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose" />
@@ -362,6 +447,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                   placeholder="Ingrese la ciudad"
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
+                  disabled={loading || loadingUser}
                 />
               </div>
 
@@ -380,6 +466,7 @@ export function CreateOrEditUser({ token }: CreateOrEditUserProps) {
                   onChange={(e) =>
                     handleInputChange("shippingPhone", e.target.value)
                   }
+                  disabled={loading || loadingUser}
                 />
               </div>
             </div>

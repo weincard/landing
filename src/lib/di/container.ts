@@ -24,8 +24,12 @@ import {
 import { CategoriesRepository } from "@/modules/categories/data/repositories/categories.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
+import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by-id.use-case";
+import { UpdateUserUseCase } from "@/modules/users/domain/use-cases/update-user.use-case";
 import { GetAllMerchantsUseCase } from "@/modules/merchants/domain/use-cases/get-all-merchants.use-case";
 import { CreateMerchantUseCase } from "@/modules/merchants/domain/use-cases/create-merchant.use-case";
+import { GetMerchantByIdUseCase } from "@/modules/merchants/domain/use-cases/get-merchant-by-id.use-case";
+import { UpdateMerchantUseCase } from "@/modules/merchants/domain/use-cases/update-merchant.use-case";
 import { GetAllBranchesUseCase } from "@/modules/branches/domain/use-cases/get-all-branches.use-case";
 import { GetOneBranchUseCase } from "@/modules/branches/domain/use-cases/get-one-branch.use-case";
 import { CreateBranchUseCase } from "@/modules/branches/domain/use-cases/create-branch.use-case";
@@ -77,8 +81,12 @@ container
 container.bind(CategoriesRepository).toSelf().inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
+container.bind(GetUserByIdUseCase).toSelf().inSingletonScope();
+container.bind(UpdateUserUseCase).toSelf().inSingletonScope();
 container.bind(GetAllMerchantsUseCase).toSelf().inSingletonScope();
 container.bind(CreateMerchantUseCase).toSelf().inSingletonScope();
+container.bind(GetMerchantByIdUseCase).toSelf().inSingletonScope();
+container.bind(UpdateMerchantUseCase).toSelf().inSingletonScope();
 container.bind(GetAllBranchesUseCase).toSelf().inSingletonScope();
 container.bind(GetOneBranchUseCase).toSelf().inSingletonScope();
 container.bind(CreateBranchUseCase).toSelf().inSingletonScope();
