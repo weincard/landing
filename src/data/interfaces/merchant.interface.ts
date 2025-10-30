@@ -49,9 +49,35 @@ export interface IBranch {
   merchant?: {
     merchantId: number;
     name: string;
+    description?: string;
+    logoUrl?: string;
+    country?: string;
+    state?: string;
+    founder?: boolean;
+    createdAt?: string;
   };
   category?: {
     categoryId: number;
     name: string;
+    description?: string;
+    image?: string;
+    slug?: string;
   };
+  branchUsers?: {
+    branchUserId: number;
+    user: {
+      userId: number;
+      name?: string;
+      phone?: string;
+      email?: string;
+      document?: string;
+      documentType?: string;
+      role?: {
+        roleId: number;
+        name: string;
+      };
+    };
+  }[];
+  reviews?: any[];
+  favorites?: any[];
 }

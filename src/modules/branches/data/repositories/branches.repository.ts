@@ -212,30 +212,25 @@ export class BranchesRepositoryImpl implements BranchesRepository {
 
     const formData = new FormData();
 
-    // Optional update fields
-    if (branchData.merchantId)
-      formData.append("merchantId", String(branchData.merchantId));
-    if (branchData.userId) formData.append("userId", String(branchData.userId));
+    // Only include fields that are allowed for update according to the API spec
     if (branchData.name) formData.append("name", branchData.name);
-    if (branchData.address) formData.append("address", branchData.address);
-    if (branchData.city) formData.append("city", branchData.city);
-    if (branchData.country) formData.append("country", branchData.country);
-    if (branchData.phone) formData.append("phone", branchData.phone);
-    if (branchData.email) formData.append("email", branchData.email);
-    if (branchData.categoryId)
-      formData.append("categoryId", String(branchData.categoryId));
     if (branchData.description)
       formData.append("description", branchData.description);
     if (branchData.howItWorks)
       formData.append("howItWorks", branchData.howItWorks);
+    if (branchData.address) formData.append("address", branchData.address);
+    if (branchData.city) formData.append("city", branchData.city);
+    if (branchData.country) formData.append("country", branchData.country);
     if (branchData.latitude)
       formData.append("latitude", String(branchData.latitude));
     if (branchData.longitude)
       formData.append("longitude", String(branchData.longitude));
+    if (branchData.phone) formData.append("phone", branchData.phone);
+    if (branchData.email) formData.append("email", branchData.email);
     if (branchData.website) formData.append("website", branchData.website);
-    if (branchData.note) formData.append("note", branchData.note);
     if (branchData.isActive !== undefined)
       formData.append("isActive", String(branchData.isActive));
+    if (branchData.note) formData.append("note", branchData.note);
 
     // Handle tags array
     if (branchData.tags && branchData.tags.length > 0) {

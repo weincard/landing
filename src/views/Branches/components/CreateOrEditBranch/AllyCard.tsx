@@ -12,6 +12,7 @@ interface AllyCardProps {
   merchants: any[];
   merchantsLoading: boolean;
   onMerchantChange: (value: string) => void;
+  isRequired?: boolean;
 }
 
 export function AllyCard({
@@ -19,11 +20,14 @@ export function AllyCard({
   merchants,
   merchantsLoading,
   onMerchantChange,
+  isRequired = true,
 }: AllyCardProps) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">Aliado *</h2>
+        <h2 className="text-lg font-semibold">
+          Aliado {isRequired ? "*" : ""}
+        </h2>
       </CardHeader>
       <CardContent>
         <Select
@@ -35,14 +39,14 @@ export function AllyCard({
             <SelectValue placeholder="Selecciona un aliado" />
           </SelectTrigger>
           <SelectContent>
-            {merchants.map((merchant) => (
-              <SelectItem
-                key={merchant.merchantId}
-                value={merchant.merchantId?.toString() || ""}
-              >
-                {merchant.name}
-              </SelectItem>
-            ))}
+            {merchants.map((merchant) => {
+              const merchantValue = merchant.merchantId?.toString() || "";
+              return (
+                <SelectItem key={merchant.merchantId} value={merchantValue}>
+                  {merchant.name}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </CardContent>

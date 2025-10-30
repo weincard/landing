@@ -146,9 +146,21 @@ export function CreateOrEditBranch({
         const response = await getOneBranch(Number(branchId), token);
         if (response && response.branch) {
           const branch = response.branch;
-          setMerchantId(branch.merchantId?.toString() || "");
+          console.log("Loading branch data:", branch); // Keep for debugging preload issue
+
+          // Extract merchantId from nested merchant object
+          const extractedMerchantId =
+            branch.merchant?.merchantId?.toString() || "";
+          setMerchantId(extractedMerchantId);
+
+          // Extract categoryId from nested category object
           setCategoryId(branch.category?.categoryId?.toString() || "");
-          setUserId(branch.userId?.toString() || "");
+
+          // Extract userId from branchUsers array (get first user if exists)
+          const extractedUserId =
+            branch.branchUsers?.[0]?.user?.userId?.toString() || "";
+          setUserId(extractedUserId);
+
           setName(branch.name || "");
           setAddress(branch.address || "");
           setCity(branch.city || "");
@@ -163,6 +175,10 @@ export function CreateOrEditBranch({
           setNote(branch.note || "");
           setIsActive(branch.isActive ?? true);
           if (branch.logoUrl) setLogo(branch.logoUrl);
+
+          console.log("Set merchantId:", extractedMerchantId); // Keep for debugging
+          console.log("Set userId:", extractedUserId); // Keep for debugging
+          console.log("Branch users:", branch.branchUsers); // Additional debugging
         }
       };
       loadBranch();
@@ -213,19 +229,23 @@ export function CreateOrEditBranch({
 
   // Save handler
   const handleSave = async () => {
-    // Validación de campos requeridos
-    if (!merchantId) {
-      toast.error("Por favor selecciona un aliado");
-      return;
+    // Validación de campos requeridos solo para CREATE
+    if (!branchId) {
+      if (!merchantId) {
+        toast.error("Por favor selecciona un aliado");
+        return;
+      }
+      if (!categoryId) {
+        toast.error("Por favor selecciona una categoría");
+        return;
+      }
+      if (!userId) {
+        toast.error("Por favor selecciona un manager");
+        return;
+      }
     }
-    if (!categoryId) {
-      toast.error("Por favor selecciona una categoría");
-      return;
-    }
-    if (!userId) {
-      toast.error("Por favor selecciona un manager");
-      return;
-    }
+
+    // Validación de campos requeridos para CREATE y EDIT
     if (!name) {
       toast.error("El nombre es requerido");
       return;
@@ -268,9 +288,6 @@ export function CreateOrEditBranch({
     }
 
     const branchData: Partial<IBranch> = {
-      merchantId: Number(merchantId),
-      categoryId: Number(categoryId),
-      userId: Number(userId),
       name,
       address,
       city,
@@ -285,6 +302,13 @@ export function CreateOrEditBranch({
       note,
       isActive,
     };
+
+    // Only include merchantId, categoryId, and userId for creation
+    if (!branchId) {
+      branchData.merchantId = Number(merchantId);
+      branchData.categoryId = Number(categoryId);
+      branchData.userId = Number(userId);
+    }
 
     try {
       let response;
@@ -404,6 +428,7 @@ export function CreateOrEditBranch({
             managers={managers}
             loadingManagers={loadingManagers}
             onManagerChange={setUserId}
+            isRequired={!branchId}
           />
 
           {/* Ally Card */}
@@ -412,6 +437,7 @@ export function CreateOrEditBranch({
             merchants={merchants}
             merchantsLoading={merchantsLoading}
             onMerchantChange={setMerchantId}
+            isRequired={!branchId}
           />
 
           {/* Active Card */}

@@ -13,6 +13,7 @@ interface ManagerCardProps {
   managers: IUser[];
   loadingManagers: boolean;
   onManagerChange: (value: string) => void;
+  isRequired?: boolean;
 }
 
 export function ManagerCard({
@@ -20,11 +21,14 @@ export function ManagerCard({
   managers,
   loadingManagers,
   onManagerChange,
+  isRequired = true,
 }: ManagerCardProps) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">Manager *</h2>
+        <h2 className="text-lg font-semibold">
+          Manager {isRequired ? "*" : ""}
+        </h2>
       </CardHeader>
       <CardContent>
         <Select
@@ -36,18 +40,20 @@ export function ManagerCard({
             <SelectValue placeholder="Selecciona un manager" />
           </SelectTrigger>
           <SelectContent>
-            {managers.map((manager) => (
-              <SelectItem
-                key={manager.id || manager.idUsuario}
-                value={
-                  manager.id?.toString() || manager.idUsuario?.toString() || ""
-                }
-              >
-                {manager.email ||
-                  manager.phone ||
-                  `${manager.name} ${manager.lastName}`}
-              </SelectItem>
-            ))}
+            {managers.map((manager) => {
+              const managerValue =
+                manager.id?.toString() || manager.idUsuario?.toString() || "";
+              return (
+                <SelectItem
+                  key={manager.id || manager.idUsuario}
+                  value={managerValue}
+                >
+                  {manager.email ||
+                    manager.phone ||
+                    `${manager.name} ${manager.lastName}`}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </CardContent>
