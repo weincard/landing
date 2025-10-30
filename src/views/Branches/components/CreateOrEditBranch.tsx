@@ -10,6 +10,22 @@ import { useRouter } from "next/navigation";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
+
+// Types for offers and availability
+interface Offer {
+  id: string;
+  offerType: string;
+  membershipType: string;
+  quantity: string;
+  details: string;
+}
+
+interface Availability {
+  id: string;
+  type: "dias" | "horas";
+  selectedDays: string[];
+  selectedTimes: string[];
+}
 import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
 import {
   BranchHeader,
@@ -73,8 +89,33 @@ export function CreateOrEditBranch({
 
   // UI state
   const [rating, setRating] = useState(4.5);
+
+  // Multiple offers and availabilities
+  const [offers, setOffers] = useState<Offer[]>([
+    {
+      id: "1",
+      offerType: "",
+      membershipType: "",
+      quantity: "",
+      details: "",
+    },
+  ]);
+
+  const [availabilities, setAvailabilities] = useState<Availability[]>([
+    {
+      id: "1",
+      type: "dias",
+      selectedDays: [],
+      selectedTimes: [],
+    },
+  ]);
+
+  // Legacy state for backward compatibility (can be removed later)
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [availabilityType, setAvailabilityType] = useState<"dias" | "horas">(
+    "dias"
+  );
 
   // Data lists
   const [merchants, setMerchants] = useState<any[]>([]);
@@ -214,7 +255,7 @@ export function CreateOrEditBranch({
     setImages(newImages);
   };
 
-  // Toggle handlers
+  // Toggle handlers (legacy - for backward compatibility)
   const toggleDay = (day: string) => {
     setSelectedDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
@@ -224,6 +265,89 @@ export function CreateOrEditBranch({
   const toggleTime = (time: string) => {
     setSelectedTimes((prev) =>
       prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
+    );
+  };
+
+  // Offer handlers
+  const addOffer = () => {
+    const newOffer: Offer = {
+      id: Date.now().toString(),
+      offerType: "",
+      membershipType: "",
+      quantity: "",
+      details: "",
+    };
+    setOffers((prev) => [...prev, newOffer]);
+  };
+
+  const removeOffer = (id: string) => {
+    setOffers((prev) => prev.filter((offer) => offer.id !== id));
+  };
+
+  const updateOffer = (id: string, field: keyof Offer, value: string) => {
+    setOffers((prev) =>
+      prev.map((offer) =>
+        offer.id === id ? { ...offer, [field]: value } : offer
+      )
+    );
+  };
+
+  // Availability handlers
+  const addAvailability = () => {
+    const newAvailability: Availability = {
+      id: Date.now().toString(),
+      type: "dias",
+      selectedDays: [],
+      selectedTimes: [],
+    };
+    setAvailabilities((prev) => [...prev, newAvailability]);
+  };
+
+  const removeAvailability = (id: string) => {
+    setAvailabilities((prev) =>
+      prev.filter((availability) => availability.id !== id)
+    );
+  };
+
+  const updateAvailability = (
+    id: string,
+    field: keyof Availability,
+    value: any
+  ) => {
+    setAvailabilities((prev) =>
+      prev.map((availability) =>
+        availability.id === id
+          ? { ...availability, [field]: value }
+          : availability
+      )
+    );
+  };
+
+  const toggleAvailabilityDay = (availabilityId: string, day: string) => {
+    setAvailabilities((prev) =>
+      prev.map((availability) => {
+        if (availability.id === availabilityId) {
+          const selectedDays = availability.selectedDays.includes(day)
+            ? availability.selectedDays.filter((d) => d !== day)
+            : [...availability.selectedDays, day];
+          return { ...availability, selectedDays };
+        }
+        return availability;
+      })
+    );
+  };
+
+  const toggleAvailabilityTime = (availabilityId: string, time: string) => {
+    setAvailabilities((prev) =>
+      prev.map((availability) => {
+        if (availability.id === availabilityId) {
+          const selectedTimes = availability.selectedTimes.includes(time)
+            ? availability.selectedTimes.filter((t) => t !== time)
+            : [...availability.selectedTimes, time];
+          return { ...availability, selectedTimes };
+        }
+        return availability;
+      })
     );
   };
 
@@ -377,18 +501,20 @@ export function CreateOrEditBranch({
 
           {/* Offer Card */}
           <OfferCard
-            selectedDays={selectedDays}
-            selectedTimes={selectedTimes}
-            onToggleDay={toggleDay}
-            onToggleTime={toggleTime}
+            offers={offers}
+            onAddOffer={addOffer}
+            onRemoveOffer={removeOffer}
+            onUpdateOffer={updateOffer}
           />
 
           {/* Availability Card */}
           <AvailabilityCard
-            selectedDays={selectedDays}
-            selectedTimes={selectedTimes}
-            onToggleDay={toggleDay}
-            onToggleTime={toggleTime}
+            availabilities={availabilities}
+            onAddAvailability={addAvailability}
+            onRemoveAvailability={removeAvailability}
+            onUpdateAvailability={updateAvailability}
+            onToggleAvailabilityDay={toggleAvailabilityDay}
+            onToggleAvailabilityTime={toggleAvailabilityTime}
           />
         </div>
 
