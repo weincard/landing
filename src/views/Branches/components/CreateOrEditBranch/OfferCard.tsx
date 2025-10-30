@@ -32,6 +32,62 @@ export function OfferCard({
   onRemoveOffer,
   onUpdateOffer,
 }: OfferCardProps) {
+  const getQuantityLabel = (offerType: string) => {
+    switch (offerType) {
+      case "porcentaje":
+        return "Porcentaje de descuento";
+      case "monto":
+        return "Monto fijo del descuento";
+      case "comensales":
+      default:
+        return "Establece la cantidad de comensales";
+    }
+  };
+
+  const getQuantityPlaceholder = (offerType: string) => {
+    switch (offerType) {
+      case "porcentaje":
+        return "20%";
+      case "monto":
+        return "$15000";
+      case "comensales":
+      default:
+        return "Selecciona la opción";
+    }
+  };
+
+  const renderQuantityField = (offer: Offer) => {
+    if (offer.offerType === "comensales" || !offer.offerType.length) {
+      return (
+        <Select
+          value={offer.quantity}
+          onValueChange={(value) => onUpdateOffer(offer.id, "quantity", value)}
+        >
+          <SelectTrigger>
+            <SelectValue
+              placeholder={getQuantityPlaceholder(offer.offerType)}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2x1">2×1</SelectItem>
+            <SelectItem value="3x1">3×1</SelectItem>
+            <SelectItem value="3x2">3×2</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    return (
+      <div className="relative">
+        <Input
+          type="number"
+          placeholder={getQuantityPlaceholder(offer.offerType)}
+          value={offer.quantity}
+          onChange={(e) => onUpdateOffer(offer.id, "quantity", e.target.value)}
+        />
+      </div>
+    );
+  };
   return (
     <Card>
       <CardHeader>
@@ -63,9 +119,11 @@ export function OfferCard({
                 <Label className="text-muted-foreground">Tipo de oferta</Label>
                 <Select
                   value={offer.offerType}
-                  onValueChange={(value) =>
-                    onUpdateOffer(offer.id, "offerType", value)
-                  }
+                  onValueChange={(value) => {
+                    onUpdateOffer(offer.id, "offerType", value);
+                    // Limpiar el campo quantity cuando cambie el tipo
+                    onUpdateOffer(offer.id, "quantity", "");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Cantidad de comensales" />
@@ -100,17 +158,11 @@ export function OfferCard({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 w-1/2">
               <Label className="text-muted-foreground">
-                Establece la cantidad de comensales
+                {getQuantityLabel(offer.offerType)}
               </Label>
-              <Input
-                placeholder="2×1"
-                value={offer.quantity}
-                onChange={(e) =>
-                  onUpdateOffer(offer.id, "quantity", e.target.value)
-                }
-              />
+              {renderQuantityField(offer)}
             </div>
 
             <div className="space-y-2">
