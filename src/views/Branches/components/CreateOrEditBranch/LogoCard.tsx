@@ -27,7 +27,7 @@ export function LogoCard({ logo, onLogoChange }: LogoCardProps) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">Logo *</h2>
+        <h2 className="text-lg font-semibold">Logo</h2>
       </CardHeader>
       <CardContent>
         <div className="border-2 border-dashed rounded-lg p-8 text-center">

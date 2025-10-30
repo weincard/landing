@@ -364,50 +364,30 @@ export function CreateOrEditBranch({
         return;
       }
       if (!userId) {
-        toast.error("Por favor selecciona un manager");
+        toast.error("Por favor selecciona un manager (nombre del responsable)");
         return;
       }
     }
 
-    // Validación de campos requeridos para CREATE y EDIT
+    // Validación de campos obligatorios para CREATE y EDIT
     if (!name) {
-      toast.error("El nombre es requerido");
-      return;
-    }
-    if (!logo && !logoFile) {
-      toast.error("El logo es requerido");
+      toast.error("El nombre del establecimiento es requerido");
       return;
     }
     if (!address) {
-      toast.error("La dirección es requerida");
-      return;
-    }
-    if (!city) {
-      toast.error("La ciudad es requerida");
-      return;
-    }
-    if (!country) {
-      toast.error("El país es requerido");
+      toast.error("La dirección exacta es requerida");
       return;
     }
     if (!latitude) {
-      toast.error("La latitud es requerida");
+      toast.error("La ubicación de Google Maps (latitud) es requerida");
       return;
     }
     if (!longitude) {
-      toast.error("La longitud es requerida");
-      return;
-    }
-    if (!phone) {
-      toast.error("El teléfono es requerido");
+      toast.error("La ubicación de Google Maps (longitud) es requerida");
       return;
     }
     if (!email) {
       toast.error("El correo electrónico es requerido");
-      return;
-    }
-    if (!howItWorks) {
-      toast.error("Debes describir cómo funciona la redención");
       return;
     }
 

@@ -251,7 +251,7 @@ export function AddressCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Dirección *</h2>
+          <h2 className="text-lg font-semibold">Dirección</h2>
           <Button
             type="button"
             variant="outline"
@@ -289,7 +289,7 @@ export function AddressCard({
 
         <div className="space-y-2">
           <Label className="text-muted-foreground" htmlFor="address">
-            Dirección
+            Dirección exacta *
           </Label>
           <Input
             ref={addressInputRef}
@@ -303,7 +303,7 @@ export function AddressCard({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="city">
-              Ciudad *
+              Ciudad
             </Label>
             <Input
               id="city"
@@ -314,7 +314,7 @@ export function AddressCard({
           </div>
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="country">
-              País *
+              País
             </Label>
             <Input
               id="country"
@@ -328,7 +328,7 @@ export function AddressCard({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="latitude">
-              Latitud *
+              Ubicación Google Maps - Latitud *
             </Label>
             <Input
               id="latitude"
@@ -343,7 +343,7 @@ export function AddressCard({
           </div>
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="longitude">
-              Longitud *
+              Ubicación Google Maps - Longitud *
             </Label>
             <Input
               id="longitude"

@@ -103,7 +103,7 @@ export function InformationCard({
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="name">
-              Nombre de la sucursal *
+              Nombre del establecimiento *
             </Label>
             <Input
               id="name"
@@ -114,7 +114,7 @@ export function InformationCard({
           </div>
           <div className="space-y-2">
             <Label className="text-muted-foreground" htmlFor="phone">
-              Contacto *
+              Contacto
             </Label>
             <Input
               id="phone"
@@ -152,7 +152,7 @@ export function InformationCard({
 
         <div className="space-y-2">
           <Label className="text-muted-foreground" htmlFor="howItWorks">
-            ¿Cómo funciona la redención? *
+            ¿Cómo funciona la redención?
           </Label>
           <Textarea
             id="howItWorks"
