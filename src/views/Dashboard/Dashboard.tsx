@@ -1,7 +1,6 @@
 "use client";
 
-import { DashboardData } from "@/data/interfaces/dashboard.interface";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,15 +21,22 @@ import {
 import {
   ArrowUpIcon,
   ArrowDownIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
   DollarSignIcon,
   UsersIcon,
   ShoppingCartIcon,
   TargetIcon,
   GiftIcon,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
+import { AllUsersResponse } from "@/modules/users/data/interfaces/users.response.interface";
+import { AllMerchantsResponse } from "@/modules/merchants/data/interfaces/merchants.response.interface";
+import { AllBranchesResponse } from "@/modules/branches/data/interfaces/branches.response.interface";
+import { AllCouponsResponse } from "@/modules/coupons/data/interfaces/coupons.response.interface";
 
 interface MetricCardProps {
   title: string;
@@ -49,7 +55,6 @@ function MetricCard({
   icon,
   color,
 }: MetricCardProps) {
-  const TrendIcon = trend === "up" ? TrendingUpIcon : TrendingDownIcon;
   const ArrowIcon = trend === "up" ? ArrowUpIcon : ArrowDownIcon;
 
   return (
@@ -77,7 +82,87 @@ function MetricCard({
   );
 }
 
-export default function DashboardView({ data }: { data: DashboardData }) {
+interface DashboardViewProps {
+  token: string;
+}
+
+export default function DashboardView({ token }: DashboardViewProps) {
+  const {
+    getAllUsers,
+    loading: isLoadingUsers,
+    error: usersError,
+  } = useUsers();
+  const {
+    getAllMerchants,
+    loading: isLoadingMerchants,
+    error: merchantsError,
+  } = useMerchants();
+  const {
+    getAllBranches,
+    loading: isLoadingBranches,
+    error: branchesError,
+  } = useBranches();
+  const {
+    getAllCoupons,
+    loading: isLoadingCoupons,
+    error: couponsError,
+  } = useCoupons();
+
+  const loading =
+    isLoadingUsers ||
+    isLoadingMerchants ||
+    isLoadingBranches ||
+    isLoadingCoupons;
+  const error = usersError || merchantsError || branchesError || couponsError;
+
+  const [userData, setUserData] = useState<AllUsersResponse>();
+  const [merchantData, setMerchantData] = useState<AllMerchantsResponse>();
+  const [branchData, setBranchData] = useState<AllBranchesResponse>();
+  const [couponData, setCouponData] = useState<AllCouponsResponse>();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Solo obtener datos necesarios para el dashboard, no todos
+      const users = await getAllUsers(token, { skip: 0, limit: 10 });
+      setUserData(users || undefined);
+
+      const merchants = await getAllMerchants(token, { skip: 0, limit: 10 });
+      setMerchantData(merchants || undefined);
+
+      const branches = await getAllBranches(undefined, token, {
+        skip: 0,
+        limit: 10,
+      });
+      setBranchData(branches || undefined);
+
+      const coupons = await getAllCoupons(token, { skip: 0, limit: 10 });
+      setCouponData(coupons || undefined);
+    };
+
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Cargando dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">Error al cargar el dashboard</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
@@ -114,125 +199,49 @@ export default function DashboardView({ data }: { data: DashboardData }) {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title={data.metrics.revenue.label}
-          value={formatCurrency(data.metrics.revenue.value)}
-          percentage={data.metrics.revenue.percentage}
-          trend={data.metrics.revenue.trend as "up" | "down"}
-          icon={<DollarSignIcon className="h-6 w-6 text-white" />}
+          title="Total Usuarios"
+          value={userData?.count || 0}
+          percentage={15}
+          trend="up"
+          icon={<UsersIcon className="h-6 w-6 text-white" />}
           color="bg-blue-500"
         />
         <MetricCard
-          title={data.metrics.orders.label}
-          value={data.metrics.orders.value}
-          percentage={data.metrics.orders.percentage}
-          trend={data.metrics.orders.trend as "up" | "down"}
+          title="Aliados Registrados"
+          value={merchantData?.count || 0}
+          percentage={8}
+          trend="up"
           icon={<ShoppingCartIcon className="h-6 w-6 text-white" />}
           color="bg-green-500"
         />
         <MetricCard
-          title={data.metrics.visits.label}
-          value={data.metrics.visits.value}
-          percentage={data.metrics.visits.percentage}
-          trend={data.metrics.visits.trend as "up" | "down"}
-          icon={<UsersIcon className="h-6 w-6 text-white" />}
-          color="bg-yellow-500"
-        />
-        <MetricCard
-          title={data.metrics.newUsers.label}
-          value={data.metrics.newUsers.value}
-          percentage={data.metrics.newUsers.percentage}
-          trend={data.metrics.newUsers.trend as "up" | "down"}
+          title="Sucursales Activas"
+          value={branchData?.count || 0}
+          percentage={12}
+          trend="up"
           icon={<TargetIcon className="h-6 w-6 text-white" />}
           color="bg-purple-500"
         />
         <MetricCard
-          title={data.metrics.redemptions.label}
-          value={data.metrics.redemptions.value}
-          percentage={data.metrics.redemptions.percentage}
-          trend={data.metrics.redemptions.trend as "up" | "down"}
+          title="Cupones Disponibles"
+          value={couponData?.count || 0}
+          percentage={5}
+          trend="up"
           icon={<GiftIcon className="h-6 w-6 text-white" />}
           color="bg-indigo-500"
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Usuarios vs tiempo */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-medium">
-              Usuarios vs. tiempo
-            </CardTitle>
-            <Select defaultValue="2025">
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <div>
-                  <p className="text-2xl font-bold">645</p>
-                  <p className="text-muted-foreground">Orders on May 22</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">472</p>
-                  <p className="text-muted-foreground">Orders on May 21</p>
-                </div>
-              </div>
-              {/* Aquí iría el gráfico - por ahora placeholder */}
-              <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  Gráfico de usuarios vs tiempo
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Membresías vendidas */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-medium">
-              Membresías vendidas
-            </CardTitle>
-            <Button variant="ghost" size="sm">
-              Ver todos
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <p className="text-2xl font-bold">1,259</p>
-                <p className="text-muted-foreground">Membresías vendidas</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{formatCurrency(12546000)}</p>
-                <p className="text-muted-foreground">Ganancias</p>
-              </div>
-              {/* Aquí iría el gráfico de barras - por ahora placeholder */}
-              <div className="h-32 bg-muted/30 rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">Gráfico de membresías</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Tables Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top miembros */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Sucursales */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-medium">Top miembros</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Top Sucursales
+            </CardTitle>
             <Button variant="ghost" size="sm">
               Ver todos
             </Button>
@@ -242,20 +251,26 @@ export default function DashboardView({ data }: { data: DashboardData }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>Últ. redención</TableHead>
-                  <TableHead>Ahorro</TableHead>
-                  <TableHead>Redenciones</TableHead>
+                  <TableHead>Ciudad</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.members.slice(0, 5).map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
+                {branchData?.branches.slice(0, 5).map((branch) => (
+                  <TableRow key={branch.branchId}>
+                    <TableCell className="font-medium">{branch.name}</TableCell>
+                    <TableCell>{branch.city}</TableCell>
                     <TableCell>
-                      {formatDate(member.lastRedemptionDate)}
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          branch.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {branch.isActive ? "Activa" : "Inactiva"}
+                      </span>
                     </TableCell>
-                    <TableCell>{formatCurrency(member.saving)}</TableCell>
-                    <TableCell>{member.totalRedemptions}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -263,10 +278,10 @@ export default function DashboardView({ data }: { data: DashboardData }) {
           </CardContent>
         </Card>
 
-        {/* Top aliados */}
+        {/* Top Aliados */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-medium">Top aliados</CardTitle>
+            <CardTitle className="text-lg font-medium">Top Aliados</CardTitle>
             <Button variant="ghost" size="sm">
               Ver todos
             </Button>
@@ -276,30 +291,96 @@ export default function DashboardView({ data }: { data: DashboardData }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>Ventas</TableHead>
-                  <TableHead>Redenciones</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.allies.slice(0, 5).map((ally) => (
-                  <TableRow key={ally.id}>
+                {merchantData?.merchants.slice(0, 5).map((merchant) => (
+                  <TableRow key={merchant.merchantId}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="relative h-8 w-8 rounded-full overflow-hidden">
-                          <Image
-                            src={ally.image}
-                            alt={ally.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-8 w-8 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                          {merchant.logoUrl ? (
+                            <Image
+                              src={merchant.logoUrl}
+                              alt={merchant.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-muted-foreground">
+                              {merchant.name?.substring(0, 2).toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                        <span className="font-medium">{ally.name}</span>
+                        <span className="font-medium">{merchant.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      {formatCurrency(parseInt(ally.sales))}
+                      <span className="text-xs text-muted-foreground">
+                        {merchant.country}, {merchant.state}
+                      </span>
                     </TableCell>
-                    <TableCell>{ally.totalRedemptions}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Usuarios Recientes */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg font-medium">
+              Usuarios Recientes
+            </CardTitle>
+            <Button variant="ghost" size="sm">
+              Ver todos
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userData?.users.slice(0, 5).map((user) => (
+                  <TableRow key={user.idUsuario}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                          <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">
+                            {user.name} {user.lastName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs capitalize">
+                        {user.role || "client"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.isVerified
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {user.isVerified ? "Verificado" : "Pendiente"}
+                      </span>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
