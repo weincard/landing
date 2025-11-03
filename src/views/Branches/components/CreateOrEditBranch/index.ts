@@ -3,7 +3,6 @@ export { InformationCard } from "./InformationCard";
 export { LogoCard } from "./LogoCard";
 export { ImagesCard } from "./ImagesCard";
 export { OfferCard } from "./OfferCard";
-export { AvailabilityCard } from "./AvailabilityCard";
 export { CategoryCard } from "./CategoryCard";
 export { CategoryRadioGroup } from "./CategoryRadioGroup";
 export { AddressCard } from "./AddressCard";

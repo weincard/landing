@@ -1,190 +1,162 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-interface Offer {
+export interface Availability {
   id: string;
+  selectedDays: string[];
+  selectedTimes: string[];
+}
+
+export interface Offer {
+  id: string;
+  title: string;
   offerType: string;
   membershipType: string;
   quantity: string;
   details: string;
+  availabilities: Availability[];
 }
 
 interface OfferCardProps {
   offers: Offer[];
-  onAddOffer: () => void;
-  onRemoveOffer: (id: string) => void;
-  onUpdateOffer: (id: string, field: keyof Offer, value: string) => void;
+  onCreateOffer: () => void;
+  onEditOffer: (offer: Offer) => void;
+  onDeleteOffer: (offerId: string) => void;
 }
 
 export function OfferCard({
   offers,
-  onAddOffer,
-  onRemoveOffer,
-  onUpdateOffer,
+  onCreateOffer,
+  onEditOffer,
+  onDeleteOffer,
 }: OfferCardProps) {
-  const getQuantityLabel = (offerType: string) => {
+  const formatAvailabilityText = (availabilities: Availability[]) => {
+    if (!availabilities || availabilities.length === 0) {
+      return "Sin disponibilidad definida";
+    }
+
+    const formattedAvailabilities = availabilities.map((availability) => {
+      const days = availability.selectedDays.join(", ");
+      const times = availability.selectedTimes.join(", ");
+
+      if (days && times) {
+        return `${days} a las ${times}`;
+      } else if (days) {
+        return days;
+      } else if (times) {
+        return `A las ${times}`;
+      }
+      return "Sin horarios";
+    });
+
+    return formattedAvailabilities.join(" | ");
+  };
+
+  const getOfferTypeDisplay = (offerType: string) => {
     switch (offerType) {
       case "porcentaje":
-        return "Porcentaje de descuento";
+        return "Porcentaje";
       case "monto":
-        return "Monto fijo del descuento";
+        return "Monto fijo";
       case "comensales":
+        return "Comensales";
+      case "promo":
+        return "Promoción";
       default:
-        return "Establece la cantidad de comensales";
+        return offerType;
     }
   };
 
-  const getQuantityPlaceholder = (offerType: string) => {
-    switch (offerType) {
-      case "porcentaje":
-        return "20%";
-      case "monto":
-        return "$15000";
-      case "comensales":
+  const getMembershipDisplay = (membershipType: string) => {
+    switch (membershipType) {
+      case "premium":
+        return "Premium";
+      case "basic":
+        return "Basic";
       default:
-        return "Selecciona la opción";
+        return membershipType;
     }
   };
 
-  const renderQuantityField = (offer: Offer) => {
-    if (offer.offerType === "comensales" || !offer.offerType.length) {
-      return (
-        <Select
-          value={offer.quantity}
-          onValueChange={(value) => onUpdateOffer(offer.id, "quantity", value)}
-        >
-          <SelectTrigger>
-            <SelectValue
-              placeholder={getQuantityPlaceholder(offer.offerType)}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2x1">2×1</SelectItem>
-            <SelectItem value="3x1">3×1</SelectItem>
-            <SelectItem value="3x2">3×2</SelectItem>
-          </SelectContent>
-        </Select>
-      );
-    }
-
-    return (
-      <div className="relative">
-        <Input
-          type="number"
-          placeholder={getQuantityPlaceholder(offer.offerType)}
-          value={offer.quantity}
-          onChange={(e) => onUpdateOffer(offer.id, "quantity", e.target.value)}
-        />
-      </div>
-    );
-  };
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">Ofertas</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Ofertas</h2>
+          <Button onClick={onCreateOffer} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Oferta
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {offers.map((offer, index) => (
-          <div
-            key={offer.id}
-            className={`space-y-4 ${
-              offers.length > 1
-                ? "p-4 border rounded-lg shadow-sm relative"
-                : ""
-            }`}
-          >
-            {offers.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                onClick={() => onRemoveOffer(offer.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Tipo de oferta</Label>
-                <Select
-                  value={offer.offerType}
-                  onValueChange={(value) => {
-                    onUpdateOffer(offer.id, "offerType", value);
-                    // Limpiar el campo quantity cuando cambie el tipo
-                    onUpdateOffer(offer.id, "quantity", "");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Promo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="promo">Promo</SelectItem>
-                    <SelectItem value="porcentaje">Porcentaje</SelectItem>
-                    <SelectItem value="monto">Regalo/Cortesía</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">
-                  Tipo de membresía
-                </Label>
-                <Select
-                  value={offer.membershipType}
-                  onValueChange={(value) =>
-                    onUpdateOffer(offer.id, "membershipType", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wein card premium" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="premium">Wein card premium</SelectItem>
-                    <SelectItem value="basic">Wein card basic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2 w-1/2">
-              <Label className="text-muted-foreground">
-                {getQuantityLabel(offer.offerType)}
-              </Label>
-              {renderQuantityField(offer)}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">
-                Detalles de la promoción
-              </Label>
-              <Input
-                placeholder="Qué productos"
-                value={offer.details}
-                onChange={(e) =>
-                  onUpdateOffer(offer.id, "details", e.target.value)
-                }
-              />
-            </div>
+        {offers.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No hay ofertas creadas</p>
+            <p className="text-sm">
+              Haz clic en &quot;Crear Oferta&quot; para agregar una nueva
+            </p>
           </div>
-        ))}
+        ) : (
+          offers.map((offer) => (
+            <div
+              key={offer.id}
+              className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium">{offer.title}</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {getOfferTypeDisplay(offer.offerType)}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {getMembershipDisplay(offer.membershipType)}
+                    </Badge>
+                  </div>
 
-        <Button
-          variant="link"
-          className="p-0 h-auto text-blue-600"
-          onClick={onAddOffer}
-        >
-          Agregar otra oferta
-        </Button>
+                  {offer.quantity && (
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <strong>Cantidad:</strong> {offer.quantity}
+                    </p>
+                  )}
+
+                  {offer.details && (
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Detalles:</strong> {offer.details}
+                    </p>
+                  )}
+
+                  <p className="text-sm text-blue-600">
+                    <strong>Disponibilidad:</strong>{" "}
+                    {formatAvailabilityText(offer.availabilities)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditOffer(offer)}
+                    className="hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteOffer(offer.id)}
+                    className="hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );
