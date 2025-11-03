@@ -126,14 +126,12 @@ export function OfferCard({
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Cantidad de comensales" />
+                    <SelectValue placeholder="Promo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="comensales">
-                      Cantidad de comensales
-                    </SelectItem>
+                    <SelectItem value="promo">Promo</SelectItem>
                     <SelectItem value="porcentaje">Porcentaje</SelectItem>
-                    <SelectItem value="monto">Monto fijo</SelectItem>
+                    <SelectItem value="monto">Regalo/Cortesía</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

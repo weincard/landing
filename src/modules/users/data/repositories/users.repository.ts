@@ -19,6 +19,7 @@ import {
   createUserResponseAdapter,
   deleteUserResponseAdapter,
   updateUserResponseAdapter,
+  getUserByIdResponseAdapter,
 } from "../adpaters/users.response.adpater";
 
 export abstract class UsersRepository {
@@ -78,6 +79,7 @@ export class UsersRepositoryImpl implements UsersRepository {
 
     // Preparar los datos según la estructura esperada por la API
     const requestBody = {
+      name: userParams.name,
       email: userParams.email,
       phone: userParams.phone,
       roleName: userParams.role || "client",
@@ -112,7 +114,7 @@ export class UsersRepositoryImpl implements UsersRepository {
     console.log("Get User ID:", userId);
 
     const axiosRequest = await this.httpClient.request({
-      url: `${apiUrls.users.getAll}/${userId}`,
+      url: `${apiUrls.users.getOne}/${userId}`,
       method: "get",
       body: {},
       isAuth: true,
@@ -125,7 +127,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       axiosRequest.statusCode === HttpStatusCode.ok ||
       axiosRequest.statusCode === HttpStatusCode.created
     ) {
-      return createUserResponseAdapter(axiosRequest.body);
+      return getUserByIdResponseAdapter(axiosRequest.body);
     } else {
       throw new CustomError(
         axiosRequest.body.message || "Error al obtener usuario"
@@ -137,10 +139,21 @@ export class UsersRepositoryImpl implements UsersRepository {
   async update(userParams: IUser, token?: string): Promise<UserResponse> {
     console.log("Update User Params:", userParams);
 
+    // Preparar los datos según la estructura esperada por la API
+    const requestBody = {
+      name: userParams.name,
+      email: userParams.email,
+      phone: userParams.phone,
+      roleName: userParams.role || "client",
+      document: userParams.document,
+      documentType: userParams.documentType || "CC",
+      isVerified: userParams.isVerified ?? true,
+    };
+
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.users.update}/${userParams.idUsuario}`,
       method: "patch",
-      body: userParams,
+      body: requestBody,
       isAuth: true,
       token,
     });

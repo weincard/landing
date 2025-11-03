@@ -50,8 +50,10 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
         setLoadingUser(true);
         try {
           const response = await getUserById(Number(userId), token);
+          console.log("getUserById response:", response);
           if (response && response.user) {
             const user = response.user;
+            console.log("User data:", user);
             setFormData({
               name: user.name || "",
               email: user.email || "",
@@ -65,6 +67,13 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
               shippingPhone: "",
             });
             setSelectedRole(user.role || "client");
+            console.log("Form data set:", {
+              name: user.name || "",
+              email: user.email || "",
+              phone: user.phone || "",
+              document: user.document || "",
+              documentType: user.documentType || "CC",
+            });
 
             // Avatar handling would be implemented if the backend supports it
             // For now, we'll use the user's name initial as avatar
@@ -106,8 +115,9 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
   };
 
   const handleSave = async () => {
-    if (!formData.email || !formData.phone) {
-      toast.error("Email y teléfono son campos requeridos");
+    // Validación de campos obligatorios
+    if (!formData.email && !formData.phone) {
+      toast.error("Email o teléfono son requeridos (al menos uno)");
       return;
     }
 

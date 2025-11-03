@@ -27,6 +27,7 @@ export const apiUrls = {
   users: {
     register: "/users/register",
     getAll: "/users/all",
+    getOne: "/users/one",
     update: "/users/update",
     delete: "/users/delete",
     getByRole: "/users/by-role",
