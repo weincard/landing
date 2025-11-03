@@ -75,7 +75,7 @@ export class CategoriesRepository {
     }
     // Only add parentCategory if it's a valid number (not null/undefined)
     if (data.parentCategory !== null && data.parentCategory !== undefined) {
-      formData.append("parentCategory", data.parentCategory.toString());
+      formData.append("parentCategoryId", data.parentCategory.toString());
     }
     formData.append("file", file);
 
@@ -115,7 +115,7 @@ export class CategoriesRepository {
     if (data.parentCategory !== undefined) {
       // Send parentCategory only if it's a valid number, otherwise omit it
       if (data.parentCategory !== null) {
-        formData.append("parentCategory", data.parentCategory.toString());
+        formData.append("parentCategoryId", data.parentCategory.toString());
       }
       // If it's null, we simply don't include it in the FormData
     }
