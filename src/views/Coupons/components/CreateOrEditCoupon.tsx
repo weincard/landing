@@ -211,7 +211,8 @@ export function CreateOrEditCoupon({
       }
     };
     fetchMembershipPlans();
-  }, [token, getAllMembershipPlans]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // Load coupon data if editing
   useEffect(() => {
