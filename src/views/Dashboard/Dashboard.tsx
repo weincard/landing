@@ -258,7 +258,25 @@ export default function DashboardView({ token }: DashboardViewProps) {
               <TableBody>
                 {branchData?.branches.slice(0, 5).map((branch) => (
                   <TableRow key={branch.branchId}>
-                    <TableCell className="font-medium">{branch.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                          {branch.logoUrl ? (
+                            <Image
+                              src={branch.logoUrl}
+                              alt={branch.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-muted-foreground">
+                              {branch.name?.substring(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-medium">{branch.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>{branch.city}</TableCell>
                     <TableCell>
                       <span
