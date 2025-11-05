@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useOffers } from "@/modules/offers/domain/hooks/use-offers";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useCategories } from "@/modules/categories/domain/hooks/use-categories";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
@@ -10,22 +11,24 @@ import { useRouter } from "next/navigation";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
+import type { CreateOfferRequest } from "@/modules/offers/data/interfaces/offers.response.interface";
 
-// Types for offers and availability
-interface Availability {
-  id: string;
-  selectedDays: string[];
-  selectedTimes: string[];
-}
-
+// Types for offers according to new API
 interface Offer {
-  id: string;
+  offerId?: number;
   title: string;
-  offerType: string;
-  membershipType: string;
-  quantity: string;
-  details: string;
-  availabilities: Availability[];
+  description: string;
+  offerType: "percentage" | "fixed_amount" | "promo" | "menu_weincard";
+  value: string;
+  conditions: string;
+  validFrom: string;
+  validTo: string;
+  validDays: string[];
+  isActive: boolean;
+  expiresAt: string;
+  excludesBankHolidays: boolean;
+  membershipPlanId: number;
+  branchId?: number;
 }
 import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
 import { CreateOrEditOfferModal } from "./CreateOrEditBranch/CreateOrEditOfferModal";
@@ -59,6 +62,15 @@ export function CreateOrEditBranch({
     updateBranch,
     loading: branchLoading,
   } = useBranches();
+
+  const {
+    createOffer,
+    updateOffer,
+    deleteOffer,
+    getAllOffers,
+    loading: offersLoading,
+  } = useOffers();
+
   const { getAllMerchants, loading: merchantsLoading } = useMerchants();
   const { getAllCategories } = useCategories();
   const { getAllUsers } = useUsers();
@@ -87,6 +99,7 @@ export function CreateOrEditBranch({
   const [logo, setLogo] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // UI state
   const [rating, setRating] = useState(4.5);
@@ -97,6 +110,14 @@ export function CreateOrEditBranch({
   // Modal state
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+
+  // Progress state for creation flow
+  const [creationProgress, setCreationProgress] = useState({
+    isCreating: false,
+    step: "",
+    currentOffer: 0,
+    totalOffers: 0,
+  });
 
   // Data lists
   const [merchants, setMerchants] = useState<any[]>([]);
@@ -161,6 +182,43 @@ export function CreateOrEditBranch({
     fetchManagers();
   }, [token, getAllUsers]);
 
+  // Load offers for a specific branch
+  const loadBranchOffers = useCallback(
+    async (branchIdNum: number) => {
+      try {
+        const offersResponse = await getAllOffers(
+          branchIdNum.toString(),
+          token
+        );
+        if (offersResponse && offersResponse.offers) {
+          // Convert API offers to component format
+          const mappedOffers: Offer[] = offersResponse.offers.map(
+            (apiOffer: any) => ({
+              offerId: apiOffer.offerId,
+              title: apiOffer.title,
+              description: apiOffer.description || "",
+              offerType: apiOffer.offerType,
+              value: apiOffer.value,
+              conditions: apiOffer.conditions || "",
+              validFrom: apiOffer.validFrom,
+              validTo: apiOffer.validTo,
+              validDays: apiOffer.validDays || [],
+              isActive: apiOffer.isActive,
+              expiresAt: apiOffer.expiresAt,
+              excludesBankHolidays: apiOffer.excludesBankHolidays,
+              membershipPlanId: apiOffer.membershipPlanId,
+              branchId: apiOffer.branchId,
+            })
+          );
+          setOffers(mappedOffers);
+        }
+      } catch (error) {
+        console.error("Error loading branch offers:", error);
+      }
+    },
+    [getAllOffers, token]
+  );
+
   // Load branch data if editing
   useEffect(() => {
     if (branchId) {
@@ -201,11 +259,14 @@ export function CreateOrEditBranch({
           console.log("Set merchantId:", extractedMerchantId); // Keep for debugging
           console.log("Set userId:", extractedUserId); // Keep for debugging
           console.log("Branch users:", branch.branchUsers); // Additional debugging
+
+          // Load offers for this branch in edit mode
+          loadBranchOffers(Number(branchId));
         }
       };
       loadBranch();
     }
-  }, [branchId, token, getOneBranch]);
+  }, [branchId, token, getOneBranch, loadBranchOffers]);
 
   // Category modal handlers
   const handleOpenCategoryModal = () => {
@@ -232,8 +293,9 @@ export function CreateOrEditBranch({
     setLogo(base64);
   };
 
-  const handleImagesChange = (newImages: string[]) => {
+  const handleImagesChange = (newImages: string[], newFiles: File[]) => {
     setImages(newImages);
+    setImageFiles(newFiles);
   };
 
   // Offer handlers
@@ -247,18 +309,76 @@ export function CreateOrEditBranch({
     setIsOfferModalOpen(true);
   };
 
-  const handleDeleteOffer = (offerId: string) => {
-    setOffers((prev) => prev.filter((offer) => offer.id !== offerId));
+  const handleDeleteOffer = async (offerId: number) => {
+    if (branchId) {
+      // Edit mode: delete directly from API
+      try {
+        await deleteOffer(offerId, token);
+        toast.success("Oferta eliminada exitosamente");
+        // Reload offers to reflect changes
+        loadBranchOffers(Number(branchId));
+      } catch (error) {
+        toast.error("Error al eliminar la oferta");
+        console.error("Error deleting offer:", error);
+      }
+    } else {
+      // Create mode: remove from local state
+      setOffers((prev) => prev.filter((offer) => offer.offerId !== offerId));
+    }
   };
 
-  const handleSaveOffer = (offer: Offer) => {
-    if (editingOffer) {
-      // Update existing offer
-      setOffers((prev) => prev.map((o) => (o.id === offer.id ? offer : o)));
+  const handleSaveOffer = async (offer: Offer) => {
+    if (branchId) {
+      // Edit mode: save directly to API
+      try {
+        const offerData: CreateOfferRequest = {
+          title: offer.title,
+          description: offer.description,
+          offerType: offer.offerType,
+          value: offer.value,
+          conditions: offer.conditions,
+          validFrom: offer.validFrom,
+          validTo: offer.validTo,
+          validDays: offer.validDays,
+          isActive: offer.isActive,
+          expiresAt: offer.expiresAt,
+          excludesBankHolidays: offer.excludesBankHolidays,
+          membershipPlanId: offer.membershipPlanId,
+          branchId: Number(branchId),
+        };
+
+        if (editingOffer && editingOffer.offerId) {
+          // Update existing offer
+          await updateOffer(editingOffer.offerId, offerData, token);
+          toast.success("Oferta actualizada exitosamente");
+        } else {
+          // Create new offer
+          await createOffer(offerData, token);
+          toast.success("Oferta creada exitosamente");
+        }
+
+        // Reload offers to reflect changes
+        loadBranchOffers(Number(branchId));
+      } catch (error) {
+        toast.error("Error al guardar la oferta");
+        console.error("Error saving offer:", error);
+      }
     } else {
-      // Add new offer
-      setOffers((prev) => [...prev, offer]);
+      // Create mode: save to local state
+      if (editingOffer) {
+        // Update existing offer
+        setOffers((prev) =>
+          prev.map((o) => (o.offerId === offer.offerId ? offer : o))
+        );
+      } else {
+        // Add new offer with temporary ID
+        const newOffer = { ...offer, offerId: Date.now() };
+        setOffers((prev) => [...prev, newOffer]);
+      }
     }
+
+    setIsOfferModalOpen(false);
+    setEditingOffer(null);
   };
 
   const handleCloseOfferModal = () => {
@@ -332,25 +452,101 @@ export function CreateOrEditBranch({
     try {
       let response;
       if (branchId) {
+        // Edit mode: just update the branch
         response = await updateBranch(
           Number(branchId),
           branchData,
           logoFile || undefined,
+          imageFiles,
           token
         );
-      } else {
-        response = await createBranch(branchData, logoFile || undefined, token);
-      }
 
-      if (response) {
-        toast.success(
-          response.message || branchId
-            ? "Sucursal actualizada exitosamente"
-            : "Sucursal creada exitosamente"
+        if (response) {
+          toast.success("Sucursal actualizada exitosamente");
+          router.push("/dashboard/branches");
+        }
+      } else {
+        // Create mode: create branch and then create offers with progress
+        setCreationProgress({
+          isCreating: true,
+          step: "Creando sucursal...",
+          currentOffer: 0,
+          totalOffers: offers.length,
+        });
+
+        response = await createBranch(
+          branchData,
+          logoFile || undefined,
+          imageFiles,
+          token
         );
-        router.push("/dashboard/branches");
+
+        if (response && response.branch) {
+          const newBranchId = response.branch.branchId;
+
+          if (!newBranchId) {
+            throw new Error("No se pudo obtener el ID de la sucursal creada");
+          }
+
+          if (offers.length > 0) {
+            // Create offers one by one with progress feedback
+            for (let i = 0; i < offers.length; i++) {
+              const offer = offers[i];
+
+              setCreationProgress({
+                isCreating: true,
+                step: `Creando oferta ${i + 1} de ${offers.length}: "${
+                  offer.title
+                }"`,
+                currentOffer: i + 1,
+                totalOffers: offers.length,
+              });
+
+              const offerData: CreateOfferRequest = {
+                title: offer.title,
+                description: offer.description,
+                offerType: offer.offerType,
+                value: offer.value,
+                conditions: offer.conditions,
+                validFrom: offer.validFrom,
+                validTo: offer.validTo,
+                validDays: offer.validDays,
+                isActive: offer.isActive,
+                expiresAt: offer.expiresAt,
+                excludesBankHolidays: offer.excludesBankHolidays,
+                membershipPlanId: offer.membershipPlanId,
+                branchId: newBranchId,
+              };
+
+              try {
+                await createOffer(offerData, token);
+                // Small delay to show progress
+                await new Promise((resolve) => setTimeout(resolve, 500));
+              } catch (offerError) {
+                console.error(`Error creating offer ${i + 1}:`, offerError);
+                toast.error(`Error al crear la oferta "${offer.title}"`);
+              }
+            }
+          }
+
+          setCreationProgress({
+            isCreating: false,
+            step: "",
+            currentOffer: 0,
+            totalOffers: 0,
+          });
+
+          toast.success("Sucursal y ofertas creadas exitosamente");
+          router.push("/dashboard/branches");
+        }
       }
     } catch (err: any) {
+      setCreationProgress({
+        isCreating: false,
+        step: "",
+        currentOffer: 0,
+        totalOffers: 0,
+      });
       toast.error(err?.message || "Error al guardar la sucursal");
     }
   };
@@ -364,9 +560,12 @@ export function CreateOrEditBranch({
       {/* Header */}
       <BranchHeader
         isEditing={!!branchId}
-        isLoading={branchLoading}
+        isLoading={branchLoading || creationProgress.isCreating}
         onSave={handleSave}
         onCancel={handleCancel}
+        creationProgress={
+          creationProgress.isCreating ? creationProgress : undefined
+        }
       />
 
       <div className="grid grid-cols-3 gap-6">
@@ -392,7 +591,11 @@ export function CreateOrEditBranch({
           <LogoCard logo={logo} onLogoChange={handleLogoChange} />
 
           {/* Images Card */}
-          <ImagesCard images={images} onImagesChange={handleImagesChange} />
+          <ImagesCard
+            images={images}
+            imageFiles={imageFiles}
+            onImagesChange={handleImagesChange}
+          />
 
           {/* Offer Card */}
           <OfferCard
@@ -400,6 +603,7 @@ export function CreateOrEditBranch({
             onCreateOffer={handleCreateOffer}
             onEditOffer={handleEditOffer}
             onDeleteOffer={handleDeleteOffer}
+            isEditMode={!!branchId}
           />
         </div>
 

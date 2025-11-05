@@ -24,6 +24,7 @@ export abstract class BranchesRepository {
   abstract create(
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse>;
   abstract getAll(
@@ -37,6 +38,7 @@ export abstract class BranchesRepository {
     branchId: number,
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse>;
   abstract delete(
@@ -127,6 +129,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
   async create(
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
     console.log("Create Branch Data:", branchData);
@@ -167,10 +170,10 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       });
     }
 
-    // Handle images array (these would be separate files)
-    if (branchData.images && branchData.images.length > 0) {
-      branchData.images.forEach((image) => {
-        formData.append("images[]", image);
+    // Handle image files (File objects)
+    if (imageFiles && imageFiles.length > 0) {
+      imageFiles.forEach((file) => {
+        formData.append("images[]", file);
       });
     }
 
@@ -206,6 +209,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     branchId: number,
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
     console.log("Update Branch Data:", branchData);
@@ -239,10 +243,10 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       });
     }
 
-    // Handle images array
-    if (branchData.images && branchData.images.length > 0) {
-      branchData.images.forEach((image) => {
-        formData.append("images[]", image);
+    // Handle image files (File objects)
+    if (imageFiles && imageFiles.length > 0) {
+      imageFiles.forEach((file) => {
+        formData.append("images[]", file);
       });
     }
 

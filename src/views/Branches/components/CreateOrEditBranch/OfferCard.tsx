@@ -3,27 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export interface Availability {
-  id: string;
-  selectedDays: string[];
-  selectedTimes: string[];
-}
-
 export interface Offer {
-  id: string;
+  offerId?: number;
   title: string;
-  offerType: string;
-  membershipType: string;
-  quantity: string;
-  details: string;
-  availabilities: Availability[];
+  description: string;
+  offerType: "percentage" | "fixed_amount" | "promo" | "menu_weincard";
+  value: string;
+  conditions: string;
+  validFrom: string;
+  validTo: string;
+  validDays: string[];
+  isActive: boolean;
+  expiresAt: string;
+  excludesBankHolidays: boolean;
+  membershipPlanId: number;
+  branchId?: number;
 }
 
 interface OfferCardProps {
   offers: Offer[];
   onCreateOffer: () => void;
   onEditOffer: (offer: Offer) => void;
-  onDeleteOffer: (offerId: string) => void;
+  onDeleteOffer: (offerId: number) => void;
+  isEditMode?: boolean;
 }
 
 export function OfferCard({
@@ -31,60 +33,52 @@ export function OfferCard({
   onCreateOffer,
   onEditOffer,
   onDeleteOffer,
+  isEditMode = false,
 }: OfferCardProps) {
-  const formatAvailabilityText = (availabilities: Availability[]) => {
-    if (!availabilities || availabilities.length === 0) {
-      return "Sin disponibilidad definida";
+  const formatValidDaysText = (validDays: string[]) => {
+    if (!validDays || validDays.length === 0) {
+      return "Todos los días";
     }
-
-    const formattedAvailabilities = availabilities.map((availability) => {
-      const days = availability.selectedDays.join(", ");
-      const times = availability.selectedTimes.join(", ");
-
-      if (days && times) {
-        return `${days} a las ${times}`;
-      } else if (days) {
-        return days;
-      } else if (times) {
-        return `A las ${times}`;
-      }
-      return "Sin horarios";
-    });
-
-    return formattedAvailabilities.join(" | ");
+    return validDays.join(", ");
   };
 
   const getOfferTypeDisplay = (offerType: string) => {
     switch (offerType) {
-      case "porcentaje":
+      case "percentage":
         return "Porcentaje";
-      case "monto":
+      case "fixed_amount":
         return "Monto fijo";
-      case "comensales":
-        return "Comensales";
       case "promo":
         return "Promoción";
+      case "menu_weincard":
+        return "Menú Weincard";
       default:
         return offerType;
     }
   };
 
-  const getMembershipDisplay = (membershipType: string) => {
-    switch (membershipType) {
-      case "premium":
-        return "Premium";
-      case "basic":
-        return "Basic";
-      default:
-        return membershipType;
-    }
+  const formatDateRange = (validFrom: string, validTo: string) => {
+    const from = new Date(validFrom).toLocaleDateString();
+    const to = new Date(validTo).toLocaleDateString();
+    return `${from} - ${to}`;
   };
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Ofertas</h2>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Ofertas</h2>
+            {isEditMode ? (
+              <p className="text-sm text-blue-600">
+                💾 Modo edición: Los cambios se guardan inmediatamente
+              </p>
+            ) : (
+              <p className="text-sm text-orange-600">
+                📝 Modo creación: Las ofertas se crearán al guardar la sucursal
+              </p>
+            )}
+          </div>
           <Button onClick={onCreateOffer} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Crear Oferta
@@ -100,9 +94,9 @@ export function OfferCard({
             </p>
           </div>
         ) : (
-          offers.map((offer) => (
+          offers.map((offer, index) => (
             <div
-              key={offer.id}
+              key={offer.offerId || index}
               className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-start justify-between">
@@ -112,26 +106,40 @@ export function OfferCard({
                     <Badge variant="secondary" className="text-xs">
                       {getOfferTypeDisplay(offer.offerType)}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {getMembershipDisplay(offer.membershipType)}
+                    <Badge
+                      variant={offer.isActive ? "default" : "outline"}
+                      className="text-xs"
+                    >
+                      {offer.isActive ? "Activa" : "Inactiva"}
                     </Badge>
                   </div>
 
-                  {offer.quantity && (
+                  {offer.value && (
                     <p className="text-sm text-muted-foreground mb-1">
-                      <strong>Cantidad:</strong> {offer.quantity}
+                      <strong>Valor:</strong> {offer.value}
                     </p>
                   )}
 
-                  {offer.details && (
+                  {offer.description && (
                     <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Detalles:</strong> {offer.details}
+                      <strong>Descripción:</strong> {offer.description}
                     </p>
                   )}
 
-                  <p className="text-sm text-blue-600">
-                    <strong>Disponibilidad:</strong>{" "}
-                    {formatAvailabilityText(offer.availabilities)}
+                  {offer.conditions && (
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Condiciones:</strong> {offer.conditions}
+                    </p>
+                  )}
+
+                  <p className="text-sm text-blue-600 mb-1">
+                    <strong>Vigencia:</strong>{" "}
+                    {formatDateRange(offer.validFrom, offer.validTo)}
+                  </p>
+
+                  <p className="text-sm text-green-600">
+                    <strong>Días válidos:</strong>{" "}
+                    {formatValidDaysText(offer.validDays)}
                   </p>
                 </div>
 
@@ -147,7 +155,7 @@ export function OfferCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDeleteOffer(offer.id)}
+                    onClick={() => onDeleteOffer(offer.offerId || 0)}
                     className="hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />

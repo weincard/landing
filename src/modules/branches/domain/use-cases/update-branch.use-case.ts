@@ -14,12 +14,14 @@ export class UpdateBranchUseCase {
     branchId: number,
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
     return await this.branchesRepository.update(
       branchId,
       branchData,
       logoFile,
+      imageFiles,
       token
     );
   }

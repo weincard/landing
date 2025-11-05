@@ -75,6 +75,7 @@ export const useBranches = () => {
     async (
       branchData: Partial<IBranch>,
       logoFile?: File,
+      imageFiles?: File[],
       token?: string
     ): Promise<BranchResponse | null> => {
       setLoading(true);
@@ -85,6 +86,7 @@ export const useBranches = () => {
         const response = await createBranchUseCase.execute(
           branchData,
           logoFile,
+          imageFiles,
           token
         );
         return response;
@@ -105,6 +107,7 @@ export const useBranches = () => {
       branchId: number,
       branchData: Partial<IBranch>,
       logoFile?: File,
+      imageFiles?: File[],
       token?: string
     ): Promise<BranchResponse | null> => {
       setLoading(true);
@@ -116,6 +119,7 @@ export const useBranches = () => {
           branchId,
           branchData,
           logoFile,
+          imageFiles,
           token
         );
         return response;

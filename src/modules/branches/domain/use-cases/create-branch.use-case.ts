@@ -13,8 +13,14 @@ export class CreateBranchUseCase {
   async execute(
     branchData: Partial<IBranch>,
     logoFile?: File,
+    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
-    return await this.branchesRepository.create(branchData, logoFile, token);
+    return await this.branchesRepository.create(
+      branchData,
+      logoFile,
+      imageFiles,
+      token
+    );
   }
 }

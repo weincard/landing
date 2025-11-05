@@ -6,29 +6,39 @@ import Image from "next/image";
 
 interface ImagesCardProps {
   images: string[];
-  onImagesChange: (newImages: string[]) => void;
+  imageFiles: File[];
+  onImagesChange: (newImages: string[], newFiles: File[]) => void;
 }
 
-export function ImagesCard({ images, onImagesChange }: ImagesCardProps) {
+export function ImagesCard({
+  images,
+  imageFiles,
+  onImagesChange,
+}: ImagesCardProps) {
   const handleImagesUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const filesArray = Array.from(e.target.files);
         const newImages: string[] = [];
+        const newFiles: File[] = [];
 
         filesArray.forEach((file) => {
+          newFiles.push(file);
           const reader = new FileReader();
           reader.onloadend = () => {
             newImages.push(reader.result as string);
             if (newImages.length === filesArray.length) {
-              onImagesChange([...images, ...newImages]);
+              onImagesChange(
+                [...images, ...newImages],
+                [...imageFiles, ...newFiles]
+              );
             }
           };
           reader.readAsDataURL(file);
         });
       }
     },
-    [images, onImagesChange]
+    [images, imageFiles, onImagesChange]
   );
 
   return (

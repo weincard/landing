@@ -18,24 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Trash2, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
-export interface Availability {
-  id: string;
-  selectedDays: string[];
-  selectedTimes: string[];
-}
-
 export interface Offer {
-  id: string;
+  offerId?: number;
   title: string;
-  offerType: string;
-  membershipType: string;
-  quantity: string;
-  details: string;
-  availabilities: Availability[];
+  description: string;
+  offerType: "percentage" | "fixed_amount" | "promo" | "menu_weincard";
+  value: string;
+  conditions: string;
+  validFrom: string;
+  validTo: string;
+  validDays: string[];
+  isActive: boolean;
+  expiresAt: string;
+  excludesBankHolidays: boolean;
+  membershipPlanId: number;
+  branchId?: number;
 }
 
 interface CreateOrEditOfferModalProps {
@@ -52,50 +52,30 @@ export function CreateOrEditOfferModal({
   offer,
 }: CreateOrEditOfferModalProps) {
   const [formData, setFormData] = useState<Offer>({
-    id: "",
     title: "",
-    offerType: "",
-    membershipType: "",
-    quantity: "",
-    details: "",
-    availabilities: [
-      {
-        id: "1",
-        selectedDays: [],
-        selectedTimes: [],
-      },
-    ],
+    description: "",
+    offerType: "percentage",
+    value: "",
+    conditions: "",
+    validFrom: new Date().toISOString().split("T")[0],
+    validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    validDays: [],
+    isActive: true,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    excludesBankHolidays: false,
+    membershipPlanId: 1,
   });
 
   const daysOfWeek = [
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-    "Domingo",
-  ];
-
-  const hoursOfDay = [
-    "06:00",
-    "07:00",
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-    "19:00",
-    "20:00",
-    "21:00",
-    "22:00",
-    "23:00",
+    { value: "monday", label: "Lunes" },
+    { value: "tuesday", label: "Martes" },
+    { value: "wednesday", label: "Miércoles" },
+    { value: "thursday", label: "Jueves" },
+    { value: "friday", label: "Viernes" },
+    { value: "saturday", label: "Sábado" },
+    { value: "sunday", label: "Domingo" },
   ];
 
   useEffect(() => {
@@ -103,144 +83,70 @@ export function CreateOrEditOfferModal({
       setFormData(offer);
     } else {
       setFormData({
-        id: Date.now().toString(),
         title: "",
-        offerType: "",
-        membershipType: "",
-        quantity: "",
-        details: "",
-        availabilities: [
-          {
-            id: "1",
-            selectedDays: [],
-            selectedTimes: [],
-          },
-        ],
+        description: "",
+        offerType: "percentage",
+        value: "",
+        conditions: "",
+        validFrom: new Date().toISOString().split("T")[0],
+        validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        validDays: [],
+        isActive: true,
+        expiresAt: new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+        excludesBankHolidays: false,
+        membershipPlanId: 1,
       });
     }
   }, [offer, isOpen]);
 
-  const handleInputChange = (field: keyof Offer, value: string) => {
+  const handleInputChange = (field: keyof Offer, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const addAvailability = () => {
-    const newAvailability: Availability = {
-      id: Date.now().toString(),
-      selectedDays: [],
-      selectedTimes: [],
-    };
+  const toggleDay = (day: string) => {
     setFormData((prev) => ({
       ...prev,
-      availabilities: [...prev.availabilities, newAvailability],
+      validDays: prev.validDays.includes(day)
+        ? prev.validDays.filter((d) => d !== day)
+        : [...prev.validDays, day],
     }));
   };
 
-  const removeAvailability = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      availabilities: prev.availabilities.filter((av) => av.id !== id),
-    }));
-  };
-
-  const toggleAvailabilityDay = (availabilityId: string, day: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      availabilities: prev.availabilities.map((availability) => {
-        if (availability.id === availabilityId) {
-          const selectedDays = availability.selectedDays.includes(day)
-            ? availability.selectedDays.filter((d) => d !== day)
-            : [...availability.selectedDays, day];
-          return { ...availability, selectedDays };
-        }
-        return availability;
-      }),
-    }));
-  };
-
-  const toggleAvailabilityTime = (availabilityId: string, time: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      availabilities: prev.availabilities.map((availability) => {
-        if (availability.id === availabilityId) {
-          const selectedTimes = availability.selectedTimes.includes(time)
-            ? availability.selectedTimes.filter((t) => t !== time)
-            : [...availability.selectedTimes, time];
-          return { ...availability, selectedTimes };
-        }
-        return availability;
-      }),
-    }));
-  };
-
-  const getQuantityLabel = (offerType: string) => {
+  const getOfferTypeLabel = (offerType: string) => {
     switch (offerType) {
-      case "porcentaje":
-        return "Porcentaje de descuento";
-      case "monto":
-        return "Monto fijo del descuento";
+      case "percentage":
+        return "Porcentaje (%)";
+      case "fixed_amount":
+        return "Monto fijo ($)";
       case "promo":
-        return "Establece la cantidad de comensales";
-      case "menu-wein":
-        return "Menu Wein";
+        return "Promoción especial";
+      case "menu_weincard":
+        return "Menú Weincard";
       default:
-        return "Cantidad";
+        return "Valor";
     }
   };
 
-  const getQuantityPlaceholder = (offerType: string) => {
+  const getValuePlaceholder = (offerType: string) => {
     switch (offerType) {
-      case "porcentaje":
+      case "percentage":
         return "20";
-      case "monto":
+      case "fixed_amount":
         return "15000";
       case "promo":
-        return "Selecciona la opción";
-      case "menu-wein":
-        return "";
+        return "2x1, 3x2, etc.";
+      case "menu_weincard":
+        return "Descripción del menú";
       default:
         return "Ingresa valor";
     }
-  };
-
-  const renderQuantityField = () => {
-    if (formData.offerType === "menu-wein") {
-      // No mostrar campo de cantidad para menu-wein
-      return null;
-    }
-    if (formData.offerType === "promo") {
-      return (
-        <Select
-          value={formData.quantity}
-          onValueChange={(value) => handleInputChange("quantity", value)}
-        >
-          <SelectTrigger>
-            <SelectValue
-              placeholder={getQuantityPlaceholder(formData.offerType)}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2x1">2×1</SelectItem>
-            <SelectItem value="3x1">3×1</SelectItem>
-            <SelectItem value="3x2">3×2</SelectItem>
-          </SelectContent>
-        </Select>
-      );
-    }
-    // Para porcentaje y monto, siempre string
-    return (
-      <div className="relative">
-        <Input
-          type="text"
-          placeholder={getQuantityPlaceholder(formData.offerType)}
-          value={formData.quantity}
-          onChange={(e) => handleInputChange("quantity", e.target.value)}
-        />
-      </div>
-    );
   };
 
   const handleSave = () => {
@@ -248,12 +154,16 @@ export function CreateOrEditOfferModal({
       toast.error("El título de la oferta es requerido");
       return;
     }
-    if (!formData.offerType) {
-      toast.error("El tipo de oferta es requerido");
+    if (!formData.value.trim()) {
+      toast.error("El valor de la oferta es requerido");
       return;
     }
-    if (!formData.membershipType) {
-      toast.error("El tipo de membresía es requerido");
+    if (!formData.validFrom || !formData.validTo) {
+      toast.error("Las fechas de vigencia son requeridas");
+      return;
+    }
+    if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
+      toast.error("La fecha de inicio debe ser anterior a la fecha de fin");
       return;
     }
 
@@ -261,23 +171,9 @@ export function CreateOrEditOfferModal({
     onClose();
   };
 
-  const formatAvailabilityText = (availability: Availability) => {
-    const days = availability.selectedDays.join(", ");
-    const times = availability.selectedTimes.join(", ");
-
-    if (days && times) {
-      return `${days} a las ${times}`;
-    } else if (days) {
-      return days;
-    } else if (times) {
-      return `A las ${times}`;
-    }
-    return "Sin horarios definidos";
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {offer ? "Editar Oferta" : "Crear Nueva Oferta"}
@@ -285,160 +181,166 @@ export function CreateOrEditOfferModal({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Título de la oferta */}
-          <div className="space-y-2">
-            <Label>Título de la oferta</Label>
-            <Input
-              placeholder="Ej: Descuento en almuerzo ejecutivo"
-              value={formData.title}
-              onChange={(e) => handleInputChange("title", e.target.value)}
-            />
-          </div>
-
-          {/* Información básica de la oferta */}
+          {/* Información básica */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tipo de oferta</Label>
+              <Label>Título de la oferta *</Label>
+              <Input
+                placeholder="Ej: Descuento en almuerzo ejecutivo"
+                value={formData.title}
+                onChange={(e) => handleInputChange("title", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de oferta *</Label>
               <Select
                 value={formData.offerType}
                 onValueChange={(value) => {
                   handleInputChange("offerType", value);
-                  handleInputChange("quantity", "");
+                  handleInputChange("value", "");
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="promo">Promo</SelectItem>
-                  <SelectItem value="porcentaje">Porcentaje</SelectItem>
-                  <SelectItem value="monto">Regalo/Cortesía</SelectItem>
-                  <SelectItem value="menu-wein">Menu Wein</SelectItem>
+                  <SelectItem value="percentage">Porcentaje</SelectItem>
+                  <SelectItem value="fixed_amount">Monto fijo</SelectItem>
+                  <SelectItem value="promo">Promoción</SelectItem>
+                  <SelectItem value="menu_weincard">Menú Weincard</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Valor y descripción */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{getOfferTypeLabel(formData.offerType)} *</Label>
+              <Input
+                placeholder={getValuePlaceholder(formData.offerType)}
+                value={formData.value}
+                onChange={(e) => handleInputChange("value", e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Tipo de membresía</Label>
+              <Label>Plan de membresía *</Label>
               <Select
-                value={formData.membershipType}
+                value={formData.membershipPlanId.toString()}
                 onValueChange={(value) =>
-                  handleInputChange("membershipType", value)
+                  handleInputChange("membershipPlanId", parseInt(value))
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona membresía" />
+                  <SelectValue placeholder="Selecciona plan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="premium">Wein card premium</SelectItem>
-                  <SelectItem value="basic">Wein card basic</SelectItem>
+                  <SelectItem value="1">Basic</SelectItem>
+                  <SelectItem value="2">Premium</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Cantidad */}
-          <div className="space-y-2 w-1/2">
-            {/* Solo mostrar label y campo si no es menu-wein */}
-            {formData.offerType !== "menu-wein" && (
-              <>
-                <Label>{getQuantityLabel(formData.offerType)}</Label>
-                {renderQuantityField()}
-              </>
-            )}
-          </div>
-
-          {/* Detalles */}
+          {/* Descripción y condiciones */}
           <div className="space-y-2">
-            <Label>Detalles de la promoción</Label>
+            <Label>Descripción</Label>
             <Input
-              placeholder="Qué productos están incluidos"
-              value={formData.details}
-              onChange={(e) => handleInputChange("details", e.target.value)}
+              placeholder="Descripción detallada de la oferta"
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
             />
           </div>
 
-          {/* Disponibilidades */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-lg">Disponibilidades</Label>
-              <Button onClick={addAvailability} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar disponibilidad
-              </Button>
+          <div className="space-y-2">
+            <Label>Condiciones</Label>
+            <Input
+              placeholder="Términos y condiciones de la oferta"
+              value={formData.conditions}
+              onChange={(e) => handleInputChange("conditions", e.target.value)}
+            />
+          </div>
+
+          {/* Fechas de vigencia */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Válido desde *</Label>
+              <Input
+                type="date"
+                value={formData.validFrom}
+                onChange={(e) => handleInputChange("validFrom", e.target.value)}
+              />
             </div>
 
-            {formData.availabilities.map((availability, index) => (
-              <Card key={availability.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-md font-medium">
-                      Disponibilidad #{index + 1}
-                    </h4>
-                    {formData.availabilities.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAvailability(availability.id)}
-                        className="hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatAvailabilityText(availability)}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Días */}
-                  <div className="space-y-2">
-                    <Label>Días disponibles</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {daysOfWeek.map((day) => (
-                        <Button
-                          key={day}
-                          variant={
-                            availability.selectedDays.includes(day)
-                              ? "default"
-                              : "outline"
-                          }
-                          size="sm"
-                          onClick={() =>
-                            toggleAvailabilityDay(availability.id, day)
-                          }
-                        >
-                          {day}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+            <div className="space-y-2">
+              <Label>Válido hasta *</Label>
+              <Input
+                type="date"
+                value={formData.validTo}
+                onChange={(e) => {
+                  handleInputChange("validTo", e.target.value);
+                  handleInputChange(
+                    "expiresAt",
+                    new Date(e.target.value).toISOString()
+                  );
+                }}
+              />
+            </div>
+          </div>
 
-                  {/* Horas */}
-                  <div className="space-y-2">
-                    <Label>Horas disponibles</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {hoursOfDay.map((time) => (
-                        <Button
-                          key={time}
-                          variant={
-                            availability.selectedTimes.includes(time)
-                              ? "default"
-                              : "outline"
-                          }
-                          size="sm"
-                          onClick={() =>
-                            toggleAvailabilityTime(availability.id, time)
-                          }
-                        >
-                          {time}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Días válidos */}
+          <div className="space-y-2">
+            <Label>Días válidos</Label>
+            <div className="flex flex-wrap gap-2">
+              {daysOfWeek.map((day) => (
+                <Button
+                  key={day.value}
+                  variant={
+                    formData.validDays.includes(day.value)
+                      ? "default"
+                      : "outline"
+                  }
+                  size="sm"
+                  onClick={() => toggleDay(day.value)}
+                >
+                  {day.label}
+                </Button>
+              ))}
+            </div>
+            {formData.validDays.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Si no seleccionas días, la oferta será válida todos los días
+              </p>
+            )}
+          </div>
+
+          {/* Opciones adicionales */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  handleInputChange("isActive", checked)
+                }
+              />
+              <Label htmlFor="isActive">Oferta activa</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="excludesBankHolidays"
+                checked={formData.excludesBankHolidays}
+                onCheckedChange={(checked) =>
+                  handleInputChange("excludesBankHolidays", checked)
+                }
+              />
+              <Label htmlFor="excludesBankHolidays">
+                Excluir días festivos
+              </Label>
+            </div>
           </div>
         </div>
 

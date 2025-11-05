@@ -44,4 +44,11 @@ export const apiUrls = {
     update: "/coupons/update",
     delete: "/coupons/delete",
   },
+  offers: {
+    create: "/offers/create",
+    getAll: "/offers/all",
+    getOne: "/offers/one",
+    update: "/offers/update",
+    delete: "/offers/delete",
+  },
 };
