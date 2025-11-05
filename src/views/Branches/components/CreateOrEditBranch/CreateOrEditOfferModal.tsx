@@ -69,18 +69,34 @@ export function CreateOrEditOfferModal({
   });
 
   const daysOfWeek = [
-    { value: "monday", label: "Lunes" },
-    { value: "tuesday", label: "Martes" },
-    { value: "wednesday", label: "Miércoles" },
-    { value: "thursday", label: "Jueves" },
-    { value: "friday", label: "Viernes" },
-    { value: "saturday", label: "Sábado" },
-    { value: "sunday", label: "Domingo" },
+    { value: "Monday", label: "Lunes" },
+    { value: "Tuesday", label: "Martes" },
+    { value: "Wednesday", label: "Miércoles" },
+    { value: "Thursday", label: "Jueves" },
+    { value: "Friday", label: "Viernes" },
+    { value: "Saturday", label: "Sábado" },
+    { value: "Sunday", label: "Domingo" },
   ];
 
   useEffect(() => {
     if (offer) {
-      setFormData(offer);
+      console.log("Loading offer for edit:", offer); // Debug log
+      console.log("Valid days from offer:", offer.validDays); // Debug log
+      setFormData({
+        ...offer,
+        membershipPlanId: offer.membershipPlanId || 1,
+        description: offer.description || "",
+        conditions: offer.conditions || "",
+        validDays: offer.validDays || [],
+        validFrom: offer.validFrom
+          ? new Date(offer.validFrom).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
+        validTo: offer.validTo
+          ? new Date(offer.validTo).toISOString().split("T")[0]
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0],
+      });
     } else {
       setFormData({
         title: "",
@@ -228,7 +244,7 @@ export function CreateOrEditOfferModal({
             <div className="space-y-2">
               <Label>Plan de membresía *</Label>
               <Select
-                value={formData.membershipPlanId.toString()}
+                value={formData.membershipPlanId?.toString() || "1"}
                 onValueChange={(value) =>
                   handleInputChange("membershipPlanId", parseInt(value))
                 }

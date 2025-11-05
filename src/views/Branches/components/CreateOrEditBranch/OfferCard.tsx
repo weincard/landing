@@ -39,7 +39,19 @@ export function OfferCard({
     if (!validDays || validDays.length === 0) {
       return "Todos los días";
     }
-    return validDays.join(", ");
+
+    const dayMapping: { [key: string]: string } = {
+      Monday: "Lunes",
+      Tuesday: "Martes",
+      Wednesday: "Miércoles",
+      Thursday: "Jueves",
+      Friday: "Viernes",
+      Saturday: "Sábado",
+      Sunday: "Domingo",
+    };
+
+    const spanishDays = validDays.map((day) => dayMapping[day] || day);
+    return spanishDays.join(", ");
   };
 
   const getOfferTypeDisplay = (offerType: string) => {

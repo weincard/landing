@@ -133,6 +133,8 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     token?: string
   ): Promise<BranchResponse> {
     console.log("Create Branch Data:", branchData);
+    console.log("Logo file:", logoFile);
+    console.log("Image files:", imageFiles);
 
     const formData = new FormData();
 
@@ -178,6 +180,12 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     }
 
     if (logoFile) formData.append("logoFile", logoFile);
+
+    // Debug: Log FormData contents
+    console.log("FormData entries:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     const axiosRequest = await this.httpClient.request({
       url: apiUrls.branches.create,
@@ -250,7 +258,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       });
     }
 
-    if (logoFile) formData.append("file", logoFile);
+    if (logoFile) formData.append("logoFile", logoFile);
 
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.branches.update}/${branchId}`,
@@ -259,7 +267,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       isAuth: true,
       token,
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type": undefined, // Let browser set multipart boundary
       },
     });
 

@@ -314,11 +314,9 @@ export function CreateOrEditBranch({
       // Edit mode: delete directly from API
       try {
         await deleteOffer(offerId, token);
-        toast.success("Oferta eliminada exitosamente");
         // Reload offers to reflect changes
         loadBranchOffers(Number(branchId));
       } catch (error) {
-        toast.error("Error al eliminar la oferta");
         console.error("Error deleting offer:", error);
       }
     } else {
@@ -350,17 +348,14 @@ export function CreateOrEditBranch({
         if (editingOffer && editingOffer.offerId) {
           // Update existing offer
           await updateOffer(editingOffer.offerId, offerData, token);
-          toast.success("Oferta actualizada exitosamente");
         } else {
           // Create new offer
           await createOffer(offerData, token);
-          toast.success("Oferta creada exitosamente");
         }
 
         // Reload offers to reflect changes
         loadBranchOffers(Number(branchId));
       } catch (error) {
-        toast.error("Error al guardar la oferta");
         console.error("Error saving offer:", error);
       }
     } else {
@@ -462,7 +457,6 @@ export function CreateOrEditBranch({
         );
 
         if (response) {
-          toast.success("Sucursal actualizada exitosamente");
           router.push("/dashboard/branches");
         }
       } else {
@@ -474,73 +468,86 @@ export function CreateOrEditBranch({
           totalOffers: offers.length,
         });
 
-        response = await createBranch(
-          branchData,
-          logoFile || undefined,
-          imageFiles,
-          token
-        );
+        try {
+          response = await createBranch(
+            branchData,
+            logoFile || undefined,
+            imageFiles,
+            token
+          );
 
-        if (response && response.branch) {
-          const newBranchId = response.branch.branchId;
+          if (response && response.branch) {
+            const newBranchId = response.branch.branchId;
 
-          if (!newBranchId) {
-            throw new Error("No se pudo obtener el ID de la sucursal creada");
-          }
+            if (!newBranchId) {
+              throw new Error("No se pudo obtener el ID de la sucursal creada");
+            }
 
-          if (offers.length > 0) {
-            // Create offers one by one with progress feedback
-            for (let i = 0; i < offers.length; i++) {
-              const offer = offers[i];
+            if (offers.length > 0) {
+              // Create offers one by one with progress feedback
+              for (let i = 0; i < offers.length; i++) {
+                const offer = offers[i];
 
-              setCreationProgress({
-                isCreating: true,
-                step: `Creando oferta ${i + 1} de ${offers.length}: "${
-                  offer.title
-                }"`,
-                currentOffer: i + 1,
-                totalOffers: offers.length,
-              });
+                setCreationProgress({
+                  isCreating: true,
+                  step: `Creando oferta ${i + 1} de ${offers.length}: "${
+                    offer.title
+                  }"`,
+                  currentOffer: i + 1,
+                  totalOffers: offers.length,
+                });
 
-              const offerData: CreateOfferRequest = {
-                title: offer.title,
-                description: offer.description,
-                offerType: offer.offerType,
-                value: offer.value,
-                conditions: offer.conditions,
-                validFrom: offer.validFrom,
-                validTo: offer.validTo,
-                validDays: offer.validDays,
-                isActive: offer.isActive,
-                expiresAt: offer.expiresAt,
-                excludesBankHolidays: offer.excludesBankHolidays,
-                membershipPlanId: offer.membershipPlanId,
-                branchId: newBranchId,
-              };
+                const offerData: CreateOfferRequest = {
+                  title: offer.title,
+                  description: offer.description,
+                  offerType: offer.offerType,
+                  value: offer.value,
+                  conditions: offer.conditions,
+                  validFrom: offer.validFrom,
+                  validTo: offer.validTo,
+                  validDays: offer.validDays,
+                  isActive: offer.isActive,
+                  expiresAt: offer.expiresAt,
+                  excludesBankHolidays: offer.excludesBankHolidays,
+                  membershipPlanId: offer.membershipPlanId,
+                  branchId: newBranchId,
+                };
 
-              try {
-                await createOffer(offerData, token);
-                // Small delay to show progress
-                await new Promise((resolve) => setTimeout(resolve, 500));
-              } catch (offerError) {
-                console.error(`Error creating offer ${i + 1}:`, offerError);
-                toast.error(`Error al crear la oferta "${offer.title}"`);
+                try {
+                  await createOffer(offerData, token);
+                  // Small delay to show progress
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                } catch (offerError) {
+                  console.error(`Error creating offer ${i + 1}:`, offerError);
+                }
               }
             }
-          }
 
+            setCreationProgress({
+              isCreating: false,
+              step: "",
+              currentOffer: 0,
+              totalOffers: 0,
+            });
+
+            router.push("/dashboard/branches");
+          } else {
+            // If response is empty or branch creation failed
+            throw new Error("No se recibió respuesta válida del servidor");
+          }
+        } catch (branchError) {
+          // Reset progress state on any error during creation
           setCreationProgress({
             isCreating: false,
             step: "",
             currentOffer: 0,
             totalOffers: 0,
           });
-
-          toast.success("Sucursal y ofertas creadas exitosamente");
-          router.push("/dashboard/branches");
+          throw branchError; // Re-throw to be caught by outer catch
         }
       }
     } catch (err: any) {
+      // Ensure progress state is always reset on any error
       setCreationProgress({
         isCreating: false,
         step: "",
