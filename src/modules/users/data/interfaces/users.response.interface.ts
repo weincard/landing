@@ -1,91 +1,115 @@
-import type { IUser } from "@/data/interfaces/user.interface"
+import type { IUser } from "@/data/interfaces/user.interface";
 
 /**
  * Interfaz para la respuesta de obtener todos los usuarios
  */
 export interface AllUsersResponse {
-  count?: number
-  users: IUser[]
+  count?: number;
+  users: IUser[];
 }
 
 /**
  * Interfaz para la respuesta de operaciones CRUD individuales (crear, actualizar, eliminar)
  */
 export interface UserResponse {
-  id?: number
-  message: string
-  user?: IUser
+  id?: number;
+  message: string;
+  user?: IUser;
 }
 
 /**
- * Interfaz para la respuesta de la API con la estructura original
+ * Interfaz para la respuesta de la API al registrar un usuario
  */
-export interface UpdateUserResponse {
-  message?: string
+export interface CreateUserApiResponse {
+  message?: string;
   user?: {
-    userId: number
-    firstName: string | null
-    lastName: string | null
-    email: string | null
-    password: string | null
-    phone: string
-    role: string
-    verificationCode: string | null
-    isVerified: boolean
-    createdAt: string
-  }
-}
-
-export interface CreateUserResponse {
-  message?: string
-  user?: {
-    userId: number
-    firstName: string | null
-    lastName: string | null
-    email: string | null
-    password: string | null
-    phone: string
-    role: string
-    verificationCode: string | null
-    isVerified: boolean
-    createdAt: string
-  }
+    userId: number;
+    name?: string;
+    email?: string;
+    phone?: string;
+    documentType?: "CC" | "NIT";
+    document?: string;
+    country?: string;
+    department?: string;
+    city?: string;
+    profileUrl?: string;
+    isVerified: boolean;
+    createdAt: string;
+    role: {
+      roleId: number;
+      name: string;
+    };
+  };
 }
 
 /**
- * Interfaz para la respuesta de obtener todos los usuarios con la estructura original
+ * Interfaz para la respuesta de la API al actualizar un usuario
+ */
+export interface UpdateUserApiResponse {
+  message?: string;
+  user?: {
+    userId: number;
+    email?: string;
+    phone?: string;
+    document?: string;
+    documentType?: "CC" | "NIT";
+    isVerified: boolean;
+    createdAt: string;
+    role: {
+      roleId: number;
+      name: string;
+    };
+  };
+}
+
+/**
+ * Interfaz para la respuesta de obtener todos los usuarios con la nueva estructura de la API
  */
 export interface ApiAllUsersResponse {
+  count: number;
   users: Array<{
-    userId: number
-    firstName: string | null
-    lastName: string | null
-    email: string | null
-    password: string | null
-    phone: string
-    role: string
-    verificationCode: string | null
-    isVerified: boolean
-    createdAt: string
-  }>
-  count: number
+    userId: number;
+    phone?: string;
+    email?: string;
+    document?: string;
+    documentType?: "CC" | "NIT";
+    isVerified: boolean;
+    createdAt: string;
+    role: {
+      roleId: number;
+      name: string;
+    };
+  }>;
 }
 
 /**
- * Interfaz para la respuesta de eliminar un usuario con la estructura original
+ * Interfaz para la respuesta de obtener un usuario por ID
  */
-export interface DeleteUserResponse {
-  message?: string
-  user?: {
-    userId: number
-    firstName: string | null
-    lastName: string | null
-    email: string | null
-    password: string | null
-    phone: string
-    role: string
-    verificationCode: string | null
-    isVerified: boolean
-    createdAt: string
-  }
+export interface GetUserByIdApiResponse {
+  userId: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+/**
+ * Interfaz para la respuesta de obtener usuarios por rol
+ */
+export interface GetUsersByRoleApiResponse {
+  users: Array<{
+    userId: number;
+    phone?: string;
+    email?: string;
+    document?: string;
+    documentType?: "CC" | "NIT";
+    isVerified: boolean;
+    createdAt: string;
+    role: {
+      roleId: number;
+      name: string;
+    };
+  }>;
 }

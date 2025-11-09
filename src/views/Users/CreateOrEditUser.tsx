@@ -15,7 +15,11 @@ import { Plus, X, Save, Camera, User as UserIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
-import type { UserRole } from "@/data/interfaces/user.interface";
+import type {
+  UserRole,
+  ICreateUserRequest,
+  IUpdateUserRequest,
+} from "@/data/interfaces/user.interface";
 import { toast } from "sonner";
 
 interface CreateOrEditUserProps {
@@ -27,6 +31,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
   const router = useRouter();
   const { createUser, getUserById, updateUser, loading, error } = useUsers();
   const [avatar, setAvatar] = useState<string>("");
+  const [profileFile, setProfileFile] = useState<File | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole>("client");
   const [loadingUser, setLoadingUser] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,11 +40,12 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
     phone: "",
     document: "",
     documentType: "CC" as "CC" | "NIT",
-    // Shipping address fields (no se envían al backend pero se mantienen en la vista)
+    country: "",
+    department: "",
+    city: "",
+    // Campos adicionales que no se envían al backend pero se mantienen en la vista
     address: "",
     apartment: "",
-    country: "",
-    city: "",
     shippingPhone: "",
   });
 
@@ -50,33 +56,34 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
         setLoadingUser(true);
         try {
           const response = await getUserById(Number(userId), token);
-          console.log("getUserById response:", response);
           if (response && response.user) {
             const user = response.user;
-            console.log("User data:", user);
-            setFormData({
+
+            const newFormData = {
               name: user.name || "",
               email: user.email || "",
               phone: user.phone || "",
               document: user.document || "",
               documentType: user.documentType || "CC",
+              country: user.country || "",
+              department: user.department || "",
+              city: user.city || "",
+              // Campos adicionales que no vienen del backend pero se mantienen
               address: "",
               apartment: "",
-              country: "",
-              city: "",
               shippingPhone: "",
-            });
-            setSelectedRole(user.role || "client");
-            console.log("Form data set:", {
-              name: user.name || "",
-              email: user.email || "",
-              phone: user.phone || "",
-              document: user.document || "",
-              documentType: user.documentType || "CC",
-            });
+            };
+            setFormData(newFormData);
 
-            // Avatar handling would be implemented if the backend supports it
-            // For now, we'll use the user's name initial as avatar
+            // Establecer el rol del usuario
+            if (user.role) {
+              setSelectedRole(user.role as UserRole);
+            }
+
+            // Establecer el avatar del usuario
+            if (user.profileUrl) {
+              setAvatar(user.profileUrl);
+            }
           }
         } catch (error) {
           console.error("Error loading user:", error);
@@ -94,13 +101,13 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
-        const reader = new FileReader();
+        setProfileFile(file);
 
+        const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
           setAvatar(base64);
         };
-
         reader.readAsDataURL(file);
       }
     },
@@ -121,36 +128,58 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
       return;
     }
 
-    // Preparar datos para enviar al backend
-    const userParams = {
-      idUsuario: userId ? Number(userId) : undefined,
-      name: formData.name,
-      lastName: "", // La API espera lastName pero el formulario no lo tiene separado
-      email: formData.email,
-      phone: formData.phone,
-      document: formData.document,
-      documentType: formData.documentType,
-      role: selectedRole,
-      isVerified: true,
-    };
-
-    console.log("Sending user data:", userParams);
+    if (!selectedRole) {
+      toast.error("Rol es requerido");
+      return;
+    }
 
     try {
       let response;
       if (userId) {
         // Update existing user
-        response = await updateUser(userParams, token);
+        const updateParams: IUpdateUserRequest = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          roleName: selectedRole,
+          document: formData.document,
+          documentType: formData.documentType,
+          country: formData.country,
+          department: formData.department,
+          city: formData.city,
+          isVerified: true,
+          file: profileFile || undefined,
+        };
+
+        // Add userId for the update
+        const userParamsWithId = {
+          ...updateParams,
+          userId: Number(userId),
+          idUsuario: Number(userId),
+        };
+
+        console.log("Updating user with data:", userParamsWithId);
+        response = await updateUser(userParamsWithId, token);
       } else {
         // Create new user
-        response = await createUser(userParams);
+        const createParams: ICreateUserRequest = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          roleName: selectedRole,
+          document: formData.document,
+          documentType: formData.documentType,
+          country: formData.country,
+          department: formData.department,
+          city: formData.city,
+          isVerified: true,
+          file: profileFile || undefined,
+        };
+
+        response = await createUser(createParams, token);
       }
 
       if (response) {
-        console.log(
-          `User ${userId ? "updated" : "created"} successfully:`,
-          response
-        );
         toast.success(
           `Usuario ${userId ? "actualizado" : "creado"} exitosamente: ${
             response.message
@@ -243,7 +272,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                   htmlFor="role"
                   className="text-sm font-medium text-muted-foreground"
                 >
-                  Rol del Usuario
+                  Rol del Usuario *
                 </label>
                 <Select
                   value={selectedRole}
@@ -343,7 +372,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 htmlFor="email"
                 className="text-sm font-medium text-muted-foreground"
               >
-                Email
+                Email {!formData.phone && "*"}
               </label>
               <Input
                 id="email"
@@ -361,7 +390,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 htmlFor="phone"
                 className="text-sm font-medium text-muted-foreground"
               >
-                Teléfono
+                Teléfono {!formData.email && "*"}
               </label>
               <Input
                 id="phone"
@@ -371,13 +400,78 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 disabled={loading || loadingUser}
               />
             </div>
+
+            {/* País */}
+            <div className="space-y-2">
+              <label
+                htmlFor="country"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                País
+              </label>
+              <Select
+                value={formData.country}
+                onValueChange={(value) => handleInputChange("country", value)}
+                disabled={loading || loadingUser}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar país" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Colombia">Colombia</SelectItem>
+                  <SelectItem value="Venezuela">Venezuela</SelectItem>
+                  <SelectItem value="Ecuador">Ecuador</SelectItem>
+                  <SelectItem value="Perú">Perú</SelectItem>
+                  <SelectItem value="México">México</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Departamento */}
+            <div className="space-y-2">
+              <label
+                htmlFor="department"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Departamento
+              </label>
+              <Input
+                id="department"
+                placeholder="Departamento"
+                value={formData.department}
+                onChange={(e) =>
+                  handleInputChange("department", e.target.value)
+                }
+                disabled={loading || loadingUser}
+              />
+            </div>
+
+            {/* Ciudad */}
+            <div className="space-y-2">
+              <label
+                htmlFor="city"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Ciudad
+              </label>
+              <Input
+                id="city"
+                placeholder="Ciudad"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                disabled={loading || loadingUser}
+              />
+            </div>
           </div>
 
-          {/* Shipping Address Section */}
+          {/* Shipping Address Section - Solo para mostrar, no se envía al backend */}
           <div className="mt-8">
             <h3 className="text-base font-medium text-muted-foreground mb-4">
-              Shipping address information
+              Información adicional de dirección
             </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Esta información es adicional y no se sincroniza con el backend
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Dirección */}
@@ -397,84 +491,20 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 />
               </div>
 
-              {/* Apartamentos */}
+              {/* Departamento */}
               <div className="space-y-2 md:col-span-2">
                 <label
                   htmlFor="apartment"
                   className="text-sm font-medium text-muted-foreground"
                 >
-                  Apartamentos
+                  Departamento
                 </label>
                 <Input
                   id="apartment"
-                  placeholder="Número de apartamento"
+                  placeholder="Departamento"
                   value={formData.apartment}
                   onChange={(e) =>
                     handleInputChange("apartment", e.target.value)
-                  }
-                  disabled={loading || loadingUser}
-                />
-              </div>
-
-              {/* País */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="country"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  País
-                </label>
-                <Select
-                  value={formData.country}
-                  onValueChange={(value) => handleInputChange("country", value)}
-                  disabled={loading || loadingUser}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="colombia">Colombia</SelectItem>
-                    <SelectItem value="venezuela">Venezuela</SelectItem>
-                    <SelectItem value="ecuador">Ecuador</SelectItem>
-                    <SelectItem value="peru">Perú</SelectItem>
-                    <SelectItem value="mexico">México</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div></div>
-
-              {/* Ciudad */}
-              <div className="space-y-2 md:col-span-2">
-                <label
-                  htmlFor="city"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Ciudad
-                </label>
-                <Input
-                  id="city"
-                  placeholder="Ingrese la ciudad"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  disabled={loading || loadingUser}
-                />
-              </div>
-
-              {/* Phone (Shipping) */}
-              <div className="space-y-2 md:col-span-4">
-                <label
-                  htmlFor="shippingPhone"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Phone
-                </label>
-                <Input
-                  id="shippingPhone"
-                  placeholder="+57 300 123 4567"
-                  value={formData.shippingPhone}
-                  onChange={(e) =>
-                    handleInputChange("shippingPhone", e.target.value)
                   }
                   disabled={loading || loadingUser}
                 />

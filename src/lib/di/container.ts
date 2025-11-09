@@ -30,6 +30,8 @@ import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-use
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
 import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by-id.use-case";
 import { UpdateUserUseCase } from "@/modules/users/domain/use-cases/update-user.use-case";
+import { GetUsersByRoleUseCase } from "@/modules/users/domain/use-cases/get-users-by-role.use-case";
+import { DeactivateAccountUseCase } from "@/modules/users/domain/use-cases/deactivate-account.use-case";
 import { GetAllMerchantsUseCase } from "@/modules/merchants/domain/use-cases/get-all-merchants.use-case";
 import { CreateMerchantUseCase } from "@/modules/merchants/domain/use-cases/create-merchant.use-case";
 import { GetMerchantByIdUseCase } from "@/modules/merchants/domain/use-cases/get-merchant-by-id.use-case";
@@ -93,6 +95,8 @@ container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
 container.bind(GetUserByIdUseCase).toSelf().inSingletonScope();
 container.bind(UpdateUserUseCase).toSelf().inSingletonScope();
+container.bind(GetUsersByRoleUseCase).toSelf().inSingletonScope();
+container.bind(DeactivateAccountUseCase).toSelf().inSingletonScope();
 container.bind(GetAllMerchantsUseCase).toSelf().inSingletonScope();
 container.bind(CreateMerchantUseCase).toSelf().inSingletonScope();
 container.bind(GetMerchantByIdUseCase).toSelf().inSingletonScope();

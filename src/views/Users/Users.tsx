@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 
 interface UsersViewProps {
@@ -224,11 +225,19 @@ export default function UsersView({ token }: UsersViewProps) {
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 relative rounded-full overflow-hidden bg-muted">
-                            {/* Avatar placeholder, you can add user.image if available */}
-                            <User className="h-6 w-6 text-muted-foreground" />
+                          <div className="h-8 w-8 relative rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                            {user.profileUrl ? (
+                              <Image
+                                src={user.profileUrl}
+                                alt={user.name || "Usuario"}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            )}
                           </div>
-                          {user.name || user.email}
+                          {user.name || user.email || "Usuario"}
                         </div>
                       </TableCell>
                       <TableCell>{user.email || "N/A"}</TableCell>
@@ -236,12 +245,16 @@ export default function UsersView({ token }: UsersViewProps) {
                       <TableCell>
                         <span
                           className={`capitalize ${
-                            user.role === "superadmin"
+                            (typeof user.role === "string"
+                              ? user.role
+                              : user.role?.name) === "superadmin"
                               ? "text-primary"
                               : "text-muted-foreground"
                           }`}
                         >
-                          {user.role || "N/A"}
+                          {typeof user.role === "string"
+                            ? user.role
+                            : user.role?.name || "N/A"}
                         </span>
                       </TableCell>
                       <TableCell>

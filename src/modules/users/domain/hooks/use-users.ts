@@ -4,12 +4,19 @@ import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-use
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
 import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by-id.use-case";
 import { UpdateUserUseCase } from "@/modules/users/domain/use-cases/update-user.use-case";
+import { GetUsersByRoleUseCase } from "@/modules/users/domain/use-cases/get-users-by-role.use-case";
+import { DeactivateAccountUseCase } from "@/modules/users/domain/use-cases/deactivate-account.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllUsersResponse,
   UserResponse,
 } from "@/modules/users/data/interfaces/users.response.interface";
-import { UserRole, type IUser } from "@/data/interfaces/user.interface";
+import {
+  UserRole,
+  type IUser,
+  type ICreateUserRequest,
+  type IUpdateUserRequest,
+} from "@/data/interfaces/user.interface";
 
 export const useUsers = () => {
   const [loading, setLoading] = useState(false);
@@ -44,14 +51,41 @@ export const useUsers = () => {
     []
   );
 
+  const getUsersByRole = useCallback(
+    async (
+      roleName: UserRole,
+      token?: string
+    ): Promise<AllUsersResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getUsersByRoleUseCase = container.get(GetUsersByRoleUseCase);
+        const response = await getUsersByRoleUseCase.execute(roleName, token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al cargar usuarios por rol";
+        setError(errorMessage);
+        console.error("Error getting users by role:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   const createUser = useCallback(
-    async (userParams: IUser): Promise<UserResponse | null> => {
+    async (
+      userParams: ICreateUserRequest | IUser,
+      token?: string
+    ): Promise<UserResponse | null> => {
       setLoading(true);
       setError(null);
 
       try {
         const createUserUseCase = container.get(CreateUserUseCase);
-        const response = await createUserUseCase.execute(userParams);
+        const response = await createUserUseCase.execute(userParams, token);
         return response;
       } catch (err: any) {
         const errorMessage = err?.message || "Error al crear usuario";
@@ -87,7 +121,10 @@ export const useUsers = () => {
   );
 
   const updateUser = useCallback(
-    async (userParams: IUser, token?: string): Promise<UserResponse | null> => {
+    async (
+      userParams: IUpdateUserRequest | IUser,
+      token?: string
+    ): Promise<UserResponse | null> => {
       setLoading(true);
       setError(null);
 
@@ -107,11 +144,36 @@ export const useUsers = () => {
     []
   );
 
+  const deactivateAccount = useCallback(
+    async (token?: string): Promise<UserResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const deactivateAccountUseCase = container.get(
+          DeactivateAccountUseCase
+        );
+        const response = await deactivateAccountUseCase.execute(token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al desactivar cuenta";
+        setError(errorMessage);
+        console.error("Error deactivating account:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     getAllUsers,
+    getUsersByRole,
     getUserById,
     createUser,
     updateUser,
+    deactivateAccount,
     loading,
     error,
   };

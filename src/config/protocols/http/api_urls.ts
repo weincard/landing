@@ -31,6 +31,7 @@ export const apiUrls = {
     update: "/users/update",
     delete: "/users/delete",
     getByRole: "/users/by-role",
+    deactivateAccount: "/users/deactivate-account",
   },
   membershipPlans: {
     create: "/memberships/plans/create",
