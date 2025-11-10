@@ -67,6 +67,7 @@ export function CreateOrEditAlly({
 
   const [files, setFiles] = useState<string[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [shouldRemoveLogo, setShouldRemoveLogo] = useState(false);
   const [offices, setOffices] = useState<Office[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -190,6 +191,7 @@ export function CreateOrEditAlly({
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
         setLogoFile(file);
+        setShouldRemoveLogo(false); // Reset the remove flag when selecting new file
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -201,6 +203,19 @@ export function CreateOrEditAlly({
     },
     []
   );
+
+  const handleRemoveLogo = useCallback(() => {
+    setFiles([]);
+    setLogoFile(null);
+    setShouldRemoveLogo(true);
+    // Reset the file input
+    const fileInput = document.getElementById(
+      "avatar-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  }, []);
 
   const handleCancel = () => {
     router.push("/dashboard/allies");
@@ -253,10 +268,11 @@ export function CreateOrEditAlly({
       let response;
       if (allyId) {
         // Update existing merchant
+        const logoToSend = shouldRemoveLogo ? null : logoFile || undefined;
         response = await updateMerchant(
           Number(allyId),
           merchantData,
-          logoFile || undefined,
+          logoToSend,
           token
         );
       } else {
@@ -336,6 +352,18 @@ export function CreateOrEditAlly({
                   <span className="text-5xl font-semibold text-muted-foreground select-none">
                     {(name && name.charAt(0).toUpperCase()) || "A"}
                   </span>
+                )}
+                {files[0] && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-8 w-8 rounded-full shadow-lg"
+                    onClick={handleRemoveLogo}
+                    disabled={loading || loadingMerchant}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
               <label htmlFor="avatar-upload">

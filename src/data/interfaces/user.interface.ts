@@ -36,7 +36,7 @@ export interface ICreateUserRequest {
   department?: string;
   city?: string;
   isVerified?: boolean;
-  file?: File; // Para la foto de perfil
+  file?: File | null; // Para la foto de perfil (null para eliminar en updates)
 }
 
 // Interface específica para la actualización de usuarios
@@ -51,5 +51,5 @@ export interface IUpdateUserRequest {
   department?: string;
   city?: string;
   isVerified?: boolean;
-  file?: File; // Para actualizar la foto de perfil
+  file?: File | null; // Para actualizar la foto de perfil (null para eliminar)
 }

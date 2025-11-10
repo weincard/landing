@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import Image from "next/image";
 
 interface ImagesCardProps {
@@ -41,6 +41,15 @@ export function ImagesCard({
     [images, imageFiles, onImagesChange]
   );
 
+  const handleRemoveImage = useCallback(
+    (indexToRemove: number) => {
+      const newImages = images.filter((_, index) => index !== indexToRemove);
+      const newFiles = imageFiles.filter((_, index) => index !== indexToRemove);
+      onImagesChange(newImages, newFiles);
+    },
+    [images, imageFiles, onImagesChange]
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -58,6 +67,15 @@ export function ImagesCard({
                     fill
                     className="object-cover rounded"
                   />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg"
+                    onClick={() => handleRemoveImage(idx)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
             </div>

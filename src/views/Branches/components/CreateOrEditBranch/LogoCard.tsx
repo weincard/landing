@@ -1,15 +1,16 @@
 import { useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import Image from "next/image";
 
 interface LogoCardProps {
   logo: string;
   onLogoChange: (file: File, base64: string) => void;
+  onLogoRemove?: () => void;
 }
 
-export function LogoCard({ logo, onLogoChange }: LogoCardProps) {
+export function LogoCard({ logo, onLogoChange, onLogoRemove }: LogoCardProps) {
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -24,6 +25,19 @@ export function LogoCard({ logo, onLogoChange }: LogoCardProps) {
     [onLogoChange]
   );
 
+  const handleRemoveLogo = useCallback(() => {
+    if (onLogoRemove) {
+      onLogoRemove();
+      // Reset the file input
+      const fileInput = document.getElementById(
+        "logo-upload"
+      ) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }
+  }, [onLogoRemove]);
+
   return (
     <Card>
       <CardHeader>
@@ -34,6 +48,17 @@ export function LogoCard({ logo, onLogoChange }: LogoCardProps) {
           {logo ? (
             <div className="relative w-32 h-32 mx-auto">
               <Image src={logo} alt="Logo" fill className="object-contain" />
+              {onLogoRemove && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-8 w-8 rounded-full shadow-lg"
+                  onClick={handleRemoveLogo}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">

@@ -38,7 +38,7 @@ export abstract class MerchantsRepository {
   abstract update(
     merchantId: number,
     merchantData: Partial<IMerchant>,
-    logoFile?: File,
+    logoFile?: File | null,
     token?: string
   ): Promise<MerchantResponse>;
 }
@@ -156,7 +156,7 @@ export class MerchantsRepositoryImpl implements MerchantsRepository {
   async update(
     merchantId: number,
     merchantData: Partial<IMerchant>,
-    logoFile?: File,
+    logoFile?: File | null,
     token?: string
   ): Promise<MerchantResponse> {
     console.log("Update Merchant Data:", merchantData);
@@ -170,7 +170,13 @@ export class MerchantsRepositoryImpl implements MerchantsRepository {
     if (merchantData.state) formData.append("state", merchantData.state);
     if (merchantData.founder !== undefined)
       formData.append("founder", String(merchantData.founder));
-    if (logoFile) formData.append("file", logoFile);
+
+    // Handle logo file - send null to remove, file to update, or omit to keep existing
+    if (logoFile === null) {
+      formData.append("file", ""); // Send empty string to indicate removal
+    } else if (logoFile) {
+      formData.append("file", logoFile);
+    }
 
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.merchants.update}/${merchantId}`,

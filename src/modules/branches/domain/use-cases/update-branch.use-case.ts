@@ -13,7 +13,7 @@ export class UpdateBranchUseCase {
   async execute(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File,
+    logoFile?: File | null,
     imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {

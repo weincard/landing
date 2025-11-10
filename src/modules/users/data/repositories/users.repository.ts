@@ -261,9 +261,15 @@ export class UsersRepositoryImpl implements UsersRepository {
         }
       }
 
-      // Agregar archivo
-      if ("file" in userParams && userParams.file) {
-        formData.append("file", userParams.file);
+      // Manejar archivo
+      if ("file" in userParams) {
+        if (userParams.file === null) {
+          // Enviar campo vacío o null para indicar eliminación
+          formData.append("file", "");
+        } else if (userParams.file) {
+          // Agregar archivo si existe
+          formData.append("file", userParams.file);
+        }
       }
 
       const userId =

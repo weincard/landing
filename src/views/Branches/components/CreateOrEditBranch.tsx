@@ -98,6 +98,7 @@ export function CreateOrEditBranch({
   // Files and images
   const [logo, setLogo] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [shouldRemoveLogo, setShouldRemoveLogo] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
@@ -291,6 +292,13 @@ export function CreateOrEditBranch({
   const handleLogoChange = (file: File, base64: string) => {
     setLogoFile(file);
     setLogo(base64);
+    setShouldRemoveLogo(false); // Reset the remove flag when selecting new file
+  };
+
+  const handleLogoRemove = () => {
+    setLogoFile(null);
+    setLogo("");
+    setShouldRemoveLogo(true);
   };
 
   const handleImagesChange = (newImages: string[], newFiles: File[]) => {
@@ -448,10 +456,11 @@ export function CreateOrEditBranch({
       let response;
       if (branchId) {
         // Edit mode: just update the branch
+        const logoToSend = shouldRemoveLogo ? null : logoFile || undefined;
         response = await updateBranch(
           Number(branchId),
           branchData,
-          logoFile || undefined,
+          logoToSend,
           imageFiles,
           token
         );
@@ -595,7 +604,11 @@ export function CreateOrEditBranch({
           />
 
           {/* Logo Card */}
-          <LogoCard logo={logo} onLogoChange={handleLogoChange} />
+          <LogoCard
+            logo={logo}
+            onLogoChange={handleLogoChange}
+            onLogoRemove={handleLogoRemove}
+          />
 
           {/* Images Card */}
           <ImagesCard

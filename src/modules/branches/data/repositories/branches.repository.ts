@@ -37,7 +37,7 @@ export abstract class BranchesRepository {
   abstract update(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File,
+    logoFile?: File | null,
     imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse>;
@@ -216,7 +216,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
   async update(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File,
+    logoFile?: File | null,
     imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
@@ -258,7 +258,12 @@ export class BranchesRepositoryImpl implements BranchesRepository {
       });
     }
 
-    if (logoFile) formData.append("logoFile", logoFile);
+    // Handle logo file - send null to remove, file to update, or omit to keep existing
+    if (logoFile === null) {
+      formData.append("logoFile", ""); // Send empty string to indicate removal
+    } else if (logoFile) {
+      formData.append("logoFile", logoFile);
+    }
 
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.branches.update}/${branchId}`,

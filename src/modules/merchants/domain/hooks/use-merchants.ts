@@ -104,7 +104,7 @@ export const useMerchants = () => {
     async (
       merchantId: number,
       merchantData: Partial<IMerchant>,
-      logoFile?: File,
+      logoFile?: File | null,
       token?: string
     ): Promise<MerchantResponse | null> => {
       setLoading(true);

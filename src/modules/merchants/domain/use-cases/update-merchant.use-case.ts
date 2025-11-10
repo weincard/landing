@@ -13,7 +13,7 @@ export class UpdateMerchantUseCase {
   async execute(
     merchantId: number,
     merchantData: Partial<IMerchant>,
-    logoFile?: File,
+    logoFile?: File | null,
     token?: string
   ): Promise<MerchantResponse> {
     return await this.merchantsRepository.update(

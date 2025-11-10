@@ -32,6 +32,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
   const { createUser, getUserById, updateUser, loading, error } = useUsers();
   const [avatar, setAvatar] = useState<string>("");
   const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [shouldRemoveAvatar, setShouldRemoveAvatar] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("client");
   const [loadingUser, setLoadingUser] = useState(false);
   const [formData, setFormData] = useState({
@@ -102,6 +103,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
         setProfileFile(file);
+        setShouldRemoveAvatar(false); // Reset the remove flag when selecting new file
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -113,6 +115,19 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
     },
     []
   );
+
+  const handleRemoveAvatar = useCallback(() => {
+    setAvatar("");
+    setProfileFile(null);
+    setShouldRemoveAvatar(true);
+    // Reset the file input
+    const fileInput = document.getElementById(
+      "avatar-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -148,7 +163,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
           department: formData.department,
           city: formData.city,
           isVerified: true,
-          file: profileFile || undefined,
+          file: shouldRemoveAvatar ? null : profileFile || undefined,
         };
 
         // Add userId for the update
@@ -257,6 +272,18 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 >
                   <Camera className="h-8 w-8 text-white" />
                 </label>
+                {avatar && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-8 w-8 rounded-full shadow-lg"
+                    onClick={handleRemoveAvatar}
+                    disabled={loading || loadingUser}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
                 <input
                   type="file"
                   id="avatar-upload"

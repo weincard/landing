@@ -106,7 +106,7 @@ export const useBranches = () => {
     async (
       branchId: number,
       branchData: Partial<IBranch>,
-      logoFile?: File,
+      logoFile?: File | null,
       imageFiles?: File[],
       token?: string
     ): Promise<BranchResponse | null> => {
