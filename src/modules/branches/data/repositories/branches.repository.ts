@@ -175,7 +175,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     // Handle image files (File objects)
     if (imageFiles && imageFiles.length > 0) {
       imageFiles.forEach((file) => {
-        formData.append("images[]", file);
+        formData.append("additionalImages", file);
       });
     }
 
@@ -254,7 +254,7 @@ export class BranchesRepositoryImpl implements BranchesRepository {
     // Handle image files (File objects)
     if (imageFiles && imageFiles.length > 0) {
       imageFiles.forEach((file) => {
-        formData.append("images[]", file);
+        formData.append("additionalImages", file);
       });
     }
 

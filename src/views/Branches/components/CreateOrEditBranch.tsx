@@ -256,6 +256,9 @@ export function CreateOrEditBranch({
           setNote(branch.note || "");
           setIsActive(branch.isActive ?? true);
           if (branch.logoUrl) setLogo(branch.logoUrl);
+          if (branch.images && branch.images.length > 0) {
+            setImages(branch.images);
+          }
 
           console.log("Set merchantId:", extractedMerchantId); // Keep for debugging
           console.log("Set userId:", extractedUserId); // Keep for debugging
