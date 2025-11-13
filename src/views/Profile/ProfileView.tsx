@@ -107,6 +107,13 @@ export default function ProfileView({
     setIsEditing(false);
   };
 
+  const getUserRole = (role: any): string => {
+    if (!role) return "Usuario";
+    if (typeof role === "string") return role;
+    if (typeof role === "object" && role.name) return role.name;
+    return "Usuario";
+  };
+
   const getStatusBadge = (status: string) => {
     if (status === "Completed") {
       return (
@@ -179,7 +186,7 @@ export default function ProfileView({
             <div className="flex-1 space-y-2">
               <div>
                 <h2 className="text-xl font-semibold">
-                  {user.name} {user.lastName} - ROL: {user.role || "Usuario"}{" "}
+                  {user.name} {user.lastName} - ROL: {getUserRole(user.role)}{" "}
                   no. {user.idUsuario || user.id || "3523"}
                 </h2>
                 <p className="text-sm text-muted-foreground">Colombia</p>
