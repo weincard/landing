@@ -67,6 +67,7 @@ function mapearUsuario(user: any): IUser {
     country: user.country || "",
     department: user.department || "",
     city: user.city || "",
+    address: user.address || "",
     profileUrl: user.profileUrl || "",
     role: user.role?.name || user.role || "client", // Manejar role como objeto o string
     verificationCode: user.verificationCode || "",

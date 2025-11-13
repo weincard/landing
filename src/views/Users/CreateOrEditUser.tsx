@@ -44,10 +44,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
     country: "",
     department: "",
     city: "",
-    // Campos adicionales que no se envían al backend pero se mantienen en la vista
     address: "",
-    apartment: "",
-    shippingPhone: "",
   });
 
   // Load existing user data when editing
@@ -69,10 +66,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
               country: user.country || "",
               department: user.department || "",
               city: user.city || "",
-              // Campos adicionales que no vienen del backend pero se mantienen
-              address: "",
-              apartment: "",
-              shippingPhone: "",
+              address: user.address || "",
             };
             setFormData(newFormData);
 
@@ -164,6 +158,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
           city: formData.city,
           isVerified: true,
           file: shouldRemoveAvatar ? null : profileFile || undefined,
+          address: formData.address,
         };
 
         // Add userId for the update
@@ -189,6 +184,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
           city: formData.city,
           isVerified: true,
           file: profileFile || undefined,
+          address: formData.address,
         };
 
         response = await createUser(createParams, token);
@@ -454,25 +450,6 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
               </Select>
             </div>
 
-            {/* Departamento */}
-            <div className="space-y-2">
-              <label
-                htmlFor="department"
-                className="text-sm font-medium text-muted-foreground"
-              >
-                Departamento
-              </label>
-              <Input
-                id="department"
-                placeholder="Departamento"
-                value={formData.department}
-                onChange={(e) =>
-                  handleInputChange("department", e.target.value)
-                }
-                disabled={loading || loadingUser}
-              />
-            </div>
-
             {/* Ciudad */}
             <div className="space-y-2">
               <label
@@ -489,53 +466,22 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 disabled={loading || loadingUser}
               />
             </div>
-          </div>
 
-          {/* Shipping Address Section - Solo para mostrar, no se envía al backend */}
-          <div className="mt-8">
-            <h3 className="text-base font-medium text-muted-foreground mb-4">
-              Información adicional de dirección
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Esta información es adicional y no se sincroniza con el backend
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Dirección */}
-              <div className="space-y-2 md:col-span-2">
-                <label
-                  htmlFor="address"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Dirección
-                </label>
-                <Input
-                  id="address"
-                  placeholder="Ingrese la dirección"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  disabled={loading || loadingUser}
-                />
-              </div>
-
-              {/* Departamento */}
-              <div className="space-y-2 md:col-span-2">
-                <label
-                  htmlFor="apartment"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Departamento
-                </label>
-                <Input
-                  id="apartment"
-                  placeholder="Departamento"
-                  value={formData.apartment}
-                  onChange={(e) =>
-                    handleInputChange("apartment", e.target.value)
-                  }
-                  disabled={loading || loadingUser}
-                />
-              </div>
+            {/* Dirección */}
+            <div className="space-y-2">
+              <label
+                htmlFor="address"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Dirección
+              </label>
+              <Input
+                id="address"
+                placeholder="Ingrese la dirección"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                disabled={loading || loadingUser}
+              />
             </div>
           </div>
         </CardContent>

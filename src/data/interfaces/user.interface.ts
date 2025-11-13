@@ -12,6 +12,7 @@ export interface IUser {
   country?: string; // País del usuario
   department?: string; // Departamento del usuario
   city?: string; // Ciudad del usuario
+  address?: string; // Dirección del usuario
   profileUrl?: string; // URL de la foto de perfil
   verificationCode?: string;
   isVerified?: boolean;
@@ -35,6 +36,7 @@ export interface ICreateUserRequest {
   country?: string;
   department?: string;
   city?: string;
+  address?: string;
   isVerified?: boolean;
   file?: File | null; // Para la foto de perfil (null para eliminar en updates)
 }
@@ -52,4 +54,5 @@ export interface IUpdateUserRequest {
   city?: string;
   isVerified?: boolean;
   file?: File | null; // Para actualizar la foto de perfil (null para eliminar)
+  address?: string;
 }

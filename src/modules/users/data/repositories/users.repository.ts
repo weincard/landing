@@ -134,6 +134,7 @@ export class UsersRepositoryImpl implements UsersRepository {
     if (userParams.email) formData.append("email", userParams.email);
     if (userParams.password) formData.append("password", userParams.password);
     if (userParams.phone) formData.append("phone", userParams.phone);
+    if (userParams.address) formData.append("address", userParams.address);
 
     // roleName es requerido según la API
     let roleName = "client"; // Valor por defecto
@@ -243,6 +244,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       if (userParams.department)
         formData.append("department", userParams.department);
       if (userParams.city) formData.append("city", userParams.city);
+      if (userParams.address) formData.append("address", userParams.address);
       if (userParams.isVerified !== undefined)
         formData.append("isVerified", userParams.isVerified.toString());
 
@@ -311,6 +313,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       if (userParams.country) requestBody.country = userParams.country;
       if (userParams.department) requestBody.department = userParams.department;
       if (userParams.city) requestBody.city = userParams.city;
+      if (userParams.address) requestBody.address = userParams.address;
       if (userParams.isVerified !== undefined)
         requestBody.isVerified = userParams.isVerified;
 
