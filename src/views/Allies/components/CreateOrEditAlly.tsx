@@ -11,14 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -26,23 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, Trash2, Save, Search, Loader2 } from "lucide-react";
+import { X, Save, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { IMerchant } from "@/data/interfaces/merchant.interface";
+import type { IMerchant, IBranch } from "@/data/interfaces/merchant.interface";
 import { IUser } from "@/data/interfaces/user.interface";
-
-interface Office {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  redemptions: number;
-  total: number;
-}
 
 interface CreateOrEditAllyProps {
   token: string;
@@ -63,14 +49,13 @@ export function CreateOrEditAlly({
     loading,
     error: merchantError,
   } = useMerchants();
+  const { getAllBranches, loading: loadingBranches } = useBranches();
   const { getAllUsers, loading: loadingUsers } = useUsers();
 
   const [files, setFiles] = useState<string[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [shouldRemoveLogo, setShouldRemoveLogo] = useState(false);
-  const [offices, setOffices] = useState<Office[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [branches, setBranches] = useState<IBranch[]>([]);
   const [ownerUsers, setOwnerUsers] = useState<IUser[]>([]);
   const [loadingMerchant, setLoadingMerchant] = useState(false);
 
@@ -82,6 +67,24 @@ export function CreateOrEditAlly({
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isFounder, setIsFounder] = useState<boolean>(false);
 
+  // Load branches for the merchant
+  const loadMerchantBranches = useCallback(
+    async (merchantId: number) => {
+      try {
+        const response = await getAllBranches(merchantId, token, {
+          skip: 0,
+          limit: 100,
+        });
+        if (response && response.branches) {
+          setBranches(response.branches);
+        }
+      } catch (error) {
+        console.error("Error loading merchant branches:", error);
+      }
+    },
+    [getAllBranches, token]
+  );
+
   // Load existing merchant data when editing
   useEffect(() => {
     const loadMerchantData = async () => {
@@ -91,6 +94,10 @@ export function CreateOrEditAlly({
           const response = await getMerchantById(Number(allyId), token);
           if (response && response.merchant) {
             const merchant = response.merchant;
+            console.log("Loading merchant data:", merchant); // Keep for debugging preload issue
+
+            // Extract merchantId from nested merchant object
+            const extractedMerchantId = merchant.merchantId?.toString() || "";
             setName(merchant.name || "");
             setDescription(merchant.description || "");
             setCountry(merchant.country || "");
@@ -106,6 +113,9 @@ export function CreateOrEditAlly({
             if (merchant.logoUrl) {
               setFiles([merchant.logoUrl]);
             }
+
+            // Load branches for this merchant
+            await loadMerchantBranches(Number(allyId));
           }
         } catch (error) {
           console.error("Error loading merchant:", error);
@@ -117,7 +127,7 @@ export function CreateOrEditAlly({
     };
 
     loadMerchantData();
-  }, [allyId, token, getMerchantById]);
+  }, [allyId, token, getMerchantById, loadMerchantBranches]);
 
   // Cargar usuarios con rol "owner" al montar el componente
   useEffect(() => {
@@ -133,58 +143,7 @@ export function CreateOrEditAlly({
     };
 
     fetchOwnerUsers();
-  }, [token, getAllUsers]); // Mock de sucursales disponibles (en producción vendría de la API)
-  const availableBranches: Office[] = [
-    {
-      id: "1",
-      name: "El cielo sede Medellín",
-      address: "Cra. 35 #66-35",
-      city: "Medellín Antioquia",
-      redemptions: 24,
-      total: 35,
-    },
-    {
-      id: "2",
-      name: "Kielo sushi Poblado",
-      address: "Cra. 43 #1 Sur-25",
-      city: "Medellín Antioquia",
-      redemptions: 145,
-      total: 200,
-    },
-    {
-      id: "3",
-      name: "Barbaro Laureles",
-      address: "Cra. 70 #44-35",
-      city: "Bogotá Colombia",
-      redemptions: 34,
-      total: 50,
-    },
-    {
-      id: "4",
-      name: "Restaurante sede n",
-      address: "Calle 10 #5-60",
-      city: "Cali Valle",
-      redemptions: 23,
-      total: 40,
-    },
-  ];
-
-  const filteredBranches = availableBranches.filter(
-    (branch) =>
-      !offices.some((office) => office.id === branch.id) &&
-      (branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        branch.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        branch.city.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  const handleAddBranch = (branch: Office) => {
-    setOffices([...offices, branch]);
-    setSearchTerm("");
-  };
-
-  const handleRemoveBranch = (branchId: string) => {
-    setOffices(offices.filter((office) => office.id !== branchId));
-  };
+  }, [token, getAllUsers]);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -494,127 +453,71 @@ export function CreateOrEditAlly({
         </CardContent>
       </Card>
 
-      {/* Offices Card */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Sucursales</h2>
-            <Button onClick={() => setIsDrawerOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Sucursal
-            </Button>
-          </div>
-
-          {/* Offices Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Ciudad</TableHead>
-                  <TableHead>Redenciones</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {offices.length === 0 ? (
+      {/* Branches Card - Only show in edit mode */}
+      {allyId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sucursales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center py-8 text-gray-500"
-                    >
-                      No hay sucursales agregadas
-                    </TableCell>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Dirección</TableHead>
+                    <TableHead>Ciudad</TableHead>
+                    <TableHead>Estado</TableHead>
                   </TableRow>
-                ) : (
-                  offices.map((office) => (
-                    <TableRow key={office.id}>
-                      <TableCell className="font-medium">
-                        {office.name}
-                      </TableCell>
-                      <TableCell>{office.address}</TableCell>
-                      <TableCell>{office.city}</TableCell>
-                      <TableCell>{office.redemptions}</TableCell>
-                      <TableCell>{office.total}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveBranch(office.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
+                </TableHeader>
+                <TableBody>
+                  {loadingBranches ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="text-center py-8 text-gray-500"
+                      >
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                        Cargando sucursales...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Drawer para buscar y agregar sucursales */}
-      <Dialog open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Buscar Sucursales</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre, dirección o ciudad..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+                  ) : branches.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="text-center py-8 text-gray-500"
+                      >
+                        No hay sucursales registradas para este aliado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    branches.map((branch) => (
+                      <TableRow key={branch.branchId}>
+                        <TableCell className="font-medium">
+                          {branch.name}
+                        </TableCell>
+                        <TableCell>{branch.address}</TableCell>
+                        <TableCell>{branch.city}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              branch.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {branch.isActive ? "Activa" : "Inactiva"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-
-            {/* Results List */}
-            <div className="max-h-[400px] overflow-y-auto space-y-2">
-              {filteredBranches.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm
-                    ? "No se encontraron sucursales"
-                    : "Todas las sucursales ya fueron agregadas"}
-                </div>
-              ) : (
-                filteredBranches.map((branch) => (
-                  <div
-                    key={branch.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-medium">{branch.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {branch.address} - {branch.city}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Redenciones: {branch.redemptions} / Total:{" "}
-                        {branch.total}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        handleAddBranch(branch);
-                      }}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Agregar
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
