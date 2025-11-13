@@ -15,6 +15,7 @@ export interface ICoupon {
   branchIds?: number[];
   isActive?: boolean;
   redemptionsCount?: number;
+  usageCount?: number;
   createdAt?: string;
   updatedAt?: string;
 
@@ -24,6 +25,14 @@ export interface ICoupon {
     name: string;
     price: number;
   };
+  membershipPlan?: {
+    membershipPlanId: number;
+    name: string;
+    description?: string;
+    price: string;
+    duration: string;
+  };
+  memberships?: any[];
   branches?: Array<{
     branchId: number;
     name: string;

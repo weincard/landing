@@ -244,7 +244,12 @@ export function CreateOrEditCoupon({
         code: coupon.code || "",
         name: coupon.name || "",
         description: coupon.description || "",
-        planId: (coupon.membershipPlanId || coupon.planId)?.toString() || "",
+        planId:
+          (
+            coupon.membershipPlan?.membershipPlanId ||
+            coupon.membershipPlanId ||
+            coupon.planId
+          )?.toString() || "",
         maxRedemptions: coupon.maxRedemptions?.toString() || "30",
         renewalCount: coupon.renewalCount?.toString() || "2",
         renewalType,
