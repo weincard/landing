@@ -191,6 +191,13 @@ export default function DashboardView({ token }: DashboardViewProps) {
     );
   };
 
+  const getUserRole = (role: any): string => {
+    if (!role) return "client";
+    if (typeof role === "string") return role;
+    if (typeof role === "object" && role.name) return role.name;
+    return "client";
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -385,7 +392,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
                     </TableCell>
                     <TableCell>
                       <span className="text-xs capitalize">
-                        {user.role || "client"}
+                        {getUserRole(user.role)}
                       </span>
                     </TableCell>
                     <TableCell>
