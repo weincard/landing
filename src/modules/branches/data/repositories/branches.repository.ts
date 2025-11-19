@@ -23,8 +23,6 @@ import {
 export abstract class BranchesRepository {
   abstract create(
     branchData: Partial<IBranch>,
-    logoFile?: File,
-    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse>;
   abstract getAll(
@@ -37,8 +35,6 @@ export abstract class BranchesRepository {
   abstract update(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File | null,
-    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse>;
   abstract delete(
@@ -128,73 +124,18 @@ export class BranchesRepositoryImpl implements BranchesRepository {
 
   async create(
     branchData: Partial<IBranch>,
-    logoFile?: File,
-    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
     console.log("Create Branch Data:", branchData);
-    console.log("Logo file:", logoFile);
-    console.log("Image files:", imageFiles);
-
-    const formData = new FormData();
-
-    // Required fields
-    if (branchData.merchantId)
-      formData.append("merchantId", String(branchData.merchantId));
-    if (branchData.userId) formData.append("userId", String(branchData.userId));
-    if (branchData.name) formData.append("name", branchData.name);
-    if (branchData.address) formData.append("address", branchData.address);
-    if (branchData.city) formData.append("city", branchData.city);
-    if (branchData.country) formData.append("country", branchData.country);
-    if (branchData.phone) formData.append("phone", branchData.phone);
-    if (branchData.email) formData.append("email", branchData.email);
-
-    // Optional fields
-    if (branchData.categoryId)
-      formData.append("categoryId", String(branchData.categoryId));
-    if (branchData.description)
-      formData.append("description", branchData.description);
-    if (branchData.howItWorks)
-      formData.append("howItWorks", branchData.howItWorks);
-    if (branchData.latitude)
-      formData.append("latitude", String(branchData.latitude));
-    if (branchData.longitude)
-      formData.append("longitude", String(branchData.longitude));
-    if (branchData.website) formData.append("website", branchData.website);
-    if (branchData.note) formData.append("note", branchData.note);
-    if (branchData.isActive !== undefined)
-      formData.append("isActive", String(branchData.isActive));
-
-    // Handle tags array
-    if (branchData.tags && branchData.tags.length > 0) {
-      branchData.tags.forEach((tag) => {
-        formData.append("tags[]", tag);
-      });
-    }
-
-    // Handle image files (File objects)
-    if (imageFiles && imageFiles.length > 0) {
-      imageFiles.forEach((file) => {
-        formData.append("additionalImages", file);
-      });
-    }
-
-    if (logoFile) formData.append("logoFile", logoFile);
-
-    // Debug: Log FormData contents
-    console.log("FormData entries:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
 
     const axiosRequest = await this.httpClient.request({
       url: apiUrls.branches.create,
       method: "post",
-      body: formData,
+      body: branchData,
       isAuth: true,
       token,
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type": "application/json",
       },
     });
 
@@ -216,63 +157,18 @@ export class BranchesRepositoryImpl implements BranchesRepository {
   async update(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File | null,
-    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
     console.log("Update Branch Data:", branchData);
 
-    const formData = new FormData();
-
-    // Only include fields that are allowed for update according to the API spec
-    if (branchData.name) formData.append("name", branchData.name);
-    if (branchData.description)
-      formData.append("description", branchData.description);
-    if (branchData.howItWorks)
-      formData.append("howItWorks", branchData.howItWorks);
-    if (branchData.address) formData.append("address", branchData.address);
-    if (branchData.city) formData.append("city", branchData.city);
-    if (branchData.country) formData.append("country", branchData.country);
-    if (branchData.latitude)
-      formData.append("latitude", String(branchData.latitude));
-    if (branchData.longitude)
-      formData.append("longitude", String(branchData.longitude));
-    if (branchData.phone) formData.append("phone", branchData.phone);
-    if (branchData.email) formData.append("email", branchData.email);
-    if (branchData.website) formData.append("website", branchData.website);
-    if (branchData.isActive !== undefined)
-      formData.append("isActive", String(branchData.isActive));
-    if (branchData.note) formData.append("note", branchData.note);
-
-    // Handle tags array
-    if (branchData.tags && branchData.tags.length > 0) {
-      branchData.tags.forEach((tag) => {
-        formData.append("tags[]", tag);
-      });
-    }
-
-    // Handle image files (File objects)
-    if (imageFiles && imageFiles.length > 0) {
-      imageFiles.forEach((file) => {
-        formData.append("additionalImages", file);
-      });
-    }
-
-    // Handle logo file - send null to remove, file to update, or omit to keep existing
-    if (logoFile === null) {
-      formData.append("logoFile", ""); // Send empty string to indicate removal
-    } else if (logoFile) {
-      formData.append("logoFile", logoFile);
-    }
-
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.branches.update}/${branchId}`,
       method: "patch",
-      body: formData,
+      body: branchData,
       isAuth: true,
       token,
       headers: {
-        "Content-Type": undefined, // Let browser set multipart boundary
+        "Content-Type": "application/json",
       },
     });
 

@@ -11,6 +11,10 @@ const nextConfig = {
         // S3 bucket used by Weincard files (used by next/image)
         hostname: "weincard-files.s3.us-east-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "s3.amazonaws.com",
+      },
     ],
   },
 };

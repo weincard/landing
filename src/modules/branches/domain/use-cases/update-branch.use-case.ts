@@ -13,16 +13,8 @@ export class UpdateBranchUseCase {
   async execute(
     branchId: number,
     branchData: Partial<IBranch>,
-    logoFile?: File | null,
-    imageFiles?: File[],
     token?: string
   ): Promise<BranchResponse> {
-    return await this.branchesRepository.update(
-      branchId,
-      branchData,
-      logoFile,
-      imageFiles,
-      token
-    );
+    return await this.branchesRepository.update(branchId, branchData, token);
   }
 }

@@ -52,4 +52,7 @@ export const apiUrls = {
     update: "/offers/update",
     delete: "/offers/delete",
   },
+  files: {
+    generatePresignedUrls: "/files/generate-presigned-urls",
+  },
 };

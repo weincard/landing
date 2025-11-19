@@ -74,8 +74,6 @@ export const useBranches = () => {
   const createBranch = useCallback(
     async (
       branchData: Partial<IBranch>,
-      logoFile?: File,
-      imageFiles?: File[],
       token?: string
     ): Promise<BranchResponse | null> => {
       setLoading(true);
@@ -83,12 +81,7 @@ export const useBranches = () => {
 
       try {
         const createBranchUseCase = container.get(CreateBranchUseCase);
-        const response = await createBranchUseCase.execute(
-          branchData,
-          logoFile,
-          imageFiles,
-          token
-        );
+        const response = await createBranchUseCase.execute(branchData, token);
         return response;
       } catch (err: any) {
         const errorMessage = err?.message || "Error al crear sucursal";
@@ -106,8 +99,6 @@ export const useBranches = () => {
     async (
       branchId: number,
       branchData: Partial<IBranch>,
-      logoFile?: File | null,
-      imageFiles?: File[],
       token?: string
     ): Promise<BranchResponse | null> => {
       setLoading(true);
@@ -118,8 +109,6 @@ export const useBranches = () => {
         const response = await updateBranchUseCase.execute(
           branchId,
           branchData,
-          logoFile,
-          imageFiles,
           token
         );
         return response;

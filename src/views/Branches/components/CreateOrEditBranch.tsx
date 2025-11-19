@@ -12,6 +12,11 @@ import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
 import type { CreateOfferRequest } from "@/modules/offers/data/interfaces/offers.response.interface";
+import {
+  uploadFilesWithPresignedUrls,
+  type UploadProgress,
+} from "@/modules/s3";
+import { apiUrls } from "@/config/protocols/http/api_urls";
 
 // Types for offers according to new API
 interface Offer {
@@ -32,6 +37,7 @@ interface Offer {
 }
 import { CreateOrEditCategoryModal } from "./CreateOrEditCategoryModal";
 import { CreateOrEditOfferModal } from "./CreateOrEditBranch/CreateOrEditOfferModal";
+import { UploadProgressModal } from "./CreateOrEditBranch/UploadProgressModal";
 import {
   BranchHeader,
   InformationCard,
@@ -95,12 +101,16 @@ export function CreateOrEditBranch({
   const [note, setNote] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  // Files and images
+  // Files and images - Store File objects for upload, URLs for display
   const [logo, setLogo] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [shouldRemoveLogo, setShouldRemoveLogo] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  // Upload progress state
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState("");
 
   // UI state
   const [rating, setRating] = useState(4.5);
@@ -295,13 +305,11 @@ export function CreateOrEditBranch({
   const handleLogoChange = (file: File, base64: string) => {
     setLogoFile(file);
     setLogo(base64);
-    setShouldRemoveLogo(false); // Reset the remove flag when selecting new file
   };
 
   const handleLogoRemove = () => {
     setLogoFile(null);
     setLogo("");
-    setShouldRemoveLogo(true);
   };
 
   const handleImagesChange = (newImages: string[], newFiles: File[]) => {
@@ -432,47 +440,115 @@ export function CreateOrEditBranch({
       return;
     }
 
-    const branchData: Partial<IBranch> = {
-      name,
-      address,
-      city,
-      country,
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-      phone,
-      email,
-      description,
-      howItWorks,
-      website,
-      note,
-      isActive,
-    };
-
-    // Only include merchantId, categoryId, and userId for creation
-    if (!branchId) {
-      branchData.merchantId = Number(merchantId);
-      branchData.categoryId = Number(categoryId);
-      branchData.userId = Number(userId);
-    }
-
     try {
+      setIsUploading(true);
+
+      // Step 1: Upload files to S3 if there are any
+      let logoUrl = logo; // Existing logo URL or empty
+      let imageUrls = images.filter((img) => img.startsWith("http")); // Keep existing URLs
+
+      const filesToUpload: File[] = [];
+
+      // Add logo file if selected
+      if (logoFile) {
+        filesToUpload.push(logoFile);
+      }
+
+      // Add new image files
+      if (imageFiles.length > 0) {
+        filesToUpload.push(...imageFiles);
+      }
+
+      // Upload files if there are any
+      if (filesToUpload.length > 0) {
+        setUploadStep("Subiendo archivos...");
+
+        const uploadResults = await uploadFilesWithPresignedUrls(
+          filesToUpload,
+          token,
+          `${process.env.NEXT_PUBLIC_API_URL}${apiUrls.files.generatePresignedUrls}`,
+          setUploadProgress
+        );
+
+        // Process upload results
+        let logoUploadFailed = false;
+        const failedUploads: string[] = [];
+
+        for (const result of uploadResults) {
+          if (result.success) {
+            if (logoFile && result.fileName === logoFile.name) {
+              logoUrl = result.publicUrl;
+            } else {
+              imageUrls.push(result.publicUrl);
+            }
+          } else {
+            // Check if the failed upload was the logo
+            if (logoFile && result.fileName === logoFile.name) {
+              logoUploadFailed = true;
+            }
+            failedUploads.push(result.fileName);
+            toast.error(`Error al subir ${result.fileName}: ${result.error}`);
+          }
+        }
+
+        // If logo upload failed and user selected a new logo, prevent save
+        if (logoUploadFailed) {
+          toast.error(
+            "No se puede guardar: La subida del logo falló. Por favor, reintenta o selecciona otra imagen."
+          );
+          setIsUploading(false);
+          return;
+        }
+
+        // If other files failed, warn but allow to continue
+        if (failedUploads.length > 0 && !logoUploadFailed) {
+          toast.warning(
+            `${failedUploads.length} archivo(s) no se pudieron subir. Se guardará la sucursal sin esas imágenes.`
+          );
+        }
+      }
+
+      // Step 2: Prepare branch data with URLs
+      const branchData: Partial<IBranch> = {
+        name,
+        address,
+        city,
+        country,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        phone,
+        email,
+        description,
+        howItWorks,
+        website,
+        note,
+        isActive,
+        logoUrl: logoUrl || undefined,
+        images: imageUrls.length > 0 ? imageUrls : undefined,
+      };
+
+      // Only include merchantId, categoryId, and userId for creation
+      if (!branchId) {
+        branchData.merchantId = Number(merchantId);
+        branchData.categoryId = Number(categoryId);
+        branchData.userId = Number(userId);
+      }
+
       let response;
       if (branchId) {
         // Edit mode: just update the branch
-        const logoToSend = shouldRemoveLogo ? null : logoFile || undefined;
-        response = await updateBranch(
-          Number(branchId),
-          branchData,
-          logoToSend,
-          imageFiles,
-          token
-        );
+        setUploadStep("Actualizando sucursal...");
+        response = await updateBranch(Number(branchId), branchData, token);
 
         if (response) {
+          setIsUploading(false);
+          toast.success("Sucursal actualizada exitosamente");
           router.push("/dashboard/branches");
         }
       } else {
         // Create mode: create branch and then create offers with progress
+        setUploadStep("Creando sucursal...");
+
         setCreationProgress({
           isCreating: true,
           step: "Creando sucursal...",
@@ -481,12 +557,7 @@ export function CreateOrEditBranch({
         });
 
         try {
-          response = await createBranch(
-            branchData,
-            logoFile || undefined,
-            imageFiles,
-            token
-          );
+          response = await createBranch(branchData, token);
 
           if (response && response.branch) {
             const newBranchId = response.branch.branchId;
@@ -542,6 +613,8 @@ export function CreateOrEditBranch({
               totalOffers: 0,
             });
 
+            setIsUploading(false);
+            toast.success("Sucursal creada exitosamente");
             router.push("/dashboard/branches");
           } else {
             // If response is empty or branch creation failed
@@ -566,8 +639,16 @@ export function CreateOrEditBranch({
         currentOffer: 0,
         totalOffers: 0,
       });
+      setIsUploading(false);
+      setUploadProgress([]);
       toast.error(err?.message || "Error al guardar la sucursal");
     }
+  };
+
+  const handleCancelUpload = () => {
+    setIsUploading(false);
+    setUploadProgress([]);
+    setUploadStep("");
   };
 
   const handleCancel = () => {
@@ -700,6 +781,15 @@ export function CreateOrEditBranch({
         onSave={handleSaveOffer}
         offer={editingOffer}
       />
+
+      {/* Upload Progress Modal */}
+      {isUploading && (
+        <UploadProgressModal
+          progress={uploadProgress}
+          step={uploadStep}
+          onCancel={handleCancelUpload}
+        />
+      )}
     </div>
   );
 }
