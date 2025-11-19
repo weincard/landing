@@ -34,12 +34,7 @@ interface CreateOrEditCouponProps {
 }
 
 // Constants
-const REDEMPTION_LIMITS = [10, 20, 30, 40, 50, 100];
-const RENEWAL_COUNTS = Array.from({ length: 12 }, (_, i) => i + 1);
-const DISCOUNT_TYPES = [
-  { value: "fixed", label: "Monto fijo" },
-  { value: "percentage", label: "Porcentaje" },
-] as const;
+const DISCOUNT_TYPES = [{ value: "percentage", label: "Porcentaje" }] as const;
 
 // Helper functions
 const validateForm = (data: {
@@ -69,8 +64,18 @@ const validateForm = (data: {
   if (!name.trim()) return "El nombre del cupón es requerido";
   if (!description.trim()) return "La descripción es requerida";
   if (!planId) return "Debe seleccionar un plan";
-  if (!maxRedemptions) return "Debe seleccionar el máximo de redenciones";
-  if (!renewalCount) return "Debe seleccionar la cantidad de renovaciones";
+  if (!maxRedemptions) return "Debe ingresar el máximo de redenciones";
+  if (!renewalCount) return "Debe ingresar la cantidad de renovaciones";
+
+  const maxRedemptionsNum = Number(maxRedemptions);
+  if (isNaN(maxRedemptionsNum) || maxRedemptionsNum <= 0) {
+    return "El máximo de redenciones debe ser un número positivo";
+  }
+
+  const renewalCountNum = Number(renewalCount);
+  if (isNaN(renewalCountNum) || renewalCountNum <= 0 || renewalCountNum > 12) {
+    return "La cantidad de renovaciones debe ser un número entre 1 y 12";
+  }
   if (!couponImport.trim()) return "El importe del cupón es requerido";
 
   const discountValue = Number(couponImport);
@@ -186,8 +191,8 @@ export function CreateOrEditCoupon({
     name: "",
     description: "",
     planId: "",
-    maxRedemptions: "30",
-    renewalCount: "2",
+    maxRedemptions: "",
+    renewalCount: "",
     renewalType: "percentage",
     couponImport: "",
     isActive: true,
@@ -422,24 +427,18 @@ export function CreateOrEditCoupon({
 
             {/* Máximo # redenciones */}
             <FormField label="Máximo # redenciones" htmlFor="maxRedemptions">
-              <Select
+              <Input
+                id="maxRedemptions"
+                placeholder="Ej: 30"
                 value={formData.maxRedemptions}
-                onValueChange={(value) =>
-                  updateFormField("maxRedemptions", value)
+                onChange={(e) =>
+                  updateFormField("maxRedemptions", e.target.value)
                 }
                 disabled={loading}
-              >
-                <SelectTrigger id="maxRedemptions">
-                  <SelectValue placeholder="Selecciona el límite" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REDEMPTION_LIMITS.map((limit) => (
-                    <SelectItem key={limit} value={limit.toString()}>
-                      {limit}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                type="number"
+                min="1"
+                step="1"
+              />
             </FormField>
 
             <div />
@@ -502,24 +501,16 @@ export function CreateOrEditCoupon({
               htmlFor="renewalCount"
               className="col-span-2"
             >
-              <Select
+              <Input
+                id="renewalCount"
+                placeholder="Ej: 2"
                 value={formData.renewalCount}
-                onValueChange={(value) =>
-                  updateFormField("renewalCount", value)
+                onChange={(e) =>
+                  updateFormField("renewalCount", e.target.value)
                 }
                 disabled={loading}
-              >
-                <SelectTrigger id="renewalCount">
-                  <SelectValue placeholder="Selecciona cantidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RENEWAL_COUNTS.map((count) => (
-                    <SelectItem key={count} value={count.toString()}>
-                      {count}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                type="number"
+              />
             </FormField>
 
             {/* Fecha de expiración */}
