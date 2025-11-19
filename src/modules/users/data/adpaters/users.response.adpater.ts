@@ -50,7 +50,7 @@ export const getUsersByRoleResponseAdapter = (
 });
 
 function mapearUsuario(user: any): IUser {
-  console.log("mapearUsuario - Input user:", user);
+  // console.log("mapearUsuario - Input user:", user);
 
   // Extraer la parte antes del @ del email como name si no hay name
   const nameFromEmail = user.email ? user.email.split("@")[0] : "";
@@ -75,6 +75,6 @@ function mapearUsuario(user: any): IUser {
     createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
   };
 
-  console.log("mapearUsuario - Output mappedUser:", mappedUser);
+  // console.log("mapearUsuario - Output mappedUser:", mappedUser);
   return mappedUser;
 }

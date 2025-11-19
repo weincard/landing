@@ -79,7 +79,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       token,
     });
 
-    console.log("Get All Users Response:", axiosRequest.body);
+    // console.log("Get All Users Response:", axiosRequest.body);
 
     if (
       axiosRequest.statusCode === HttpStatusCode.ok ||

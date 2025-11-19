@@ -15,7 +15,7 @@ export function loadGoogleMaps(): Promise<typeof google> {
     return window.__googleMapsScriptLoadingPromise;
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey = "AIzaSyCdlSGLxIHphwSa8T2M_p4hZk5473_Luug";
   if (!apiKey) {
     return Promise.reject(new Error("Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"));
   }
