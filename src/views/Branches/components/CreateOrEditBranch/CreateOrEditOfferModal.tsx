@@ -31,6 +31,9 @@ export interface Offer {
   validFrom: string;
   validTo: string;
   validDays: string[];
+  // validHours: string[]; // Deprecated: now using startTime and endTime
+  startTime?: string; // Formato HH:mm (ej: "09:00")
+  endTime?: string; // Formato HH:mm (ej: "17:00")
   isActive: boolean;
   expiresAt: string;
   excludesBankHolidays: boolean;
@@ -62,6 +65,9 @@ export function CreateOrEditOfferModal({
       .toISOString()
       .split("T")[0],
     validDays: [],
+    // validHours: [], // Deprecated
+    startTime: "",
+    endTime: "",
     isActive: true,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     excludesBankHolidays: false,
@@ -78,6 +84,13 @@ export function CreateOrEditOfferModal({
     { value: "Sunday", label: "Domingo" },
   ];
 
+  // Deprecated: hoursOfDay array - now using time range inputs
+  // const hoursOfDay = [
+  //   { value: "1", label: "1 AM" },
+  //   { value: "2", label: "2 AM" },
+  //   ...
+  // ];
+
   useEffect(() => {
     if (offer) {
       console.log("Loading offer for edit:", offer); // Debug log
@@ -88,6 +101,9 @@ export function CreateOrEditOfferModal({
         description: offer.description || "",
         conditions: offer.conditions || "",
         validDays: offer.validDays || [],
+        // validHours: offer.validHours || [], // Deprecated
+        startTime: offer.startTime || "",
+        endTime: offer.endTime || "",
         validFrom: offer.validFrom
           ? new Date(offer.validFrom).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
@@ -109,6 +125,9 @@ export function CreateOrEditOfferModal({
           .toISOString()
           .split("T")[0],
         validDays: [],
+        // validHours: [], // Deprecated
+        startTime: "",
+        endTime: "",
         isActive: true,
         expiresAt: new Date(
           Date.now() + 30 * 24 * 60 * 60 * 1000
@@ -134,6 +153,16 @@ export function CreateOrEditOfferModal({
         : [...prev.validDays, day],
     }));
   };
+
+  // Deprecated: toggleHour function - now using time inputs
+  // const toggleHour = (hour: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     validHours: prev.validHours.includes(hour)
+  //       ? prev.validHours.filter((h) => h !== hour)
+  //       : [...prev.validHours, hour],
+  //   }));
+  // };
 
   const getOfferTypeLabel = (offerType: string) => {
     switch (offerType) {
@@ -183,7 +212,28 @@ export function CreateOrEditOfferModal({
       return;
     }
 
-    onSave(formData);
+    // Validar rango horario si se especifica
+    if (formData.startTime && formData.endTime) {
+      if (formData.startTime >= formData.endTime) {
+        toast.error("La hora de inicio debe ser anterior a la hora de fin");
+        return;
+      }
+    }
+
+    // Construir las fechas con horarios para el backend
+    const offerData = {
+      ...formData,
+      // Agregar hora de inicio a validFrom si se especifica
+      validFrom: formData.startTime
+        ? `${formData.validFrom}T${formData.startTime}:00.000Z`
+        : `${formData.validFrom}T00:00:00.000Z`,
+      // Agregar hora de fin a validTo si se especifica
+      validTo: formData.endTime
+        ? `${formData.validTo}T${formData.endTime}:00.000Z`
+        : `${formData.validTo}T23:59:59.000Z`,
+    };
+
+    onSave(offerData);
     onClose();
   };
 
@@ -328,6 +378,42 @@ export function CreateOrEditOfferModal({
             {formData.validDays.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Si no seleccionas días, la oferta será válida todos los días
+              </p>
+            )}
+          </div>
+
+          {/* Rango horario válido */}
+          <div className="space-y-2">
+            <Label>Rango horario válido (opcional)</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">
+                  Hora de inicio
+                </Label>
+                <Input
+                  type="time"
+                  value={formData.startTime || ""}
+                  onChange={(e) =>
+                    handleInputChange("startTime", e.target.value)
+                  }
+                  placeholder="09:00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">
+                  Hora de fin
+                </Label>
+                <Input
+                  type="time"
+                  value={formData.endTime || ""}
+                  onChange={(e) => handleInputChange("endTime", e.target.value)}
+                  placeholder="17:00"
+                />
+              </div>
+            </div>
+            {!formData.startTime && !formData.endTime && (
+              <p className="text-sm text-muted-foreground">
+                Si no especificas horario, la oferta será válida todo el día
               </p>
             )}
           </div>

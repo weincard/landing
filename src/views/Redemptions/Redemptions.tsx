@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IRedemption } from "@/data/interfaces/interfaces.interface";
+import type { IRedemption } from "@/modules/redemptions/data/interfaces/redemptions.response.interface";
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,56 +32,75 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { useRedemptions } from "@/modules/redemptions/domain/hooks/use-redemptions";
 
-const allies: IRedemption[] = [
-  {
-    redemptionId: 1,
-    order: "ORD-001",
-    date: new Date("2024-01-15"),
-    customer: 123,
-    ally: "Restaurant ABC",
-    office: "Downtown Branch",
-    total: 50.0,
-  },
-  {
-    redemptionId: 2,
-    order: "ORD-002",
-    date: new Date("2024-01-16"),
-    customer: 124,
-    ally: "Store XYZ",
-    office: "Mall Branch",
-    total: 75.5,
-  },
-  {
-    redemptionId: 3,
-    order: "ORD-003",
-    date: new Date("2024-01-17"),
-    customer: 125,
-    ally: "Cafe 123",
-    total: 25.0,
-  },
-];
+interface RedemptionsViewProps {
+  token: string;
+}
 
-interface RedemptionsViewProps {}
+export default function RedemptionsView({ token }: RedemptionsViewProps) {
+  const { getAllRedemptions, loading } = useRedemptions();
 
-export default function RedemptionsView({}: RedemptionsViewProps) {
-  const [loading, setLoading] = useState(false);
+  const [redemptions, setRedemptions] = useState<IRedemption[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRedemptions, setSelectedRedemptions] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [branchIdFilter, setBranchIdFilter] = useState<string>("");
+  const [userIdFilter, setUserIdFilter] = useState<string>("");
 
-  const totalPages = Math.ceil(allies.length / pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const fetchRedemptions = useCallback(async () => {
+    const skip = (currentPage - 1) * pageSize;
+
+    const filters: { branchId?: number | null; userId?: number | null } = {};
+
+    if (branchIdFilter) {
+      filters.branchId = parseInt(branchIdFilter) || null;
+    }
+
+    if (userIdFilter) {
+      filters.userId = parseInt(userIdFilter) || null;
+    }
+
+    const response = await getAllRedemptions(
+      token,
+      { limit: pageSize, skip },
+      filters
+    );
+
+    if (response) {
+      setRedemptions(response.redemptions);
+      setTotalCount(response.count);
+    }
+  }, [
+    getAllRedemptions,
+    token,
+    currentPage,
+    pageSize,
+    branchIdFilter,
+    userIdFilter,
+  ]);
+
+  useEffect(() => {
+    fetchRedemptions();
+  }, [fetchRedemptions]);
 
   const handlePageChange = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Lógica para cargar los datos de la página correspondiente
+  }, []);
+
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPageSize(value);
+    setCurrentPage(1);
   }, []);
 
   const handleSearch = useCallback(() => {
-    // Lógica de búsqueda aquí
-    console.log("Buscar:", searchTerm);
-  }, [searchTerm]);
+    setCurrentPage(1);
+    fetchRedemptions();
+  }, [fetchRedemptions]);
 
   return (
     <div>
@@ -93,16 +112,23 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
           {/* Filtros */}
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="w-full md:w-64">
-              <Select
-              // value={selectedSpecieId}
-              // onValueChange={handleSpeciesChange}
-              // disabled={loading || species.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtro" />
-                </SelectTrigger>
-                <SelectContent>{/*  */}</SelectContent>
-              </Select>
+              <Input
+                placeholder="ID de Sucursal"
+                value={branchIdFilter}
+                onChange={(e) => setBranchIdFilter(e.target.value)}
+                type="number"
+                className="w-full"
+              />
+            </div>
+
+            <div className="w-full md:w-64">
+              <Input
+                placeholder="ID de Usuario"
+                value={userIdFilter}
+                onChange={(e) => setUserIdFilter(e.target.value)}
+                type="number"
+                className="w-full"
+              />
             </div>
 
             <div className="flex-1 relative max-w-xs">
@@ -122,29 +148,6 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
                 "Buscar"
               )}
             </Button>
-            <div className="flex gap-2 ml-auto">
-              <Button
-                disabled={selectedRedemptions.length === 0}
-                variant="outline"
-                className="text-primary"
-                size="icon"
-              >
-                <Link href={`/dashboard/allies/${selectedRedemptions[0]}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                  <span className="sr-only">Editar</span>
-                </Link>
-              </Button>
-              <Button
-                disabled={selectedRedemptions.length === 0}
-                variant="outline"
-                className="text-primary"
-                size="icon"
-                // onClick={() => handleDeleteClick(raza)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Eliminar</span>
-              </Button>
-            </div>
           </div>
 
           {/* Tabla */}
@@ -155,19 +158,21 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
                   <TableHead className="w-[50px]">
                     <Checkbox
                       checked={
-                        selectedRedemptions.length === allies.length &&
-                        allies.length > 0
+                        selectedRedemptions.length === redemptions.length &&
+                        redemptions.length > 0
                       }
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setSelectedRedemptions(
-                            allies.map((redemption) => redemption.redemptionId)
+                            redemptions.map(
+                              (redemption) => redemption.redemptionId
+                            )
                           );
                         } else {
                           setSelectedRedemptions([]);
                         }
                       }}
-                      disabled={loading || allies.length === 0}
+                      disabled={loading || redemptions.length === 0}
                     />
                   </TableHead>
                   {/* <TableHead>ID</TableHead> */}
@@ -176,14 +181,15 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Aliado</TableHead>
                   <TableHead>Sucursal</TableHead>
-                  <TableHead>Total</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Ahorro</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       <div className="flex justify-center items-center">
@@ -192,17 +198,17 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : allies.length === 0 ? (
+                ) : redemptions.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       No se encontraron redenciones
                     </TableCell>
                   </TableRow>
                 ) : (
-                  allies.map((redemption) => (
+                  redemptions.map((redemption) => (
                     <TableRow key={redemption.redemptionId}>
                       <TableCell>
                         <Checkbox
@@ -226,15 +232,27 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        {redemption.order}
+                        {redemption.redemptionId}
                       </TableCell>
                       <TableCell>
-                        {redemption.date.toLocaleDateString()}
+                        {new Date(
+                          redemption.redeemedAt || redemption.createdAt
+                        ).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{redemption.customer}</TableCell>
-                      <TableCell>{redemption.ally}</TableCell>
-                      <TableCell>{redemption.office || "N/A"}</TableCell>
-                      <TableCell>${redemption.total.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {redemption.user?.name ||
+                          redemption.user?.email ||
+                          redemption.user?.userId ||
+                          "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {redemption.branch?.merchant?.name || "N/A"}
+                      </TableCell>
+                      <TableCell>{redemption.branch?.name || "N/A"}</TableCell>
+                      <TableCell>${redemption.value.toFixed(2)}</TableCell>
+                      <TableCell className="text-green-600 font-semibold">
+                        ${redemption.savings.toFixed(2)}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -246,13 +264,18 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               Mostrando
-              {allies.length === 0 ? " 0 " : ` ${1} - ${allies.length} `}
-              de {allies.length} redenciones
+              {redemptions.length === 0
+                ? " 0 "
+                : ` ${(currentPage - 1) * pageSize + 1} - ${Math.min(
+                    currentPage * pageSize,
+                    totalCount
+                  )} `}
+              de {totalCount} redenciones
             </div>
             <div className="flex items-center gap-2">
               <Select
-              // value={pageSize.toString()}
-              // onValueChange={(value) => handlePageSizeChange(Number(value))}
+                value={pageSize.toString()}
+                onValueChange={(value) => handlePageSizeChange(Number(value))}
               >
                 <SelectTrigger className="w-[100px]">
                   <SelectValue placeholder="10 por página" />
@@ -357,8 +380,8 @@ export default function RedemptionsView({}: RedemptionsViewProps) {
 
               <Button
                 variant="outline"
-                // disabled={currentPage >= totalPages || loading}
-                // onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages || loading}
+                onClick={() => handlePageChange(currentPage + 1)}
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-1" />

@@ -55,4 +55,9 @@ export const apiUrls = {
   files: {
     generatePresignedUrls: "/files/generate-presigned-urls",
   },
+  redemptions: {
+    create: "/redemptions/create",
+    getAll: "/redemptions/all",
+    getByMe: "/redemptions/by-me",
+  },
 };

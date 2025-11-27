@@ -25,6 +25,10 @@ import {
   OffersRepository,
   OffersRepositoryImpl,
 } from "@/modules/offers/data/repositories/offers.repository";
+import {
+  RedemptionsRepository,
+  RedemptionsRepositoryImpl,
+} from "@/modules/redemptions/data/repositories/redemptions.repository";
 import { CategoriesRepository } from "@/modules/categories/data/repositories/categories.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
@@ -56,6 +60,9 @@ import { GetOneOfferUseCase } from "@/modules/offers/domain/use-cases/get-one-of
 import { CreateOfferUseCase } from "@/modules/offers/domain/use-cases/create-offer.use-case";
 import { UpdateOfferUseCase } from "@/modules/offers/domain/use-cases/update-offer.use-case";
 import { DeleteOfferUseCase } from "@/modules/offers/domain/use-cases/delete-offer.use-case";
+import { GetAllRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-all-redemptions.use-case";
+import { GetMyRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-my-redemptions.use-case";
+import { CreateRedemptionUseCase } from "@/modules/redemptions/domain/use-cases/create-redemption.use-case";
 import { MembershipPlansRepository } from "@/modules/membership-plans/data/repositories/membership-plans.repository";
 import { GetAllMembershipPlansUseCase } from "@/modules/membership-plans/domain/use-cases/get-all-membership-plans.use-case";
 import { GetOneMembershipPlanUseCase } from "@/modules/membership-plans/domain/use-cases/get-one-membership-plan.use-case";
@@ -90,6 +97,10 @@ container
   .to(CouponsRepositoryImpl)
   .inSingletonScope();
 container.bind("OffersRepository").to(OffersRepositoryImpl).inSingletonScope();
+container
+  .bind("RedemptionsRepository")
+  .to(RedemptionsRepositoryImpl)
+  .inSingletonScope();
 container.bind(CategoriesRepository).toSelf().inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
@@ -121,6 +132,9 @@ container.bind(GetOneOfferUseCase).toSelf().inSingletonScope();
 container.bind(CreateOfferUseCase).toSelf().inSingletonScope();
 container.bind(UpdateOfferUseCase).toSelf().inSingletonScope();
 container.bind(DeleteOfferUseCase).toSelf().inSingletonScope();
+container.bind(GetAllRedemptionsUseCase).toSelf().inSingletonScope();
+container.bind(GetMyRedemptionsUseCase).toSelf().inSingletonScope();
+container.bind(CreateRedemptionUseCase).toSelf().inSingletonScope();
 container.bind(MembershipPlansRepository).toSelf().inSingletonScope();
 container.bind(GetAllMembershipPlansUseCase).toSelf().inSingletonScope();
 container.bind(GetOneMembershipPlanUseCase).toSelf().inSingletonScope();

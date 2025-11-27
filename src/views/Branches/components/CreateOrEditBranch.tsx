@@ -29,6 +29,9 @@ interface Offer {
   validFrom: string;
   validTo: string;
   validDays: string[];
+  // validHours: string[]; // Deprecated: now using startTime and endTime in validFrom/validTo
+  startTime?: string;
+  endTime?: string;
   isActive: boolean;
   expiresAt: string;
   excludesBankHolidays: boolean;
@@ -204,22 +207,60 @@ export function CreateOrEditBranch({
         if (offersResponse && offersResponse.offers) {
           // Convert API offers to component format
           const mappedOffers: Offer[] = offersResponse.offers.map(
-            (apiOffer: any) => ({
-              offerId: apiOffer.offerId,
-              title: apiOffer.title,
-              description: apiOffer.description || "",
-              offerType: apiOffer.offerType,
-              value: apiOffer.value,
-              conditions: apiOffer.conditions || "",
-              validFrom: apiOffer.validFrom,
-              validTo: apiOffer.validTo,
-              validDays: apiOffer.validDays || [],
-              isActive: apiOffer.isActive,
-              expiresAt: apiOffer.expiresAt,
-              excludesBankHolidays: apiOffer.excludesBankHolidays,
-              membershipPlanId: apiOffer.membershipPlanId,
-              branchId: apiOffer.branchId,
-            })
+            (apiOffer: any) => {
+              // Extraer hora de validFrom si existe
+              let startTime = "";
+              if (apiOffer.validFrom) {
+                const fromDate = new Date(apiOffer.validFrom);
+                const hours = fromDate
+                  .getUTCHours()
+                  .toString()
+                  .padStart(2, "0");
+                const minutes = fromDate
+                  .getUTCMinutes()
+                  .toString()
+                  .padStart(2, "0");
+                // Solo guardar si no es medianoche (00:00)
+                if (hours !== "00" || minutes !== "00") {
+                  startTime = `${hours}:${minutes}`;
+                }
+              }
+
+              // Extraer hora de validTo si existe
+              let endTime = "";
+              if (apiOffer.validTo) {
+                const toDate = new Date(apiOffer.validTo);
+                const hours = toDate.getUTCHours().toString().padStart(2, "0");
+                const minutes = toDate
+                  .getUTCMinutes()
+                  .toString()
+                  .padStart(2, "0");
+                // Solo guardar si no es 23:59
+                if (hours !== "23" || minutes !== "59") {
+                  endTime = `${hours}:${minutes}`;
+                }
+              }
+
+              return {
+                offerId: apiOffer.offerId,
+                title: apiOffer.title,
+                description: apiOffer.description || "",
+                offerType: apiOffer.offerType,
+                value: apiOffer.value,
+                conditions: apiOffer.conditions || "",
+                validFrom: apiOffer.validFrom,
+                validTo: apiOffer.validTo,
+                validDays: apiOffer.validDays || [],
+                // validHours: apiOffer.validHours || [], // Deprecated
+                startTime,
+                endTime,
+                isActive: apiOffer.isActive,
+                expiresAt: apiOffer.expiresAt,
+                excludesBankHolidays: apiOffer.excludesBankHolidays,
+                membershipPlanId: apiOffer.membershipPlanId,
+                branchId: apiOffer.branchId,
+              };
+            }
           );
           setOffers(mappedOffers);
         }
@@ -568,6 +609,8 @@ export function CreateOrEditBranch({
 
             if (offers.length > 0) {
               // Create offers one by one with progress feedback
+              const offerErrors: string[] = [];
+
               for (let i = 0; i < offers.length; i++) {
                 const offer = offers[i];
 
@@ -596,13 +639,31 @@ export function CreateOrEditBranch({
                   branchId: newBranchId,
                 };
 
+                console.log(`Creating offer ${i + 1}:`, offerData);
+
                 try {
-                  await createOffer(offerData, token);
+                  const offerResult = await createOffer(offerData, token);
+                  console.log(
+                    `Offer ${i + 1} created successfully:`,
+                    offerResult
+                  );
                   // Small delay to show progress
                   await new Promise((resolve) => setTimeout(resolve, 500));
-                } catch (offerError) {
-                  console.error(`Error creating offer ${i + 1}:`, offerError);
+                } catch (offerError: any) {
+                  const errorMsg = `Error al crear oferta "${offer.title}": ${
+                    offerError?.message || "Error desconocido"
+                  }`;
+                  console.error(errorMsg, offerError);
+                  offerErrors.push(errorMsg);
                 }
+              }
+
+              // Show warnings if some offers failed
+              if (offerErrors.length > 0) {
+                console.error("Errors creating offers:", offerErrors);
+                toast.warning(
+                  `Sucursal creada, pero ${offerErrors.length} oferta(s) fallaron. Revisa la consola para más detalles.`
+                );
               }
             }
 

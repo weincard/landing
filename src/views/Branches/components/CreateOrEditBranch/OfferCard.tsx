@@ -13,6 +13,9 @@ export interface Offer {
   validFrom: string;
   validTo: string;
   validDays: string[];
+  // validHours: string[]; // Deprecated: now using startTime and endTime
+  startTime?: string;
+  endTime?: string;
   isActive: boolean;
   expiresAt: string;
   excludesBankHolidays: boolean;
@@ -52,6 +55,28 @@ export function OfferCard({
 
     const spanishDays = validDays.map((day) => dayMapping[day] || day);
     return spanishDays.join(", ");
+  };
+
+  const formatTimeRangeText = (startTime?: string, endTime?: string) => {
+    if (!startTime && !endTime) {
+      return "Todo el día";
+    }
+
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(":");
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minutes} ${ampm}`;
+    };
+
+    if (startTime && endTime) {
+      return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    } else if (startTime) {
+      return `Desde ${formatTime(startTime)}`;
+    } else {
+      return `Hasta ${formatTime(endTime!)}`;
+    }
   };
 
   const getOfferTypeDisplay = (offerType: string) => {
@@ -149,9 +174,14 @@ export function OfferCard({
                     {formatDateRange(offer.validFrom, offer.validTo)}
                   </p>
 
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-green-600 mb-1">
                     <strong>Días válidos:</strong>{" "}
                     {formatValidDaysText(offer.validDays)}
+                  </p>
+
+                  <p className="text-sm text-purple-600">
+                    <strong>Horario:</strong>{" "}
+                    {formatTimeRangeText(offer.startTime, offer.endTime)}
                   </p>
                 </div>
 
