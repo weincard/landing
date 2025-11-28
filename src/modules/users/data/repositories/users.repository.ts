@@ -49,6 +49,7 @@ export abstract class UsersRepository {
     token?: string
   ): Promise<UserResponse>;
   abstract deactivateAccount(token?: string): Promise<UserResponse>;
+  abstract delete(userId: number, token?: string): Promise<UserResponse>;
 }
 
 @injectable()
@@ -381,6 +382,34 @@ export class UsersRepositoryImpl implements UsersRepository {
     } else {
       throw new CustomError(
         axiosRequest.body.message || "Error al desactivar cuenta"
+      );
+    }
+  }
+
+  /////////////////////////////////DELETE USER////////////////////////////////////////////////
+  async delete(userId: number, token?: string): Promise<UserResponse> {
+    console.log("Delete User ID:", userId);
+
+    const axiosRequest = await this.httpClient.request({
+      url: `${apiUrls.users.delete}/${userId}`,
+      method: "patch",
+      body: {},
+      isAuth: true,
+      token,
+    });
+
+    console.log("Delete User Response:", axiosRequest.body);
+
+    if (
+      axiosRequest.statusCode === HttpStatusCode.ok ||
+      axiosRequest.statusCode === HttpStatusCode.created
+    ) {
+      return {
+        message: axiosRequest.body.message || "Usuario eliminado correctamente",
+      };
+    } else {
+      throw new CustomError(
+        axiosRequest.body.message || "Error al eliminar usuario"
       );
     }
   }

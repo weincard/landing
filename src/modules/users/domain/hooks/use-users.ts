@@ -6,6 +6,7 @@ import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by
 import { UpdateUserUseCase } from "@/modules/users/domain/use-cases/update-user.use-case";
 import { GetUsersByRoleUseCase } from "@/modules/users/domain/use-cases/get-users-by-role.use-case";
 import { DeactivateAccountUseCase } from "@/modules/users/domain/use-cases/deactivate-account.use-case";
+import { DeleteUserUseCase } from "@/modules/users/domain/use-cases/delete-user.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllUsersResponse,
@@ -167,6 +168,27 @@ export const useUsers = () => {
     []
   );
 
+  const deleteUser = useCallback(
+    async (userId: number, token?: string): Promise<UserResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const deleteUserUseCase = container.get(DeleteUserUseCase);
+        const response = await deleteUserUseCase.execute(userId, token);
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al eliminar usuario";
+        setError(errorMessage);
+        console.error("Error deleting user:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     getAllUsers,
     getUsersByRole,
@@ -174,6 +196,7 @@ export const useUsers = () => {
     createUser,
     updateUser,
     deactivateAccount,
+    deleteUser,
     loading,
     error,
   };

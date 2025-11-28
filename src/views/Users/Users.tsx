@@ -28,18 +28,29 @@ import {
   Search,
   User,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UsersViewProps {
   token: string;
 }
 
 export default function UsersView({ token }: UsersViewProps) {
-  const { getAllUsers, loading, error } = useUsers();
+  const { getAllUsers, deleteUser, loading, error } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
@@ -47,6 +58,8 @@ export default function UsersView({ token }: UsersViewProps) {
   const [pageSize, setPageSize] = useState(10);
   const [users, setUsers] = useState<IUser[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     if (!token) return;
@@ -92,6 +105,20 @@ export default function UsersView({ token }: UsersViewProps) {
     setPageSize(size);
     setCurrentPage(1); // Reset to first page when page size changes
   }, []);
+
+  const handleDeleteUser = useCallback(
+    async (userId: number) => {
+      setIsDeleting(true);
+      const response = await deleteUser(userId, token);
+      if (response) {
+        // Refrescar la lista después de eliminar
+        fetchUsers();
+        setUserToDelete(null);
+      }
+      setIsDeleting(false);
+    },
+    [deleteUser, token, fetchUsers]
+  );
 
   const filteredUsers = users.filter((user) => {
     const term = searchTerm.toLowerCase();
@@ -259,11 +286,11 @@ export default function UsersView({ token }: UsersViewProps) {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          className={
                             user.isVerified
-                              ? "bg-green-50 text-green-700"
-                              : "bg-red-50 text-red-700"
-                          }`}
+                              ? "text-green-600"
+                              : "text-orange-600"
+                          }
                         >
                           {user.isVerified ? "Sí" : "No"}
                         </span>
@@ -274,7 +301,7 @@ export default function UsersView({ token }: UsersViewProps) {
                           : "N/A"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -286,6 +313,15 @@ export default function UsersView({ token }: UsersViewProps) {
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => setUserToDelete(user.idUsuario!)}
+                            disabled={loading || isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -426,6 +462,42 @@ export default function UsersView({ token }: UsersViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Diálogo de confirmación para eliminar */}
+      <AlertDialog
+        open={userToDelete !== null}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará el usuario de forma permanente (soft
+              delete). El usuario no podrá acceder al sistema. ¿Estás seguro de
+              que deseas continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => userToDelete && handleDeleteUser(userToDelete)}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
