@@ -43,7 +43,6 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
 
   const [redemptions, setRedemptions] = useState<IRedemption[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedRedemptions, setSelectedRedemptions] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -131,16 +130,6 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
               />
             </div>
 
-            <div className="flex-1 relative max-w-xs">
-              <Input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-8 w-full"
-              />
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            </div>
             <Button onClick={handleSearch} disabled={loading}>
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
