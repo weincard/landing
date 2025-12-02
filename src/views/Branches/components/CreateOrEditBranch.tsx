@@ -276,7 +276,7 @@ export function CreateOrEditBranch({
     if (branchId) {
       const loadBranch = async () => {
         const response = await getOneBranch(Number(branchId), token);
-        if (response && response.branch) {
+        if (response) {
           const branch = response.branch;
           console.log("Loading branch data:", branch); // Keep for debugging preload issue
 
@@ -600,12 +600,20 @@ export function CreateOrEditBranch({
         try {
           response = await createBranch(branchData, token);
 
+          console.log("Create branch response:", response);
+
           if (response && response.branch) {
             const newBranchId = response.branch.branchId;
 
+            console.log("Extracted branchId:", newBranchId);
+
             if (!newBranchId) {
+              console.error("Branch response structure:", response);
               throw new Error("No se pudo obtener el ID de la sucursal creada");
             }
+
+            // Show success for branch creation
+            toast.success("Sucursal creada exitosamente");
 
             if (offers.length > 0) {
               // Create offers one by one with progress feedback
@@ -658,11 +666,15 @@ export function CreateOrEditBranch({
                 }
               }
 
-              // Show warnings if some offers failed
+              // Show results
               if (offerErrors.length > 0) {
                 console.error("Errors creating offers:", offerErrors);
                 toast.warning(
                   `Sucursal creada, pero ${offerErrors.length} oferta(s) fallaron. Revisa la consola para más detalles.`
+                );
+              } else {
+                toast.success(
+                  `${offers.length} oferta(s) creada(s) exitosamente`
                 );
               }
             }
@@ -675,10 +687,12 @@ export function CreateOrEditBranch({
             });
 
             setIsUploading(false);
-            toast.success("Sucursal creada exitosamente");
+
+            // Navigate to branches list
             router.push("/dashboard/branches");
           } else {
             // If response is empty or branch creation failed
+            console.error("Invalid response:", response);
             throw new Error("No se recibió respuesta válida del servidor");
           }
         } catch (branchError) {

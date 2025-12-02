@@ -4,38 +4,45 @@ import type {
 } from "../interfaces/branches.response.interface";
 
 export const createBranchResponseAdapter = (data: any): BranchResponse => {
+  // Handle both possible response structures: direct fields or nested in 'branch'
+  const branchData = data.branch || data;
+
   return {
     message: data.message || "Branch created successfully",
     branch: {
-      branchId: data.branchId,
-      merchantId: data.merchantId,
-      categoryId: data.categoryId,
-      userId: data.userId,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      howItWorks: data.howItWorks,
-      address: data.address,
-      city: data.city,
-      country: data.country,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      phone: data.phone,
-      email: data.email,
-      website: data.website,
-      note: data.note,
-      logoUrl: data.logoUrl,
-      coverImageUrl: data.coverImageUrl,
-      images: data.images || data.additionalImages || [],
-      tags: data.tags || [],
-      isActive: data.isActive,
-      createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
-      updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined,
-      merchant: data.merchant,
-      category: data.category,
-      branchUsers: data.branchUsers,
-      reviews: data.reviews,
-      favorites: data.favorites,
+      branchId: branchData.branchId,
+      merchantId: branchData.merchantId,
+      categoryId: branchData.categoryId,
+      userId: branchData.userId,
+      name: branchData.name,
+      slug: branchData.slug,
+      description: branchData.description,
+      howItWorks: branchData.howItWorks,
+      address: branchData.address,
+      city: branchData.city,
+      country: branchData.country,
+      latitude: branchData.latitude,
+      longitude: branchData.longitude,
+      phone: branchData.phone,
+      email: branchData.email,
+      website: branchData.website,
+      note: branchData.note,
+      logoUrl: branchData.logoUrl,
+      coverImageUrl: branchData.coverImageUrl,
+      images: branchData.images || branchData.additionalImages || [],
+      tags: branchData.tags || [],
+      isActive: branchData.isActive,
+      createdAt: branchData.createdAt
+        ? new Date(branchData.createdAt)
+        : undefined,
+      updatedAt: branchData.updatedAt
+        ? new Date(branchData.updatedAt)
+        : undefined,
+      merchant: branchData.merchant,
+      category: branchData.category,
+      branchUsers: branchData.branchUsers,
+      reviews: branchData.reviews,
+      favorites: branchData.favorites,
     },
   };
 };
