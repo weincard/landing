@@ -84,7 +84,7 @@ export function OfferCard({
       case "percentage":
         return "Porcentaje";
       case "fixed_amount":
-        return "Monto fijo";
+        return "Regalo";
       case "promo":
         return "Promoción";
       case "menu_weincard":
