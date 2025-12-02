@@ -461,23 +461,39 @@ export function CreateOrEditBranch({
 
     // Validación de campos obligatorios para CREATE y EDIT
     if (!name) {
-      toast.error("El nombre del establecimiento es requerido");
+      toast.error("El campo 'Nombre del establecimiento' es obligatorio");
       return;
     }
-    if (!address) {
-      toast.error("La dirección exacta es requerida");
-      return;
-    }
-    if (!latitude) {
-      toast.error("La ubicación de Google Maps (latitud) es requerida");
-      return;
-    }
-    if (!longitude) {
-      toast.error("La ubicación de Google Maps (longitud) es requerida");
+    if (!phone) {
+      toast.error("El campo 'Contacto' (teléfono) es obligatorio");
       return;
     }
     if (!email) {
-      toast.error("El correo electrónico es requerido");
+      toast.error("El campo 'Correo' es obligatorio");
+      return;
+    }
+    if (!howItWorks) {
+      toast.error("El campo '¿Cómo funciona la redención?' es obligatorio");
+      return;
+    }
+    if (!logo && !logoFile) {
+      toast.error("El campo 'Logo' es obligatorio. Por favor, sube un logo");
+      return;
+    }
+    if (!address) {
+      toast.error("El campo 'Dirección exacta' es obligatorio");
+      return;
+    }
+    if (!latitude) {
+      toast.error(
+        "El campo 'Ubicación de Google Maps' (latitud) es obligatorio"
+      );
+      return;
+    }
+    if (!longitude) {
+      toast.error(
+        "El campo 'Ubicación de Google Maps' (longitud) es obligatorio"
+      );
       return;
     }
 
