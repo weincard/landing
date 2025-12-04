@@ -57,7 +57,7 @@ import { AllBranchesResponse } from "@/modules/branches/data/interfaces/branches
 import { AllCouponsResponse } from "@/modules/coupons/data/interfaces/coupons.response.interface";
 import { UserMetricsResponse } from "@/modules/users/domain/hooks/use-user-metrics";
 import { MembershipMetricsResponse } from "@/modules/memberships/domain/hooks/use-membership-metrics";
-import { UserMetricsChart } from "@/components";
+import { UserMetricsChart, MembershipChart } from "@/components";
 
 interface MetricCardProps {
   title: string;
@@ -83,10 +83,15 @@ function MetricCard({
   return (
     <Card className="relative overflow-hidden">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">
+            <div className={`p-3 rounded-lg ${bgColor} flex-shrink-0`}>
+              <div className={color}>{icon}</div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-2xl font-bold break-words">
               {typeof value === "number" ? value.toLocaleString() : value}
             </p>
             <div
@@ -97,9 +102,6 @@ function MetricCard({
               <TrendIcon className="h-3 w-3" />
               <span>{percentage}%</span>
             </div>
-          </div>
-          <div className={`p-3 rounded-lg ${bgColor}`}>
-            <div className={color}>{icon}</div>
           </div>
         </div>
         <div
@@ -169,6 +171,21 @@ export default function DashboardView({ token }: DashboardViewProps) {
   const [userMetrics, setUserMetrics] = useState<UserMetricsResponse>();
   const [membershipMetrics, setMembershipMetrics] =
     useState<MembershipMetricsResponse>();
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [isLoadingYearChange, setIsLoadingYearChange] = useState(false);
+
+  const handleYearChange = async (year: number) => {
+    setIsLoadingYearChange(true);
+    setSelectedYear(year);
+    try {
+      const userMetricsData = await getUserRegistrationMetrics(year, token);
+      setUserMetrics(userMetricsData || undefined);
+    } catch (error) {
+      console.error("Error fetching year metrics:", error);
+    } finally {
+      setIsLoadingYearChange(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -188,10 +205,9 @@ export default function DashboardView({ token }: DashboardViewProps) {
       const coupons = await getAllCoupons(token, { skip: 0, limit: 10 });
       setCouponData(coupons || undefined);
 
-      // Obtener métricas de usuarios del año actual
-      const currentYear = new Date().getFullYear();
+      // Obtener métricas de usuarios del año seleccionado
       const userMetricsData = await getUserRegistrationMetrics(
-        currentYear,
+        selectedYear,
         token
       );
       setUserMetrics(userMetricsData || undefined);
@@ -325,53 +341,28 @@ export default function DashboardView({ token }: DashboardViewProps) {
         />
       </div>
 
-      {/* User Metrics Summary - optional section */}
-      {userMetrics && userMetrics.metrics && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">
-              Registros de Usuarios {new Date().getFullYear()}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-2">
-                  Propietarios (Owners)
-                </h4>
-                <p className="text-2xl font-bold text-blue-600">
-                  {userMetrics.metrics.reduce(
-                    (acc, curr) => acc + (curr.owner || 0),
-                    0
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  registros este año
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-2">
-                  Clientes (Clients)
-                </h4>
-                <p className="text-2xl font-bold text-green-600">
-                  {userMetrics.metrics.reduce(
-                    (acc, curr) => acc + (curr.client || 0),
-                    0
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  registros este año
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Metrics Chart - Line Chart */}
+        {userMetrics &&
+          userMetrics.metrics &&
+          userMetrics.metrics.length > 0 && (
+            <UserMetricsChart
+              data={userMetrics}
+              year={selectedYear}
+              onYearChange={handleYearChange}
+              isLoading={isLoadingYearChange}
+            />
+          )}
 
-      {/* User Metrics Chart - optional section */}
-      {userMetrics && userMetrics.metrics && userMetrics.metrics.length > 0 && (
-        <UserMetricsChart data={userMetrics} year={new Date().getFullYear()} />
-      )}
+        {/* Membership Chart - Bar Chart */}
+        {membershipMetrics && (
+          <MembershipChart
+            count={membershipMetrics.count}
+            profits={membershipMetrics.profits}
+          />
+        )}
+      </div>
 
       {/* Tables Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

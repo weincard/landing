@@ -14,3 +14,4 @@ export * from "./ui/scroll-area";
 export * from "./ui/select";
 export * from "./ui/tabs";
 export * from "./UserMetricsChart";
+export * from "./MembershipChart";
