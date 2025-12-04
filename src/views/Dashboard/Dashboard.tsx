@@ -27,16 +27,37 @@ import {
   TargetIcon,
   GiftIcon,
   Loader2,
+  CreditCardIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import Image from "next/image";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
+import { useUserMetrics } from "@/modules/users/domain/hooks/use-user-metrics";
+import { useMembershipMetrics } from "@/modules/memberships/domain/hooks/use-membership-metrics";
 import { AllUsersResponse } from "@/modules/users/data/interfaces/users.response.interface";
 import { AllMerchantsResponse } from "@/modules/merchants/data/interfaces/merchants.response.interface";
 import { AllBranchesResponse } from "@/modules/branches/data/interfaces/branches.response.interface";
 import { AllCouponsResponse } from "@/modules/coupons/data/interfaces/coupons.response.interface";
+import { UserMetricsResponse } from "@/modules/users/domain/hooks/use-user-metrics";
+import { MembershipMetricsResponse } from "@/modules/memberships/domain/hooks/use-membership-metrics";
+import { UserMetricsChart } from "@/components";
 
 interface MetricCardProps {
   title: string;
@@ -45,6 +66,7 @@ interface MetricCardProps {
   trend: "up" | "down";
   icon: React.ReactNode;
   color: string;
+  bgColor: string;
 }
 
 function MetricCard({
@@ -54,14 +76,15 @@ function MetricCard({
   trend,
   icon,
   color,
+  bgColor,
 }: MetricCardProps) {
-  const ArrowIcon = trend === "up" ? ArrowUpIcon : ArrowDownIcon;
+  const TrendIcon = trend === "up" ? TrendingUpIcon : TrendingDownIcon;
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex flex-col">
+          <div className="flex flex-col space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">
               {typeof value === "number" ? value.toLocaleString() : value}
@@ -71,17 +94,21 @@ function MetricCard({
                 trend === "up" ? "text-green-600" : "text-red-600"
               }`}
             >
-              <ArrowIcon className="h-3 w-3" />
+              <TrendIcon className="h-3 w-3" />
               <span>{percentage}%</span>
             </div>
           </div>
-          <div className={`p-3 rounded-lg ${color}`}>{icon}</div>
+          <div className={`p-3 rounded-lg ${bgColor}`}>
+            <div className={color}>{icon}</div>
+          </div>
         </div>
+        <div
+          className={`absolute bottom-0 right-0 w-24 h-16 ${bgColor} opacity-10 rounded-tl-3xl`}
+        />
       </CardContent>
     </Card>
   );
 }
-
 interface DashboardViewProps {
   token: string;
 }
@@ -108,17 +135,40 @@ export default function DashboardView({ token }: DashboardViewProps) {
     error: couponsError,
   } = useCoupons();
 
+  const {
+    getUserRegistrationMetrics,
+    loading: isLoadingUserMetrics,
+    error: userMetricsError,
+  } = useUserMetrics();
+
+  const {
+    getMembershipCountAndProfits,
+    loading: isLoadingMembershipMetrics,
+    error: membershipMetricsError,
+  } = useMembershipMetrics();
+
   const loading =
     isLoadingUsers ||
     isLoadingMerchants ||
     isLoadingBranches ||
-    isLoadingCoupons;
-  const error = usersError || merchantsError || branchesError || couponsError;
+    isLoadingCoupons ||
+    isLoadingUserMetrics ||
+    isLoadingMembershipMetrics;
+  const error =
+    usersError ||
+    merchantsError ||
+    branchesError ||
+    couponsError ||
+    userMetricsError ||
+    membershipMetricsError;
 
   const [userData, setUserData] = useState<AllUsersResponse>();
   const [merchantData, setMerchantData] = useState<AllMerchantsResponse>();
   const [branchData, setBranchData] = useState<AllBranchesResponse>();
   const [couponData, setCouponData] = useState<AllCouponsResponse>();
+  const [userMetrics, setUserMetrics] = useState<UserMetricsResponse>();
+  const [membershipMetrics, setMembershipMetrics] =
+    useState<MembershipMetricsResponse>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,6 +187,18 @@ export default function DashboardView({ token }: DashboardViewProps) {
 
       const coupons = await getAllCoupons(token, { skip: 0, limit: 10 });
       setCouponData(coupons || undefined);
+
+      // Obtener métricas de usuarios del año actual
+      const currentYear = new Date().getFullYear();
+      const userMetricsData = await getUserRegistrationMetrics(
+        currentYear,
+        token
+      );
+      setUserMetrics(userMetricsData || undefined);
+
+      // Obtener métricas de membresías
+      const membershipMetricsData = await getMembershipCountAndProfits(token);
+      setMembershipMetrics(membershipMetricsData || undefined);
     };
 
     fetchData();
@@ -206,40 +268,110 @@ export default function DashboardView({ token }: DashboardViewProps) {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           title="Total Usuarios"
           value={userData?.count || 0}
           percentage={15}
           trend="up"
-          icon={<UsersIcon className="h-6 w-6 text-white" />}
-          color="bg-blue-500"
+          icon={<UsersIcon className="h-6 w-6" />}
+          color="text-blue-600"
+          bgColor="bg-blue-100"
         />
         <MetricCard
           title="Aliados Registrados"
           value={merchantData?.count || 0}
           percentage={8}
           trend="up"
-          icon={<ShoppingCartIcon className="h-6 w-6 text-white" />}
-          color="bg-green-500"
+          icon={<ShoppingCartIcon className="h-6 w-6" />}
+          color="text-green-600"
+          bgColor="bg-green-100"
         />
         <MetricCard
           title="Sucursales Activas"
           value={branchData?.count || 0}
           percentage={12}
           trend="up"
-          icon={<TargetIcon className="h-6 w-6 text-white" />}
-          color="bg-purple-500"
+          icon={<TargetIcon className="h-6 w-6" />}
+          color="text-purple-600"
+          bgColor="bg-purple-100"
         />
         <MetricCard
           title="Cupones Disponibles"
           value={couponData?.count || 0}
           percentage={5}
           trend="up"
-          icon={<GiftIcon className="h-6 w-6 text-white" />}
-          color="bg-indigo-500"
+          icon={<GiftIcon className="h-6 w-6" />}
+          color="text-indigo-600"
+          bgColor="bg-indigo-100"
+        />
+        <MetricCard
+          title="Membresías Vendidas"
+          value={membershipMetrics?.count || 0}
+          percentage={22}
+          trend="up"
+          icon={<CreditCardIcon className="h-6 w-6" />}
+          color="text-orange-600"
+          bgColor="bg-orange-100"
+        />
+        <MetricCard
+          title="Ingresos Total"
+          value={formatCurrency(membershipMetrics?.profits || 0)}
+          percentage={18}
+          trend="up"
+          icon={<TrendingUpIcon className="h-6 w-6" />}
+          color="text-emerald-600"
+          bgColor="bg-emerald-100"
         />
       </div>
+
+      {/* User Metrics Summary - optional section */}
+      {userMetrics && userMetrics.metrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">
+              Registros de Usuarios {new Date().getFullYear()}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">
+                  Propietarios (Owners)
+                </h4>
+                <p className="text-2xl font-bold text-blue-600">
+                  {userMetrics.metrics.reduce(
+                    (acc, curr) => acc + (curr.owner || 0),
+                    0
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  registros este año
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">
+                  Clientes (Clients)
+                </h4>
+                <p className="text-2xl font-bold text-green-600">
+                  {userMetrics.metrics.reduce(
+                    (acc, curr) => acc + (curr.client || 0),
+                    0
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  registros este año
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* User Metrics Chart - optional section */}
+      {userMetrics && userMetrics.metrics && userMetrics.metrics.length > 0 && (
+        <UserMetricsChart data={userMetrics} year={new Date().getFullYear()} />
+      )}
 
       {/* Tables Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
