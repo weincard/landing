@@ -281,7 +281,7 @@ export function CouponsView({ token }: CouponsViewProps) {
                           {coupon.isActive ? "Sí" : "No"}
                         </span>
                       </TableCell>
-                      <TableCell>{coupon.redemptionsCount || 0}</TableCell>
+                      <TableCell>{coupon.usageCount || 0}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
                           <Button
