@@ -352,7 +352,7 @@ export function CreateOrEditAlly({
               {/* Nombre */}
               <div className="space-y-2 col-span-2">
                 <label htmlFor="name" className="text-sm text-muted-foreground">
-                  Nombre
+                  Nombre <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="name"
@@ -388,7 +388,7 @@ export function CreateOrEditAlly({
                   htmlFor="owner"
                   className="text-sm text-muted-foreground"
                 >
-                  Propietario
+                  Propietario <span className="text-red-500">*</span>
                 </label>
                 <Select
                   value={selectedUserId}
@@ -421,7 +421,7 @@ export function CreateOrEditAlly({
                   htmlFor="country"
                   className="text-sm text-muted-foreground"
                 >
-                  País
+                  País <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="country"
@@ -438,7 +438,7 @@ export function CreateOrEditAlly({
                   htmlFor="state"
                   className="text-sm text-muted-foreground"
                 >
-                  Estado / Departamento
+                  Estado / Departamento <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="state"

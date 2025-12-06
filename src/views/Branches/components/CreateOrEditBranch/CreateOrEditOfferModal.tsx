@@ -29,7 +29,7 @@ export interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo: string;
+  validTo?: string;
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and endTime
   startTime?: string; // Formato HH:mm (ej: "09:00")
@@ -203,11 +203,14 @@ export function CreateOrEditOfferModal({
       toast.error("El valor de la oferta es requerido");
       return;
     }
-    if (!formData.validFrom || !formData.validTo) {
-      toast.error("Las fechas de vigencia son requeridas");
+    if (!formData.validFrom) {
+      toast.error("La fecha de inicio es requerida");
       return;
     }
-    if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
+    if (
+      formData.validTo &&
+      new Date(formData.validFrom) >= new Date(formData.validTo)
+    ) {
       toast.error("La fecha de inicio debe ser anterior a la fecha de fin");
       return;
     }
@@ -227,10 +230,12 @@ export function CreateOrEditOfferModal({
       validFrom: formData.startTime
         ? `${formData.validFrom}T${formData.startTime}:00.000Z`
         : `${formData.validFrom}T00:00:00.000Z`,
-      // Agregar hora de fin a validTo si se especifica
-      validTo: formData.endTime
-        ? `${formData.validTo}T${formData.endTime}:00.000Z`
-        : `${formData.validTo}T23:59:59.000Z`,
+      // Agregar hora de fin a validTo si se especifica y validTo existe
+      validTo: formData.validTo
+        ? formData.endTime
+          ? `${formData.validTo}T${formData.endTime}:00.000Z`
+          : `${formData.validTo}T23:59:59.000Z`
+        : undefined,
     };
 
     onSave(offerData);
@@ -341,7 +346,7 @@ export function CreateOrEditOfferModal({
             </div>
 
             <div className="space-y-2">
-              <Label>Válido hasta *</Label>
+              <Label>Válido hasta</Label>
               <Input
                 type="date"
                 value={formData.validTo}

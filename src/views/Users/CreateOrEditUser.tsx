@@ -132,6 +132,11 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
 
   const handleSave = async () => {
     // Validación de campos obligatorios
+    if (!formData.name.trim()) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+
     if (!formData.email && !formData.phone) {
       toast.error("Email o teléfono son requeridos (al menos uno)");
       return;
@@ -187,6 +192,8 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
           address: formData.address,
         };
 
+        console.log("Creating user with name:", formData.name);
+        console.log("Create params:", createParams);
         response = await createUser(createParams, token);
       }
 
@@ -336,7 +343,7 @@ export function CreateOrEditUser({ token, userId }: CreateOrEditUserProps) {
                 htmlFor="name"
                 className="text-sm font-medium text-muted-foreground"
               >
-                Nombres
+                Nombres <span className="text-red-500">*</span>
               </label>
               <Input
                 id="name"

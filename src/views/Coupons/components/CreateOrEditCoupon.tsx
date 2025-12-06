@@ -345,7 +345,7 @@ export function CreateOrEditCoupon({
         <CardContent className="space-y-6">
           <div className="grid grid-cols-4 gap-6">
             {/* Código */}
-            <FormField label="Código" htmlFor="code" className="col-span-2">
+            <FormField label="Código *" htmlFor="code" className="col-span-2">
               <Input
                 id="code"
                 placeholder="Ej: 121KSA"
@@ -357,7 +357,7 @@ export function CreateOrEditCoupon({
 
             {/* Descripción */}
             <FormField
-              label="Descripción"
+              label="Descripción *"
               htmlFor="description"
               className="col-span-2 row-span-2"
             >
@@ -374,7 +374,7 @@ export function CreateOrEditCoupon({
 
             {/* Nombre del cupón */}
             <FormField
-              label="Nombre del cupón"
+              label="Nombre del cupón *"
               htmlFor="name"
               className="col-span-2"
             >
@@ -389,7 +389,7 @@ export function CreateOrEditCoupon({
 
             {/* Membresía aplicada */}
             <FormField
-              label="Membresía aplicada"
+              label="Membresía aplicada *"
               htmlFor="plan"
               className="col-span-2"
             >
@@ -426,7 +426,7 @@ export function CreateOrEditCoupon({
             </FormField>
 
             {/* Máximo # redenciones */}
-            <FormField label="Máximo # redenciones" htmlFor="maxRedemptions">
+            <FormField label="Máximo # redenciones *" htmlFor="maxRedemptions">
               <Input
                 id="maxRedemptions"
                 placeholder="Ej: 30"
@@ -445,7 +445,7 @@ export function CreateOrEditCoupon({
 
             {/* Tipo de importe */}
             <FormField
-              label="Tipo de importe"
+              label="Tipo de descuento *"
               htmlFor="renewalType"
               className="col-span-2"
             >
@@ -468,7 +468,7 @@ export function CreateOrEditCoupon({
             </FormField>
 
             {/* Importe del cupón */}
-            <FormField label="Importe del cupón" htmlFor="coupon_import">
+            <FormField label="Importe del cupón *" htmlFor="coupon_import">
               <Input
                 id="coupon_import"
                 placeholder={
@@ -497,7 +497,7 @@ export function CreateOrEditCoupon({
 
             {/* Cantidad de renovaciones */}
             <FormField
-              label="Cantidad de renovaciones"
+              label="Cantidad de renovaciones *"
               htmlFor="renewalCount"
               className="col-span-2"
             >
@@ -514,7 +514,7 @@ export function CreateOrEditCoupon({
             </FormField>
 
             {/* Fecha de expiración */}
-            <FormField label="Fecha de expiración" htmlFor="expirationDate">
+            <FormField label="Fecha de expiración *" htmlFor="expirationDate">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
