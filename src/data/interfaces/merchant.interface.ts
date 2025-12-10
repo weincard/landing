@@ -80,4 +80,8 @@ export interface IBranch {
   }[];
   reviews?: any[];
   favorites?: any[];
+  offers?: {
+    offerType: string;
+  }[];
+  redemptionsCount?: number;
 }

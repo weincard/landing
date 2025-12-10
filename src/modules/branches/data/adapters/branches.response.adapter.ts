@@ -43,6 +43,8 @@ export const createBranchResponseAdapter = (data: any): BranchResponse => {
       branchUsers: branchData.branchUsers,
       reviews: branchData.reviews,
       favorites: branchData.favorites,
+      offers: branchData.offers || [],
+      redemptionsCount: branchData.redemptionsCount || 0,
     },
   };
 };
@@ -84,6 +86,8 @@ export const updateBranchResponseAdapter = (data: any): BranchResponse => {
       branchUsers: data.branch?.branchUsers,
       reviews: data.branch?.reviews,
       favorites: data.branch?.favorites,
+      offers: data.branch?.offers || [],
+      redemptionsCount: data.branch?.redemptionsCount || 0,
     },
   };
 };
@@ -121,6 +125,8 @@ export const allBranchesResponseAdapter = (data: any): AllBranchesResponse => {
         branchUsers: branch.branchUsers,
         reviews: branch.reviews,
         favorites: branch.favorites,
+        offers: branch.offers || [],
+        redemptionsCount: branch.redemptionsCount || 0,
       })) || [],
     count: data.count || 0,
   };
@@ -163,6 +169,8 @@ export const getBranchResponseAdapter = (data: any): BranchResponse => {
       branchUsers: data.branch?.branchUsers,
       reviews: data.branch?.reviews,
       favorites: data.branch?.favorites,
+      offers: data.branch?.offers || [],
+      redemptionsCount: data.branch?.redemptionsCount || 0,
     },
   };
 };

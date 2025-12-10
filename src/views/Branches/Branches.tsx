@@ -387,8 +387,25 @@ export function BranchesView({ token }: BranchesViewProps) {
                             {branch.category?.name || "Sin categoría"}
                           </span>
                         </TableCell>
-                        <TableCell>24</TableCell>
-                        <TableCell>2x1</TableCell>
+                        <TableCell>{branch.redemptionsCount ?? 0}</TableCell>
+                        <TableCell>
+                          {branch.offers && branch.offers.length > 0
+                            ? (() => {
+                                switch (branch.offers[0].offerType) {
+                                  case "percentage":
+                                    return "% Descuento";
+                                  case "fixed_amount":
+                                    return "$ Descuento";
+                                  case "promo":
+                                    return "Promoción";
+                                  case "menu_weincard":
+                                    return "Menú weincard";
+                                  default:
+                                    return branch.offers[0].offerType;
+                                }
+                              })()
+                            : "-"}
+                        </TableCell>
                         <TableCell>
                           <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
