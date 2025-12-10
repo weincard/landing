@@ -106,6 +106,29 @@ export function AddressCard({
     [extractAddressComponents]
   );
 
+  // Update map when coordinates are manually changed
+  const updateMapFromCoordinates = useCallback(
+    (lat: string, lng: string) => {
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+
+      if (
+        !isNaN(latNum) &&
+        !isNaN(lngNum) &&
+        mapInstanceRef.current &&
+        markerInstanceRef.current
+      ) {
+        const position = { lat: latNum, lng: lngNum };
+        mapInstanceRef.current.setCenter(position);
+        markerInstanceRef.current.setPosition(position);
+
+        // Optionally reverse geocode to update address
+        reverseGeocode(latNum, lngNum);
+      }
+    },
+    [reverseGeocode]
+  );
+
   // Initialize Google Maps (once) using singleton loader
   useEffect(() => {
     let isCancelled = false;
@@ -150,7 +173,17 @@ export function AddressCard({
           const autocompleteInstance = new google.maps.places.Autocomplete(
             addressInputRef.current,
             {
-              fields: ["formatted_address", "geometry", "address_components"],
+              fields: [
+                "formatted_address",
+                "geometry",
+                "address_components",
+                "place_id",
+                "name",
+              ],
+              types: ["establishment", "geocode"],
+              componentRestrictions: {
+                country: ["co", "us", "mx", "ve", "ec", "pe"],
+              },
             }
           );
 
@@ -283,7 +316,8 @@ export function AddressCard({
             style={{ minHeight: "256px" }}
           />
           <p className="text-xs text-muted-foreground">
-            Arrastra el marcador para ajustar la ubicación exacta
+            Arrastra el marcador para ajustar la ubicación exacta o edita las
+            coordenadas manualmente
           </p>
         </div>
 
@@ -336,9 +370,10 @@ export function AddressCard({
               step="any"
               placeholder="6.244203"
               value={latitude}
-              onChange={(e) => onLatitudeChange(e.target.value)}
-              className="bg-muted"
-              readOnly
+              onChange={(e) => {
+                onLatitudeChange(e.target.value);
+                updateMapFromCoordinates(e.target.value, longitude);
+              }}
             />
           </div>
           <div className="space-y-2">
@@ -351,9 +386,10 @@ export function AddressCard({
               step="any"
               placeholder="-75.581215"
               value={longitude}
-              onChange={(e) => onLongitudeChange(e.target.value)}
-              className="bg-muted"
-              readOnly
+              onChange={(e) => {
+                onLongitudeChange(e.target.value);
+                updateMapFromCoordinates(latitude, e.target.value);
+              }}
             />
           </div>
         </div>
