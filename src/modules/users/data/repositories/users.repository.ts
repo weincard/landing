@@ -5,12 +5,11 @@ import type {
   IUpdateUserRequest,
 } from "@/data/interfaces/user.interface";
 import type { AxiosHttpClient } from "@/config/protocols/http/axios-http-client";
-import { inject } from "inversify/lib/annotation/inject";
+import { inject, injectable } from "inversify";
 import {
   HttpClient,
   HttpStatusCode,
 } from "@/config/protocols/http/http_utilities";
-import { injectable } from "inversify/lib/annotation/injectable";
 import { apiUrls } from "@/config/protocols/http/api_urls";
 import { CustomError } from "@/data/errors/custom-error";
 

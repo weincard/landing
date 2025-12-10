@@ -1,5 +1,4 @@
-import { inject } from "inversify/lib/annotation/inject";
-import { injectable } from "inversify/lib/annotation/injectable";
+import { inject, injectable } from "inversify";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllRedemptionsResponse,
