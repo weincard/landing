@@ -99,7 +99,6 @@ export function CreateOrEditBranch({
 
   // Form fields - Optional
   const [description, setDescription] = useState("");
-  const [howItWorks, setHowItWorks] = useState("");
   const [website, setWebsite] = useState("");
   const [note, setNote] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -302,7 +301,6 @@ export function CreateOrEditBranch({
           setLatitude(branch.latitude?.toString() || "");
           setLongitude(branch.longitude?.toString() || "");
           setDescription(branch.description || "");
-          setHowItWorks(branch.howItWorks || "");
           setWebsite(branch.website || "");
           setNote(branch.note || "");
           setIsActive(branch.isActive ?? true);
@@ -472,10 +470,6 @@ export function CreateOrEditBranch({
       toast.error("El campo 'Correo' es obligatorio");
       return;
     }
-    if (!howItWorks) {
-      toast.error("El campo '¿Cómo funciona la redención?' es obligatorio");
-      return;
-    }
     if (!logo && !logoFile) {
       toast.error("El campo 'Logo' es obligatorio. Por favor, sube un logo");
       return;
@@ -576,7 +570,6 @@ export function CreateOrEditBranch({
         phone,
         email,
         description,
-        howItWorks,
         website,
         note,
         isActive,
@@ -768,13 +761,11 @@ export function CreateOrEditBranch({
             phone={phone}
             email={email}
             description={description}
-            howItWorks={howItWorks}
             rating={rating}
             onNameChange={setName}
             onPhoneChange={setPhone}
             onEmailChange={setEmail}
             onDescriptionChange={setDescription}
-            onHowItWorksChange={setHowItWorks}
             onRatingChange={setRating}
           />
 

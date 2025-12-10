@@ -9,13 +9,11 @@ interface InformationCardProps {
   phone: string;
   email: string;
   description: string;
-  howItWorks: string;
   rating: number;
   onNameChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
-  onHowItWorksChange: (value: string) => void;
   onRatingChange: (rating: number) => void;
 }
 
@@ -24,13 +22,11 @@ export function InformationCard({
   phone,
   email,
   description,
-  howItWorks,
   rating,
   onNameChange,
   onPhoneChange,
   onEmailChange,
   onDescriptionChange,
-  onHowItWorksChange,
   onRatingChange,
 }: InformationCardProps) {
   const handleStarClick = (
@@ -147,19 +143,6 @@ export function InformationCard({
             rows={3}
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-muted-foreground" htmlFor="howItWorks">
-            ¿Cómo funciona la redención? *
-          </Label>
-          <Textarea
-            id="howItWorks"
-            placeholder="Como funciona la redención en esta sucursal"
-            rows={3}
-            value={howItWorks}
-            onChange={(e) => onHowItWorksChange(e.target.value)}
           />
         </div>
       </CardContent>
