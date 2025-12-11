@@ -29,7 +29,7 @@ export interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo: string;
+  validTo?: string;
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and endTime
   startTime?: string; // Formato HH:mm (ej: "09:00")
@@ -207,10 +207,6 @@ export function CreateOrEditOfferModal({
       toast.error("La fecha de inicio es requerida");
       return;
     }
-    if (!formData.validTo) {
-      toast.error("La fecha de fin es requerida");
-      return;
-    }
     if (
       formData.validTo &&
       new Date(formData.validFrom) >= new Date(formData.validTo)
@@ -234,10 +230,12 @@ export function CreateOrEditOfferModal({
       validFrom: formData.startTime
         ? `${formData.validFrom}T${formData.startTime}:00.000Z`
         : `${formData.validFrom}T00:00:00.000Z`,
-      // Agregar hora de fin a validTo si se especifica
-      validTo: formData.endTime
-        ? `${formData.validTo}T${formData.endTime}:00.000Z`
-        : `${formData.validTo}T23:59:59.000Z`,
+      // Agregar hora de fin a validTo si se especifica y validTo existe
+      validTo: formData.validTo
+        ? formData.endTime
+          ? `${formData.validTo}T${formData.endTime}:00.000Z`
+          : `${formData.validTo}T23:59:59.000Z`
+        : formData.validTo, // Keep original value (empty string or valid date)
     };
 
     try {
@@ -359,10 +357,12 @@ export function CreateOrEditOfferModal({
                 value={formData.validTo}
                 onChange={(e) => {
                   handleInputChange("validTo", e.target.value);
-                  handleInputChange(
-                    "expiresAt",
-                    new Date(e.target.value).toISOString()
-                  );
+                  if (e.target.value) {
+                    handleInputChange(
+                      "expiresAt",
+                      new Date(e.target.value).toISOString()
+                    );
+                  }
                 }}
               />
             </div>

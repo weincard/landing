@@ -11,7 +11,7 @@ export interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo: string;
+  validTo?: string;
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and endTime
   startTime?: string;
@@ -94,8 +94,11 @@ export function OfferCard({
     }
   };
 
-  const formatDateRange = (validFrom: string, validTo: string) => {
+  const formatDateRange = (validFrom: string, validTo?: string) => {
     const from = new Date(validFrom).toLocaleDateString();
+    if (!validTo) {
+      return `Desde ${from}`;
+    }
     const to = new Date(validTo).toLocaleDateString();
     return `${from} - ${to}`;
   };
