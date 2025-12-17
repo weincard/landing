@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
+import { validateImageFile } from "@/lib/utils";
 
 interface CreateOrEditCategoryModalProps {
   token: string;
@@ -86,9 +87,18 @@ export const CreateOrEditCategoryModal: React.FC<
     }
   }, [isOpen]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate image
+      const validation = await validateImageFile(file);
+      if (!validation.isValid) {
+        toast.error(validation.error || "Error al validar la imagen");
+        // Reset the file input
+        e.target.value = "";
+        return;
+      }
+
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {

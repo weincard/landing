@@ -17,6 +17,7 @@ import {
   type UploadProgress,
 } from "@/modules/s3";
 import { apiUrls } from "@/config/protocols/http/api_urls";
+import { validateImageFile } from "@/lib/utils";
 
 // Types for offers according to new API
 interface Offer {
@@ -341,7 +342,14 @@ export function CreateOrEditBranch({
   };
 
   // Image handlers
-  const handleLogoChange = (file: File, base64: string) => {
+  const handleLogoChange = async (file: File, base64: string) => {
+    // Validate image
+    const validation = await validateImageFile(file);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Error al validar la imagen");
+      return;
+    }
+
     setLogoFile(file);
     setLogo(base64);
   };
@@ -351,7 +359,16 @@ export function CreateOrEditBranch({
     setLogo("");
   };
 
-  const handleImagesChange = (newImages: string[], newFiles: File[]) => {
+  const handleImagesChange = async (newImages: string[], newFiles: File[]) => {
+    // Validate all new files
+    for (const file of newFiles) {
+      const validation = await validateImageFile(file);
+      if (!validation.isValid) {
+        toast.error(validation.error || "Error al validar una de las imágenes");
+        return;
+      }
+    }
+
     setImages(newImages);
     setImageFiles(newFiles);
   };

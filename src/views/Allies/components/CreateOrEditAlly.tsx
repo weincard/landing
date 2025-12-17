@@ -23,6 +23,7 @@ import {
 import { X, Save, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
+import { validateImageFile } from "@/lib/utils";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { toast } from "sonner";
@@ -149,6 +150,16 @@ export function CreateOrEditAlly({
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
+
+        // Validate image
+        const validation = await validateImageFile(file);
+        if (!validation.isValid) {
+          toast.error(validation.error || "Error al validar la imagen");
+          // Reset the file input
+          e.target.value = "";
+          return;
+        }
+
         setLogoFile(file);
         setShouldRemoveLogo(false); // Reset the remove flag when selecting new file
 
