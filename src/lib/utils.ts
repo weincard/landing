@@ -49,7 +49,7 @@ export function formatFileSize(sizeInKB: number): string {
  */
 export function validateImageFile(
   file: File,
-  maxSizeKB: number = 500,
+  maxSizeKB: number = 2048,
   maxWidth: number = 1000,
   maxHeight: number = 1000
 ): Promise<ImageValidationResult> {
