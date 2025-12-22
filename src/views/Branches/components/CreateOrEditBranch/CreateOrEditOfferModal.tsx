@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -165,7 +166,7 @@ export function CreateOrEditOfferModal({
       case "percentage":
         return "Porcentaje (%)";
       case "fixed_amount":
-        return "Regalo ($)";
+        return "Cortesía ($)";
       case "promo":
         return "Promoción especial";
       case "menu_weincard":
@@ -184,7 +185,7 @@ export function CreateOrEditOfferModal({
       case "promo":
         return "2x1, 3x2, etc.";
       case "menu_weincard":
-        return "Descripción del menú";
+        return "Entrada: Ensalada mixta\nPlato principal: Lomo de cerdo\nPostre: Torta de chocolate\nBebida: Jugo natural";
       default:
         return "Ingresa valor";
     }
@@ -300,11 +301,21 @@ export function CreateOrEditOfferModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{getOfferTypeLabel(formData.offerType)} *</Label>
-              <Input
-                placeholder={getValuePlaceholder(formData.offerType)}
-                value={formData.value}
-                onChange={(e) => handleInputChange("value", e.target.value)}
-              />
+              {formData.offerType === "menu_weincard" ? (
+                <Textarea
+                  placeholder={getValuePlaceholder(formData.offerType)}
+                  value={formData.value}
+                  onChange={(e) => handleInputChange("value", e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              ) : (
+                <Input
+                  placeholder={getValuePlaceholder(formData.offerType)}
+                  value={formData.value}
+                  onChange={(e) => handleInputChange("value", e.target.value)}
+                />
+              )}
             </div>
 
             <div className="space-y-2">

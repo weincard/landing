@@ -84,7 +84,7 @@ export function OfferCard({
       case "percentage":
         return "Porcentaje";
       case "fixed_amount":
-        return "Regalo";
+        return "Cortesía";
       case "promo":
         return "Promoción";
       case "menu_weincard":
@@ -155,9 +155,18 @@ export function OfferCard({
                   </div>
 
                   {offer.value && (
-                    <p className="text-sm text-muted-foreground mb-1">
-                      <strong>Valor:</strong> {offer.value}
-                    </p>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      <strong>Valor:</strong>{" "}
+                      <span
+                        className={
+                          offer.offerType === "menu_weincard"
+                            ? "whitespace-pre-wrap"
+                            : ""
+                        }
+                      >
+                        {offer.value}
+                      </span>
+                    </div>
                   )}
 
                   {offer.description && (
