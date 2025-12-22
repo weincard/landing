@@ -28,7 +28,7 @@ interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo?: string;
+  validTo?: string | null;
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and endTime in validFrom/validTo
   startTime?: string;
@@ -411,9 +411,7 @@ export function CreateOrEditBranch({
           value: offer.value,
           conditions: offer.conditions,
           validFrom: offer.validFrom,
-          validTo:
-            offer.validTo ||
-            new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          validTo: offer.validTo || null, // Permitir null cuando está vacío
           validDays: offer.validDays,
           isActive: offer.isActive,
           expiresAt: offer.expiresAt,

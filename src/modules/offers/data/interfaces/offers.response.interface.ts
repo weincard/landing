@@ -6,7 +6,7 @@ export interface IOffer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo: string;
+  validTo: string | null;
   validDays: string[];
   isActive: boolean;
   expiresAt: string;
@@ -42,7 +42,7 @@ export interface CreateOfferRequest {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo: string;
+  validTo: string | null;
   validDays?: string[];
   isActive: boolean;
   expiresAt: string;
