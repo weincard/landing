@@ -170,9 +170,12 @@ export function OfferCard({
                   )}
 
                   {offer.description && (
-                    <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Descripción:</strong> {offer.description}
-                    </p>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      <strong>Descripción:</strong>{" "}
+                      <span className="whitespace-pre-wrap">
+                        {offer.description}
+                      </span>
+                    </div>
                   )}
 
                   {offer.conditions && (

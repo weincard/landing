@@ -340,10 +340,12 @@ export function CreateOrEditOfferModal({
           {/* Descripción y condiciones */}
           <div className="space-y-2">
             <Label>Descripción</Label>
-            <Input
+            <Textarea
               placeholder="Descripción detallada de la oferta"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
+              rows={3}
+              className="resize-none"
             />
           </div>
 
