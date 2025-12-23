@@ -9,7 +9,7 @@ export interface IOffer {
   validTo: string | null;
   validDays: string[];
   isActive: boolean;
-  expiresAt: string;
+  expiresAt: string | null;
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId: number;
@@ -45,7 +45,7 @@ export interface CreateOfferRequest {
   validTo: string | null;
   validDays?: string[];
   isActive: boolean;
-  expiresAt: string;
+  expiresAt: string | null;
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId: number;

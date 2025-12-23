@@ -17,7 +17,7 @@ export interface Offer {
   startTime?: string;
   endTime?: string;
   isActive: boolean;
-  expiresAt: string;
+  expiresAt: string | null;
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;
@@ -94,12 +94,12 @@ export function OfferCard({
     }
   };
 
-  const formatDateRange = (validFrom: string, validTo?: string | null) => {
+  const formatDateRange = (validFrom: string, expiresAt?: string | null) => {
     const from = new Date(validFrom).toLocaleDateString();
-    if (!validTo) {
+    if (!expiresAt) {
       return `Desde ${from}`;
     }
-    const to = new Date(validTo).toLocaleDateString();
+    const to = new Date(expiresAt).toLocaleDateString();
     return `${from} - ${to}`;
   };
 
@@ -186,7 +186,7 @@ export function OfferCard({
 
                   <p className="text-sm text-blue-600 mb-1">
                     <strong>Vigencia:</strong>{" "}
-                    {formatDateRange(offer.validFrom, offer.validTo)}
+                    {formatDateRange(offer.validFrom, offer.expiresAt)}
                   </p>
 
                   <p className="text-sm text-green-600 mb-1">

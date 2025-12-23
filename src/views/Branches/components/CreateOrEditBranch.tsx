@@ -34,7 +34,7 @@ interface Offer {
   startTime?: string;
   endTime?: string;
   isActive: boolean;
-  expiresAt: string;
+  expiresAt: string | null;
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;

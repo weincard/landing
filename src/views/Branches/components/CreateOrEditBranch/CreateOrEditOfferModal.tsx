@@ -36,7 +36,7 @@ export interface Offer {
   startTime?: string; // Formato HH:mm (ej: "09:00")
   endTime?: string; // Formato HH:mm (ej: "17:00")
   isActive: boolean;
-  expiresAt: string;
+  expiresAt: string | null;
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;
@@ -126,9 +126,7 @@ export function CreateOrEditOfferModal({
         startTime: "",
         endTime: "",
         isActive: true,
-        expiresAt: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(),
+        expiresAt: null,
         excludesBankHolidays: false,
         membershipPlanId: 1,
       });
@@ -237,12 +235,21 @@ export function CreateOrEditOfferModal({
       validFrom: formData.startTime
         ? `${formData.validFrom}T${formData.startTime}:00.000Z`
         : `${formData.validFrom}T00:00:00.000Z`,
-      // Agregar hora de fin a validTo si se especifica y validTo existe
+      // Lógica para validTo:
+      // - Si hay validTo (fecha hasta), usar esa fecha con endTime o 23:59:59
+      // - Si no hay validTo pero sí endTime, usar fecha de validFrom con endTime
+      // - Si no hay ni validTo ni endTime, null
       validTo: formData.validTo
         ? formData.endTime
           ? `${formData.validTo}T${formData.endTime}:00.000Z`
           : `${formData.validTo}T23:59:59.000Z`
-        : null, // Explícitamente null cuando está vacío
+        : formData.endTime
+        ? `${formData.validFrom}T${formData.endTime}:00.000Z`
+        : null,
+      // expiresAt es nullable cuando no hay fecha hasta
+      expiresAt: formData.validTo
+        ? new Date(formData.validTo).toISOString()
+        : null,
     };
 
     try {
@@ -382,13 +389,7 @@ export function CreateOrEditOfferModal({
                   if (!newValidTo) {
                     handleInputChange("endTime", "");
                   }
-
-                  if (newValidTo) {
-                    handleInputChange(
-                      "expiresAt",
-                      new Date(newValidTo).toISOString()
-                    );
-                  }
+                  // Ya no actualizamos expiresAt aquí, se maneja en handleSave
                 }}
               />
             </div>
