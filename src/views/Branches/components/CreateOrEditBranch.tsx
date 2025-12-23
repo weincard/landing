@@ -28,13 +28,13 @@ interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo?: string | null;
+  validTo?: string; // Hora de fin (Formato HH:mm) - actualizado para compatibilidad
   validDays: string[];
-  // validHours: string[]; // Deprecated: now using startTime and endTime in validFrom/validTo
+  // validHours: string[]; // Deprecated: now using startTime and validTo
   startTime?: string;
-  endTime?: string;
+  // endTime?: string; // Deprecated: ahora usamos validTo
   isActive: boolean;
-  expiresAt: string | null;
+  expiresAt: string | null; // Fecha límite de la oferta
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;
@@ -227,7 +227,7 @@ export function CreateOrEditBranch({
               }
 
               // Extraer hora de validTo si existe
-              let endTime = "";
+              let validToTime = "";
               if (apiOffer.validTo) {
                 const toDate = new Date(apiOffer.validTo);
                 const hours = toDate.getUTCHours().toString().padStart(2, "0");
@@ -237,7 +237,7 @@ export function CreateOrEditBranch({
                   .padStart(2, "0");
                 // Solo guardar si no es 23:59
                 if (hours !== "23" || minutes !== "59") {
-                  endTime = `${hours}:${minutes}`;
+                  validToTime = `${hours}:${minutes}`;
                 }
               }
 
@@ -249,11 +249,11 @@ export function CreateOrEditBranch({
                 value: apiOffer.value,
                 conditions: apiOffer.conditions || "",
                 validFrom: apiOffer.validFrom,
-                validTo: apiOffer.validTo,
+                validTo: validToTime, // Ahora es solo la hora extraída
                 validDays: apiOffer.validDays || [],
                 // validHours: apiOffer.validHours || [], // Deprecated
                 startTime,
-                endTime,
+                // endTime, // Deprecated: ahora usamos validTo
                 isActive: apiOffer.isActive,
                 expiresAt: apiOffer.expiresAt,
                 excludesBankHolidays: apiOffer.excludesBankHolidays,
