@@ -389,11 +389,8 @@ export function CreateOrEditOfferModal({
                 onChange={(e) => {
                   const newExpiresAt = e.target.value;
                   handleInputChange("expiresAt", newExpiresAt);
-
-                  // Si se borra la fecha límite, también limpiar la hora de fin
-                  if (!newExpiresAt) {
-                    handleInputChange("validTo", "");
-                  }
+                  // Ya no borramos validTo cuando se borra expiresAt
+                  // Los campos son independientes
                 }}
               />
             </div>
