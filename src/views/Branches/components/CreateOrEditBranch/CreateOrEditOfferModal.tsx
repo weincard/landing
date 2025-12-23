@@ -289,7 +289,7 @@ export function CreateOrEditOfferModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Porcentaje</SelectItem>
-                  <SelectItem value="fixed_amount">Regalo</SelectItem>
+                  <SelectItem value="fixed_amount">Cortesía</SelectItem>
                   <SelectItem value="promo">Promoción</SelectItem>
                   <SelectItem value="menu_weincard">Menú Weincard</SelectItem>
                 </SelectContent>
