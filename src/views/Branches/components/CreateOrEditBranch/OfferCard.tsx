@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatDateSafe } from "@/utilities/helpers/format-date";
 
 export interface Offer {
   offerId?: number;
@@ -11,13 +12,13 @@ export interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo?: string | null;
+  validTo?: string; // Hora de fin
   validDays: string[];
-  // validHours: string[]; // Deprecated: now using startTime and endTime
+  // validHours: string[]; // Deprecated: now using startTime and validTo
   startTime?: string;
-  endTime?: string;
+  // endTime?: string; // Deprecated: ahora usamos validTo
   isActive: boolean;
-  expiresAt: string | null;
+  expiresAt: string | null; // Fecha límite
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;
@@ -57,25 +58,32 @@ export function OfferCard({
     return spanishDays.join(", ");
   };
 
-  const formatTimeRangeText = (startTime?: string, endTime?: string) => {
-    if (!startTime && !endTime) {
+  const formatTimeRangeText = (startTime?: string, validTo?: string) => {
+    if (!startTime && !validTo) {
       return "Todo el día";
     }
 
     const formatTime = (time: string) => {
-      const [hours, minutes] = time.split(":");
-      const hour = parseInt(hours);
+      // Si viene como datetime, extraer solo la hora
+      let timeStr = time;
+      if (time.includes("T")) {
+        timeStr = time.split("T")[1].substr(0, 5);
+      }
+
+      const [hours, minutes] = timeStr.split(":");
+      const hour = parseInt(hours, 10);
       const ampm = hour >= 12 ? "PM" : "AM";
-      const hour12 = hour % 12 || 12;
+      let hour12 = hour % 12;
+      if (hour12 === 0) hour12 = 12; // Convertir 0 a 12 para formato 12h
       return `${hour12}:${minutes} ${ampm}`;
     };
 
-    if (startTime && endTime) {
-      return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    if (startTime && validTo) {
+      return `${formatTime(startTime)} - ${formatTime(validTo)}`;
     } else if (startTime) {
       return `Desde ${formatTime(startTime)}`;
     } else {
-      return `Hasta ${formatTime(endTime!)}`;
+      return `Hasta ${formatTime(validTo!)}`;
     }
   };
 
@@ -95,11 +103,11 @@ export function OfferCard({
   };
 
   const formatDateRange = (validFrom: string, expiresAt?: string | null) => {
-    const from = new Date(validFrom).toLocaleDateString();
+    const from = formatDateSafe(validFrom);
     if (!expiresAt) {
       return `Desde ${from}`;
     }
-    const to = new Date(expiresAt).toLocaleDateString();
+    const to = formatDateSafe(expiresAt);
     return `${from} - ${to}`;
   };
 
@@ -196,7 +204,7 @@ export function OfferCard({
 
                   <p className="text-sm text-purple-600">
                     <strong>Horario:</strong>{" "}
-                    {formatTimeRangeText(offer.startTime, offer.endTime)}
+                    {formatTimeRangeText(offer.startTime, offer.validTo)}
                   </p>
                 </div>
 

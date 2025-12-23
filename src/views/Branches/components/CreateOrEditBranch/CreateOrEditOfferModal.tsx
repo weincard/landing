@@ -30,13 +30,13 @@ export interface Offer {
   value: string;
   conditions: string;
   validFrom: string;
-  validTo?: string | null;
+  validTo?: string; // Hora de fin (Formato HH:mm)
   validDays: string[];
-  // validHours: string[]; // Deprecated: now using startTime and endTime
+  // validHours: string[]; // Deprecated: now using startTime and validTo
   startTime?: string; // Formato HH:mm (ej: "09:00")
-  endTime?: string; // Formato HH:mm (ej: "17:00")
+  // endTime?: string; // Deprecated: ahora usamos validTo
   isActive: boolean;
-  expiresAt: string | null;
+  expiresAt: string | null; // Fecha límite de la oferta
   excludesBankHolidays: boolean;
   membershipPlanId: number;
   branchId?: number;
@@ -62,15 +62,15 @@ export function CreateOrEditOfferModal({
     value: "",
     conditions: "",
     validFrom: new Date().toISOString().split("T")[0],
-    validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    validTo: "", // Hora de fin
     validDays: [],
     // validHours: [], // Deprecated
     startTime: "",
-    endTime: "",
+    // endTime: "", // Deprecated: ahora usamos validTo
     isActive: true,
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0], // Fecha límite
     excludesBankHolidays: false,
     membershipPlanId: 1,
   });
@@ -103,14 +103,24 @@ export function CreateOrEditOfferModal({
         conditions: offer.conditions || "",
         validDays: offer.validDays || [],
         // validHours: offer.validHours || [], // Deprecated
-        startTime: offer.startTime || "",
-        endTime: offer.endTime || "",
+        startTime: offer.startTime
+          ? typeof offer.startTime === "string" && offer.startTime.includes("T")
+            ? new Date(offer.startTime).toISOString().substr(11, 5) // Si es datetime, extraer hora
+            : offer.startTime // Si ya es formato HH:mm, usar tal como está
+          : offer.validFrom
+          ? new Date(offer.validFrom).toISOString().substr(11, 5) // Fallback: extraer hora de validFrom
+          : "",
+        validTo: offer.validTo
+          ? typeof offer.validTo === "string" && offer.validTo.includes("T")
+            ? new Date(offer.validTo).toISOString().substr(11, 5) // Si es datetime, extraer hora
+            : offer.validTo // Si ya es formato HH:mm, usar tal como está
+          : "", // Hora de fin
         validFrom: offer.validFrom
           ? new Date(offer.validFrom).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
-        validTo: offer.validTo
-          ? new Date(offer.validTo).toISOString().split("T")[0]
-          : "", // Dejar vacío si no existe
+        expiresAt: offer.expiresAt
+          ? new Date(offer.expiresAt).toISOString().split("T")[0]
+          : "", // Fecha límite
       });
     } else {
       setFormData({
@@ -120,13 +130,13 @@ export function CreateOrEditOfferModal({
         value: "",
         conditions: "",
         validFrom: new Date().toISOString().split("T")[0],
-        validTo: "", // Iniciar vacío para nueva oferta
+        validTo: "", // Hora de fin
         validDays: [],
         // validHours: [], // Deprecated
         startTime: "",
-        endTime: "",
+        // endTime: "", // Deprecated
         isActive: true,
-        expiresAt: null,
+        expiresAt: "", // Fecha límite
         excludesBankHolidays: false,
         membershipPlanId: 1,
       });
@@ -203,26 +213,26 @@ export function CreateOrEditOfferModal({
       return;
     }
     if (
-      formData.validTo &&
-      new Date(formData.validFrom) >= new Date(formData.validTo)
+      formData.expiresAt &&
+      new Date(formData.validFrom) >= new Date(formData.expiresAt)
     ) {
       toast.error("La fecha de inicio debe ser anterior a la fecha de fin");
       return;
     }
 
     // Validar rango horario si se especifica
-    if (formData.startTime && formData.endTime) {
+    if (formData.startTime && formData.validTo) {
       // Validar que son horarios válidos antes de compararlos
       const timeRegex = /^([01]?\d|2[0-3]):([0-5]?\d)$/;
       if (
         !timeRegex.test(formData.startTime) ||
-        !timeRegex.test(formData.endTime)
+        !timeRegex.test(formData.validTo)
       ) {
         toast.error("Formato de hora inválido");
         return;
       }
 
-      if (formData.startTime >= formData.endTime) {
+      if (formData.startTime >= formData.validTo) {
         toast.error("La hora de inicio debe ser anterior a la hora de fin");
         return;
       }
@@ -235,21 +245,16 @@ export function CreateOrEditOfferModal({
       validFrom: formData.startTime
         ? `${formData.validFrom}T${formData.startTime}:00.000Z`
         : `${formData.validFrom}T00:00:00.000Z`,
-      // Lógica para validTo:
-      // - Si hay validTo (fecha hasta), usar esa fecha con endTime o 23:59:59
-      // - Si no hay validTo pero sí endTime, usar fecha de validFrom con endTime
-      // - Si no hay ni validTo ni endTime, null
+      // validTo debe ser datetime también si se especifica hora de fin
       validTo: formData.validTo
-        ? formData.endTime
-          ? `${formData.validTo}T${formData.endTime}:00.000Z`
-          : `${formData.validTo}T23:59:59.000Z`
-        : formData.endTime
-        ? `${formData.validFrom}T${formData.endTime}:00.000Z`
-        : null,
-      // expiresAt es nullable cuando no hay fecha hasta
-      expiresAt: formData.validTo
-        ? new Date(formData.validTo).toISOString()
-        : null,
+        ? `${formData.validFrom}T${formData.validTo}:00.000Z` // Usar la misma fecha base con la hora de fin
+        : undefined,
+      // expiresAt es la fecha límite de la oferta
+      expiresAt: formData.expiresAt
+        ? formData.validTo // Si hay hora de fin, combinar fecha límite con hora
+          ? `${formData.expiresAt}T${formData.validTo}:00.000Z`
+          : `${formData.expiresAt}T23:59:59.000Z`
+        : null, // Si no hay fecha límite, null
     };
 
     try {
@@ -380,16 +385,15 @@ export function CreateOrEditOfferModal({
               <Label>Válido hasta</Label>
               <Input
                 type="date"
-                value={formData.validTo || ""}
+                value={formData.expiresAt || ""}
                 onChange={(e) => {
-                  const newValidTo = e.target.value;
-                  handleInputChange("validTo", newValidTo);
+                  const newExpiresAt = e.target.value;
+                  handleInputChange("expiresAt", newExpiresAt);
 
-                  // Si se borra la fecha final, también limpiar horario final
-                  if (!newValidTo) {
-                    handleInputChange("endTime", "");
+                  // Si se borra la fecha límite, también limpiar la hora de fin
+                  if (!newExpiresAt) {
+                    handleInputChange("validTo", "");
                   }
-                  // Ya no actualizamos expiresAt aquí, se maneja en handleSave
                 }}
               />
             </div>
@@ -432,9 +436,22 @@ export function CreateOrEditOfferModal({
                 <Input
                   type="time"
                   value={formData.startTime || ""}
-                  onChange={(e) =>
-                    handleInputChange("startTime", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const startTime = e.target.value;
+                    handleInputChange("startTime", startTime);
+
+                    // Si se pone hora de inicio y no hay hora de fin, asignar hora de fin automáticamente
+                    if (startTime && !formData.validTo) {
+                      // Calcular hora de fin (8 horas después por defecto)
+                      const [hours, minutes] = startTime.split(":");
+                      const startHour = parseInt(hours);
+                      const endHour = Math.min(startHour + 8, 23); // Máximo 23:00
+                      const endTime = `${endHour
+                        .toString()
+                        .padStart(2, "0")}:${minutes}`;
+                      handleInputChange("validTo", endTime);
+                    }
+                  }}
                   placeholder="09:00"
                 />
               </div>
@@ -444,13 +461,28 @@ export function CreateOrEditOfferModal({
                 </Label>
                 <Input
                   type="time"
-                  value={formData.endTime || ""}
-                  onChange={(e) => handleInputChange("endTime", e.target.value)}
+                  value={formData.validTo || ""}
+                  onChange={(e) => {
+                    const endTime = e.target.value;
+                    handleInputChange("validTo", endTime);
+
+                    // Si se pone hora de fin y no hay hora de inicio, asignar hora de inicio automáticamente
+                    if (endTime && !formData.startTime) {
+                      // Calcular hora de inicio (8 horas antes por defecto)
+                      const [hours, minutes] = endTime.split(":");
+                      const endHour = parseInt(hours);
+                      const startHour = Math.max(endHour - 8, 0); // Mínimo 00:00
+                      const startTime = `${startHour
+                        .toString()
+                        .padStart(2, "0")}:${minutes}`;
+                      handleInputChange("startTime", startTime);
+                    }
+                  }}
                   placeholder="17:00"
                 />
               </div>
             </div>
-            {!formData.startTime && !formData.endTime && (
+            {!formData.startTime && !formData.validTo && (
               <p className="text-sm text-muted-foreground">
                 Si no especificas horario, la oferta será válida todo el día
               </p>
