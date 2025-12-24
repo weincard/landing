@@ -29,7 +29,7 @@ export interface Offer {
   offerType: "percentage" | "fixed_amount" | "promo" | "menu_weincard";
   value: string;
   conditions: string;
-  validFrom?: string;
+  validFrom: string;
   validTo?: string; // Hora de fin (Formato HH:mm)
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and validTo
@@ -107,8 +107,9 @@ export function CreateOrEditOfferModal({
           ? typeof offer.startTime === "string" && offer.startTime.includes("T")
             ? new Date(offer.startTime).toISOString().substr(11, 5) // Si es datetime, extraer hora
             : offer.startTime // Si ya es formato HH:mm, usar tal como está
-          : offer.validFrom
-          ? new Date(offer.validFrom).toISOString().substr(11, 5) // Fallback: extraer hora de validFrom
+          : offer.validFrom &&
+            new Date(offer.validFrom).toISOString().substr(11, 5) !== "00:00"
+          ? new Date(offer.validFrom).toISOString().substr(11, 5) // Fallback: extraer hora de validFrom solo si no es 00:00
           : "",
         validTo: offer.validTo
           ? typeof offer.validTo === "string" && offer.validTo.includes("T")
@@ -242,11 +243,13 @@ export function CreateOrEditOfferModal({
     // Construir las fechas con horarios para el backend
     const offerData = {
       ...formData,
-      // Agregar hora de inicio a validFrom si se especifica, si no hay startTime se envía como undefined
+      // Agregar hora de inicio a validFrom si se especifica, sino usar la fecha sin hora
       validFrom:
         formData.startTime && formData.validFrom
           ? `${formData.validFrom}T${formData.startTime}:00.000Z`
-          : undefined,
+          : formData.validFrom
+          ? `${formData.validFrom}T00:00:00.000Z`
+          : new Date().toISOString().split("T")[0] + "T00:00:00.000Z",
       // validTo debe ser datetime también si se especifica hora de fin
       validTo:
         formData.validTo && formData.validFrom
