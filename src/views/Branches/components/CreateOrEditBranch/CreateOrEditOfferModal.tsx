@@ -29,7 +29,7 @@ export interface Offer {
   offerType: "percentage" | "fixed_amount" | "promo" | "menu_weincard";
   value: string;
   conditions: string;
-  validFrom: string;
+  validFrom?: string;
   validTo?: string; // Hora de fin (Formato HH:mm)
   validDays: string[];
   // validHours: string[]; // Deprecated: now using startTime and validTo
@@ -214,6 +214,7 @@ export function CreateOrEditOfferModal({
     }
     if (
       formData.expiresAt &&
+      formData.validFrom &&
       new Date(formData.validFrom) >= new Date(formData.expiresAt)
     ) {
       toast.error("La fecha de inicio debe ser anterior a la fecha de fin");
@@ -241,14 +242,16 @@ export function CreateOrEditOfferModal({
     // Construir las fechas con horarios para el backend
     const offerData = {
       ...formData,
-      // Agregar hora de inicio a validFrom si se especifica
-      validFrom: formData.startTime
-        ? `${formData.validFrom}T${formData.startTime}:00.000Z`
-        : `${formData.validFrom}T00:00:00.000Z`,
+      // Agregar hora de inicio a validFrom si se especifica, si no hay startTime se envía como undefined
+      validFrom:
+        formData.startTime && formData.validFrom
+          ? `${formData.validFrom}T${formData.startTime}:00.000Z`
+          : undefined,
       // validTo debe ser datetime también si se especifica hora de fin
-      validTo: formData.validTo
-        ? `${formData.validFrom}T${formData.validTo}:00.000Z` // Usar la misma fecha base con la hora de fin
-        : undefined,
+      validTo:
+        formData.validTo && formData.validFrom
+          ? `${formData.validFrom}T${formData.validTo}:00.000Z` // Usar la misma fecha base con la hora de fin
+          : undefined,
       // expiresAt es la fecha límite de la oferta
       expiresAt: formData.expiresAt
         ? formData.validTo // Si hay hora de fin, combinar fecha límite con hora
