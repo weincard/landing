@@ -46,7 +46,13 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
       {/* Sección izquierda */}
       <div className="flex items-center gap-4 lg:gap-16">
         {/* Botón de menú móvil */}
-        <NoSSR fallback={<Button variant="ghost" size="icon" className="md:hidden"><Menu className="h-5 w-5" /></Button>}>
+        <NoSSR
+          fallback={
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          }
+        >
           <SidebarTrigger className="md:hidden">
             <Menu className="h-5 w-5" />
           </SidebarTrigger>
@@ -84,7 +90,13 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
       </div>
 
       {/* Barra de búsqueda - Móvil */}
-      <NoSSR fallback={<Button variant="ghost" size="icon" className="md:hidden"><Search className="h-5 w-5" /></Button>}>
+      <NoSSR
+        fallback={
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Search className="h-5 w-5" />
+          </Button>
+        }
+      >
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
@@ -119,16 +131,18 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
         </div>
 
         {/* Menú de usuario */}
-        <NoSSR fallback={
-          <Button variant="ghost" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-              {user?.name?.split("")[0] || "U"}
-            </div>
-            <span className="hidden md:inline">
-              {user?.name || "Usuario"}
-            </span>
-          </Button>
-        }>
+        <NoSSR
+          fallback={
+            <Button variant="ghost" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                {user?.name?.split("")[0] || "U"}
+              </div>
+              <span className="hidden md:inline">
+                {user?.name || "Usuario"}
+              </span>
+            </Button>
+          }
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
@@ -149,7 +163,9 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
                   {user?.email || "correo@ejemplo.com"}
                 </div>
               </div>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/profile")}
+              >
                 Perfil
               </DropdownMenuItem>
               <DropdownMenuItem>Configuración</DropdownMenuItem>
@@ -164,7 +180,10 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
                   <span>Notificaciones</span>
                 </DropdownMenuItem>
               </div>
-              <DropdownMenuItem onClick={() => logout()} className="text-red-600">
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="text-red-600"
+              >
                 Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>

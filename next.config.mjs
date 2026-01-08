@@ -3,7 +3,11 @@ const nextConfig = {
   // Fix hydration issues with Radix UI components
   experimental: {
     // Ensures consistent IDs between server and client for Radix components
-    optimizePackageImports: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+    optimizePackageImports: [
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+    ],
   },
   // Suppress hydration warnings for known Radix UI ID mismatches
   // This is a temporary fix until Radix UI provides a better solution
