@@ -13,11 +13,11 @@ import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
 import type { CreateOfferRequest } from "@/modules/offers/data/interfaces/offers.response.interface";
 import {
-  uploadFilesWithPresignedUrls,
-  type UploadProgress,
-} from "@/modules/s3";
-import { apiUrls } from "@/config/protocols/http/api_urls";
-import { validateImageFile } from "@/lib/utils";
+  uploadFilesToCloudinary,
+  logoUploadOptions,
+  branchImageUploadOptions,
+  type CloudinaryUploadProgress,
+} from "@/modules/cloudinary";
 
 // Types for offers according to new API
 interface Offer {
@@ -111,7 +111,9 @@ export function CreateOrEditBranch({
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // Upload progress state
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<
+    CloudinaryUploadProgress[]
+  >([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState("");
 
@@ -343,15 +345,38 @@ export function CreateOrEditBranch({
 
   // Image handlers
   const handleLogoChange = async (file: File, base64: string) => {
-    // Validate image
-    const validation = await validateImageFile(file);
-    if (!validation.isValid) {
-      toast.error(validation.error || "Error al validar la imagen");
-      return;
-    }
-
-    setLogoFile(file);
+    // Set preview immediately
     setLogo(base64);
+
+    try {
+      setIsUploading(true);
+      setUploadStep("Subiendo logo...");
+
+      const logoResults = await uploadFilesToCloudinary(
+        [file],
+        logoUploadOptions,
+        setUploadProgress
+      );
+
+      const logoResult = logoResults[0];
+      if (logoResult.success) {
+        setLogo(logoResult.secureUrl);
+        setLogoFile(null); // Clear file since we now have URL
+        toast.success("Logo subido exitosamente");
+      } else {
+        toast.error(`Error al subir logo: ${logoResult.error}`);
+        setLogo(""); // Clear preview on error
+      }
+    } catch (error: any) {
+      toast.error(
+        `Error al subir logo: ${error?.message || "Error desconocido"}`
+      );
+      setLogo(""); // Clear preview on error
+    } finally {
+      setIsUploading(false);
+      setUploadProgress([]);
+      setUploadStep("");
+    }
   };
 
   const handleLogoRemove = () => {
@@ -360,17 +385,63 @@ export function CreateOrEditBranch({
   };
 
   const handleImagesChange = async (newImages: string[], newFiles: File[]) => {
-    // Validate all new files
-    for (const file of newFiles) {
-      const validation = await validateImageFile(file);
-      if (!validation.isValid) {
-        toast.error(validation.error || "Error al validar una de las imágenes");
-        return;
-      }
+    // If no new files, just update images (for removals)
+    if (newFiles.length === 0) {
+      setImages(newImages);
+      return;
     }
 
+    // Set preview immediately for new files
     setImages(newImages);
-    setImageFiles(newFiles);
+
+    try {
+      setIsUploading(true);
+      setUploadStep(`Subiendo ${newFiles.length} imagen(es)...`);
+
+      const imageResults = await uploadFilesToCloudinary(
+        newFiles,
+        branchImageUploadOptions,
+        setUploadProgress
+      );
+
+      // Replace base64 previews with Cloudinary URLs
+      const existingUrls = images.filter((img) => img.startsWith("http"));
+      const newCloudinaryUrls: string[] = [];
+      const failedUploads: string[] = [];
+
+      for (const result of imageResults) {
+        if (result.success) {
+          newCloudinaryUrls.push(result.secureUrl);
+        } else {
+          failedUploads.push(result.fileName);
+          toast.error(`Error al subir ${result.fileName}: ${result.error}`);
+        }
+      }
+
+      // Update images with successful uploads
+      setImages([...existingUrls, ...newCloudinaryUrls]);
+      setImageFiles([]); // Clear files since we now have URLs
+
+      if (newCloudinaryUrls.length > 0) {
+        toast.success(
+          `${newCloudinaryUrls.length} imagen(es) subida(s) exitosamente`
+        );
+      }
+
+      if (failedUploads.length > 0) {
+        toast.warning(`${failedUploads.length} imagen(es) fallaron al subirse`);
+      }
+    } catch (error: any) {
+      toast.error(
+        `Error al subir imágenes: ${error?.message || "Error desconocido"}`
+      );
+      // Revert to original images on error
+      setImages(images);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress([]);
+      setUploadStep("");
+    }
   };
 
   // Offer handlers
@@ -487,7 +558,7 @@ export function CreateOrEditBranch({
       toast.error("El campo 'Correo' es obligatorio");
       return;
     }
-    if (!logo && !logoFile) {
+    if (!logo) {
       toast.error("El campo 'Logo' es obligatorio. Por favor, sube un logo");
       return;
     }
@@ -509,74 +580,11 @@ export function CreateOrEditBranch({
     }
 
     try {
-      setIsUploading(true);
+      // Prepare branch data with existing URLs (files already uploaded)
+      const logoUrl = logo;
+      const imageUrls = images.filter((img) => img.startsWith("http"));
 
-      // Step 1: Upload files to S3 if there are any
-      let logoUrl = logo; // Existing logo URL or empty
-      let imageUrls = images.filter((img) => img.startsWith("http")); // Keep existing URLs
-
-      const filesToUpload: File[] = [];
-
-      // Add logo file if selected
-      if (logoFile) {
-        filesToUpload.push(logoFile);
-      }
-
-      // Add new image files
-      if (imageFiles.length > 0) {
-        filesToUpload.push(...imageFiles);
-      }
-
-      // Upload files if there are any
-      if (filesToUpload.length > 0) {
-        setUploadStep("Subiendo archivos...");
-
-        const uploadResults = await uploadFilesWithPresignedUrls(
-          filesToUpload,
-          token,
-          `${process.env.NEXT_PUBLIC_API_URL}${apiUrls.files.generatePresignedUrls}`,
-          setUploadProgress
-        );
-
-        // Process upload results
-        let logoUploadFailed = false;
-        const failedUploads: string[] = [];
-
-        for (const result of uploadResults) {
-          if (result.success) {
-            if (logoFile && result.fileName === logoFile.name) {
-              logoUrl = result.publicUrl;
-            } else {
-              imageUrls.push(result.publicUrl);
-            }
-          } else {
-            // Check if the failed upload was the logo
-            if (logoFile && result.fileName === logoFile.name) {
-              logoUploadFailed = true;
-            }
-            failedUploads.push(result.fileName);
-            toast.error(`Error al subir ${result.fileName}: ${result.error}`);
-          }
-        }
-
-        // If logo upload failed and user selected a new logo, prevent save
-        if (logoUploadFailed) {
-          toast.error(
-            "No se puede guardar: La subida del logo falló. Por favor, reintenta o selecciona otra imagen."
-          );
-          setIsUploading(false);
-          return;
-        }
-
-        // If other files failed, warn but allow to continue
-        if (failedUploads.length > 0 && !logoUploadFailed) {
-          toast.warning(
-            `${failedUploads.length} archivo(s) no se pudieron subir. Se guardará la sucursal sin esas imágenes.`
-          );
-        }
-      }
-
-      // Step 2: Prepare branch data with URLs
+      // Prepare branch data with URLs
       const branchData: Partial<IBranch> = {
         name,
         address,
@@ -604,18 +612,14 @@ export function CreateOrEditBranch({
       let response;
       if (branchId) {
         // Edit mode: just update the branch
-        setUploadStep("Actualizando sucursal...");
         response = await updateBranch(Number(branchId), branchData, token);
 
         if (response) {
-          setIsUploading(false);
           toast.success("Sucursal actualizada exitosamente");
           router.push("/dashboard/branches");
         }
       } else {
         // Create mode: create branch and then create offers with progress
-        setUploadStep("Creando sucursal...");
-
         setCreationProgress({
           isCreating: true,
           step: "Creando sucursal...",
@@ -716,8 +720,6 @@ export function CreateOrEditBranch({
               totalOffers: 0,
             });
 
-            setIsUploading(false);
-
             // Navigate to branches list
             router.push("/dashboard/branches");
           } else {
@@ -744,14 +746,11 @@ export function CreateOrEditBranch({
         currentOffer: 0,
         totalOffers: 0,
       });
-      setIsUploading(false);
-      setUploadProgress([]);
       toast.error(err?.message || "Error al guardar la sucursal");
     }
   };
 
   const handleCancelUpload = () => {
-    setIsUploading(false);
     setUploadProgress([]);
     setUploadStep("");
   };
