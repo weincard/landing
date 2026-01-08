@@ -19,7 +19,7 @@ import { CookiesKeysEnum } from "@/utilities/enums";
 import { routes } from "@/config/routes/routes";
 import { useRouter } from "next-nprogress-bar";
 import { IUser } from "@/data/interfaces/user.interface";
-import { log } from "console";
+import { NoSSR } from "./NoSSR";
 
 interface AppBarProps {
   user?: IUser;
@@ -46,9 +46,17 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
       {/* Sección izquierda */}
       <div className="flex items-center gap-4 lg:gap-16">
         {/* Botón de menú móvil */}
-        <SidebarTrigger className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
+        <NoSSR
+          fallback={
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          }
+        >
+          <SidebarTrigger className="md:hidden">
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
+        </NoSSR>
 
         {/* Logo */}
         <Image
@@ -82,23 +90,31 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
       </div>
 
       {/* Barra de búsqueda - Móvil */}
-      <Sheet>
-        <SheetTrigger asChild>
+      <NoSSR
+        fallback={
           <Button variant="ghost" size="icon" className="md:hidden">
             <Search className="h-5 w-5" />
           </Button>
-        </SheetTrigger>
-        <SheetContent side="top" className="h-32">
-          <div className="relative mt-4">
-            {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full pl-10 bg-gray-50"
-            /> */}
-          </div>
-        </SheetContent>
-      </Sheet>
+        }
+      >
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Search className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="top" className="h-32">
+            <div className="relative mt-4">
+              {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="w-full pl-10 bg-gray-50"
+              /> */}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </NoSSR>
 
       {/* Sección derecha */}
       <div className="flex items-center gap-2 md:gap-4">
@@ -115,46 +131,64 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
         </div>
 
         {/* Menú de usuario */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <NoSSR
+          fallback={
             <Button variant="ghost" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
                 {user?.name?.split("")[0] || "U"}
               </div>
-              {/* Nombre de usuario - Se oculta en móvil */}
               <span className="hidden md:inline">
                 {user?.name || "Usuario"}
               </span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {/* Información del usuario - Visible solo en móvil */}
-            <div className="md:hidden px-2 py-1.5 text-sm">
-              <div className="font-medium">{user?.name || "Usuario"}</div>
-              <div className="text-muted-foreground">
-                {user?.email || "correo@ejemplo.com"}
+          }
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                  {user?.name?.split("")[0] || "U"}
+                </div>
+                {/* Nombre de usuario - Se oculta en móvil */}
+                <span className="hidden md:inline">
+                  {user?.name || "Usuario"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Información del usuario - Visible solo en móvil */}
+              <div className="md:hidden px-2 py-1.5 text-sm">
+                <div className="font-medium">{user?.name || "Usuario"}</div>
+                <div className="text-muted-foreground">
+                  {user?.email || "correo@ejemplo.com"}
+                </div>
               </div>
-            </div>
-            <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
-              Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem>Configuración</DropdownMenuItem>
-            {/* Mostrar notificaciones en el menú en móvil muy pequeño */}
-            <div className="sm:hidden">
-              <DropdownMenuItem>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                <span>Mensajes</span>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/profile")}
+              >
+                Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Notificaciones</span>
+              <DropdownMenuItem>Configuración</DropdownMenuItem>
+              {/* Mostrar notificaciones en el menú en móvil muy pequeño */}
+              <div className="sm:hidden">
+                <DropdownMenuItem>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Mensajes</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notificaciones</span>
+                </DropdownMenuItem>
+              </div>
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="text-red-600"
+              >
+                Cerrar sesión
               </DropdownMenuItem>
-            </div>
-            <DropdownMenuItem onClick={() => logout()} className="text-red-600">
-              Cerrar sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </NoSSR>
       </div>
     </header>
   );
