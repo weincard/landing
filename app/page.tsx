@@ -422,8 +422,7 @@ export default function RestaurantLandingPage() {
                 1. ¿QUÉ ES WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Weincard es una membresía que te da acceso a beneficios exclusivos, descuentos y regalos en los mejores
-                restaurantes de tu ciudad.
+                Weincard es una membresía digital con beneficios, regalos y descuentos exclusivos en los mejores restaurantes de Medellín, perfecta para los que buscan multiplicar sus salidas. 
               </AccordionContent>
             </AccordionItem>
 
@@ -432,8 +431,8 @@ export default function RestaurantLandingPage() {
                 2. ¿CUÁNTO CUESTA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Ofrecemos dos planes: Mensual por $14,900 COP/mes y Anual por $189,000 COP, que equivale a ahorrar más
-                de dos meses gratis.
+                La suscripción mensual cuesta $18.900 COP y el plan anual podrás adquirirlo por $189.000 COP. <br />
+*Que podrías librar desde tu primera salida. 
               </AccordionContent>
             </AccordionItem>
 
@@ -442,8 +441,7 @@ export default function RestaurantLandingPage() {
                 3. ¿DÓNDE PUEDO USAR WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Puedes usar tu weincard en todos nuestros restaurantes afiliados. Consulta la lista completa en nuestra
-                app.
+                Tu membresía es válida en Medellín y el Área Metropolitana. 
               </AccordionContent>
             </AccordionItem>
 
@@ -452,8 +450,7 @@ export default function RestaurantLandingPage() {
                 4. ¿CÓMO CANCELO MI MEMBRESÍA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Puedes cancelar tu membresía en cualquier momento desde la configuración de tu cuenta en la app, sin
-                cargos adicionales.
+                Sin complicaciones ni letra pequeña. Puedes cancelar tu suscripción en cualquier momento directamente desde tu perfil en la aplicación, en la sección: administrar suscripción.
               </AccordionContent>
             </AccordionItem>
 
@@ -462,8 +459,7 @@ export default function RestaurantLandingPage() {
                 5. ¿QUÉ INCLUYE WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Incluye descuentos especiales, 2x1 en platos seleccionados, regalos de bienvenida y acceso prioritario a
-                eventos gastronómicos exclusivos.
+                Tu membresía incluye los mejores beneficios en los mejores restaurantes de Medellín: 30% OFF en Sushi Market, 20% OFF en Olivia, Menú Weincard en Mistura y muchísimos más restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
               </AccordionContent>
             </AccordionItem>
 
@@ -472,8 +468,8 @@ export default function RestaurantLandingPage() {
                 6. ¿QUÉ RESTAURANTES ESTÁN EN WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Contamos con más de 50 restaurantes asociados incluyendo Archie, Villa, Romero, Leo, y muchos más. La
-                lista se actualiza constantemente.
+                Solo los mejores. 
+Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
               </AccordionContent>
             </AccordionItem>
           </Accordion>
