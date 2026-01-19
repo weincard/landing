@@ -433,6 +433,7 @@ export default function RestaurantLandingPage() {
               <AccordionContent className="text-gray-700 font-hepta-slab">
                 La suscripción mensual cuesta $18.900 COP y el plan anual podrás adquirirlo por $189.000 COP. <br />
 *Que podrías librar desde tu primera salida. 
+
               </AccordionContent>
             </AccordionItem>
 
