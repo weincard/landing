@@ -418,7 +418,7 @@ export default function RestaurantLandingPage() {
 
           <Accordion type="single" collapsible className="space-y-0 border-b border-black/20">
             <AccordionItem value="item-1" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 1. ¿QUÉ ES WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -427,7 +427,7 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 2. ¿CUÁNTO CUESTA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -438,7 +438,7 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 3. ¿DÓNDE PUEDO USAR WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -447,7 +447,7 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-4" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 4. ¿CÓMO CANCELO MI MEMBRESÍA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -456,7 +456,7 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-5" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 5. ¿QUÉ INCLUYE WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -465,7 +465,7 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-6" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
                 6. ¿QUÉ RESTAURANTES ESTÁN EN WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
