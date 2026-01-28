@@ -668,11 +668,7 @@ export function CreateOrEditBranch({
                   value: offer.value,
                   conditions: offer.conditions,
                   validFrom: offer.validFrom,
-                  validTo:
-                    offer.validTo ||
-                    new Date(
-                      Date.now() + 30 * 24 * 60 * 60 * 1000
-                    ).toISOString(),
+                  validTo: offer.validTo || null, // No generar fecha automática
                   validDays: offer.validDays,
                   isActive: offer.isActive,
                   expiresAt: offer.expiresAt,

@@ -62,10 +62,10 @@ export function CreateOrEditOfferModal({
     value: "",
     conditions: "",
     validFrom: new Date().toISOString().split("T")[0],
-    validTo: "", // Hora de fin
+    validTo: undefined, // Hora de fin
     validDays: [],
     // validHours: [], // Deprecated
-    startTime: "",
+    startTime: undefined,
     // endTime: "", // Deprecated: ahora usamos validTo
     isActive: true,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -115,7 +115,7 @@ export function CreateOrEditOfferModal({
           ? typeof offer.validTo === "string" && offer.validTo.includes("T")
             ? new Date(offer.validTo).toISOString().substr(11, 5) // Si es datetime, extraer hora
             : offer.validTo // Si ya es formato HH:mm, usar tal como está
-          : "", // Hora de fin
+          : undefined, // Hora de fin
         validFrom: offer.validFrom
           ? new Date(offer.validFrom).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
@@ -131,13 +131,13 @@ export function CreateOrEditOfferModal({
         value: "",
         conditions: "",
         validFrom: new Date().toISOString().split("T")[0],
-        validTo: "", // Hora de fin
+        validTo: undefined, // Hora de fin
         validDays: [],
         // validHours: [], // Deprecated
-        startTime: "",
+        startTime: undefined,
         // endTime: "", // Deprecated
         isActive: true,
-        expiresAt: "", // Fecha límite
+        expiresAt: null, // Fecha límite
         excludesBankHolidays: false,
         membershipPlanId: 1,
       });
@@ -245,17 +245,17 @@ export function CreateOrEditOfferModal({
       ...formData,
       // Agregar hora de inicio a validFrom solo si se especifica, sino usar solo la fecha
       validFrom:
-        formData.startTime && formData.validFrom
+        formData.startTime && formData.startTime.trim() && formData.validFrom
           ? `${formData.validFrom}T${formData.startTime}:00.000Z`
           : formData.validFrom || new Date().toISOString().split("T")[0],
       // validTo debe ser datetime también si se especifica hora de fin
       validTo:
-        formData.validTo && formData.validFrom
+        formData.validTo && formData.validTo.trim() && formData.validFrom
           ? `${formData.validFrom}T${formData.validTo}:00.000Z` // Usar la misma fecha base con la hora de fin
           : undefined,
       // expiresAt es la fecha límite de la oferta, solo agregar hora si hay validTo especificado
       expiresAt: formData.expiresAt
-        ? formData.validTo // Si hay hora de fin, combinar fecha límite con hora
+        ? formData.validTo && formData.validTo.trim() // Si hay hora de fin, combinar fecha límite con hora
           ? `${formData.expiresAt}T${formData.validTo}:00.000Z`
           : formData.expiresAt // Si no hay hora de fin, usar solo la fecha
         : null, // Si no hay fecha límite, null
@@ -439,7 +439,7 @@ export function CreateOrEditOfferModal({
                   value={formData.startTime || ""}
                   onChange={(e) => {
                     const startTime = e.target.value;
-                    handleInputChange("startTime", startTime);
+                    handleInputChange("startTime", startTime || undefined);
 
                     // Si se pone hora de inicio y no hay hora de fin, asignar hora de fin automáticamente
                     if (startTime && !formData.validTo) {
@@ -465,7 +465,7 @@ export function CreateOrEditOfferModal({
                   value={formData.validTo || ""}
                   onChange={(e) => {
                     const endTime = e.target.value;
-                    handleInputChange("validTo", endTime);
+                    handleInputChange("validTo", endTime || undefined);
 
                     // Si se pone hora de fin y no hay hora de inicio, asignar hora de inicio automáticamente
                     if (endTime && !formData.startTime) {
