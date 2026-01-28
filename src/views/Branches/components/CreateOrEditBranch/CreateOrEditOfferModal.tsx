@@ -243,23 +243,21 @@ export function CreateOrEditOfferModal({
     // Construir las fechas con horarios para el backend
     const offerData = {
       ...formData,
-      // Agregar hora de inicio a validFrom si se especifica, sino usar la fecha sin hora
+      // Agregar hora de inicio a validFrom solo si se especifica, sino usar solo la fecha
       validFrom:
         formData.startTime && formData.validFrom
           ? `${formData.validFrom}T${formData.startTime}:00.000Z`
-          : formData.validFrom
-          ? `${formData.validFrom}T00:00:00.000Z`
-          : new Date().toISOString().split("T")[0] + "T00:00:00.000Z",
+          : formData.validFrom || new Date().toISOString().split("T")[0],
       // validTo debe ser datetime también si se especifica hora de fin
       validTo:
         formData.validTo && formData.validFrom
           ? `${formData.validFrom}T${formData.validTo}:00.000Z` // Usar la misma fecha base con la hora de fin
           : undefined,
-      // expiresAt es la fecha límite de la oferta
+      // expiresAt es la fecha límite de la oferta, solo agregar hora si hay validTo especificado
       expiresAt: formData.expiresAt
         ? formData.validTo // Si hay hora de fin, combinar fecha límite con hora
           ? `${formData.expiresAt}T${formData.validTo}:00.000Z`
-          : `${formData.expiresAt}T23:59:59.000Z`
+          : formData.expiresAt // Si no hay hora de fin, usar solo la fecha
         : null, // Si no hay fecha límite, null
     };
 
