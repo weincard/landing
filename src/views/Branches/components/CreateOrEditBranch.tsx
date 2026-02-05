@@ -602,11 +602,21 @@ export function CreateOrEditBranch({
         images: imageUrls.length > 0 ? imageUrls : undefined,
       };
 
-      // Only include merchantId, categoryId, and userId for creation
+      // Include merchantId and userId only when creating
       if (!branchId) {
         branchData.merchantId = Number(merchantId);
-        branchData.categoryId = Number(categoryId);
         branchData.userId = Number(userId);
+      }
+
+      // Always handle categoryId so changes made in EDIT mode are sent to the API.
+      // - If a category is selected, send its numeric id
+      // - If in EDIT mode and category was cleared (empty string), send explicit null
+      //   so backend can remove the relation. Use `as any` to avoid strict TS issues
+      //   since Partial<IBranch> allows number but not null by default.
+      if (categoryId !== "") {
+        branchData.categoryId = Number(categoryId);
+      } else if (branchId) {
+        branchData.categoryId = null as any;
       }
 
       let response;
