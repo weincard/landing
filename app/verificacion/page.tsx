@@ -242,7 +242,7 @@ export default function VerificacionPage() {
                 value={formData.identification}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="Numero de identificacion"
+                placeholder="Número de identificación"
               />
             </div>
 
@@ -259,7 +259,7 @@ export default function VerificacionPage() {
                 value={formData.code}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="Ingresa el codigo"
+                placeholder="Ingresa el código"
               />
             </div>
 
