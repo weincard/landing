@@ -211,7 +211,7 @@ export default function VerificacionPage() {
       <main className="container mx-auto px-4 py-12 max-w-2xl">
         <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12">
           <h1 className="font-clash font-bold text-3xl md:text-4xl mb-2 text-gray-900">
-            Verificacion de codigo
+            Verificación de código
           </h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
             Digite la cédula y el código único del usuario para validar el beneficio WEINCARD.
