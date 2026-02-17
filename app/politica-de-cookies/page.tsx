@@ -158,7 +158,7 @@ export default function PoliticaDeCookiesPage() {
       {/* Footer */}
       <footer className="bg-black text-white py-8 mt-12">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-sm">© 2025 Weincard. Todos los derechos reservados.</p>
+          <p className="text-sm">© 2026 Weincard. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>
