@@ -313,7 +313,7 @@ export default function VerificacionPage() {
                     Verificando...
                   </span>
                 ) : (
-                  "Verificar codigo"
+                  "Verificar código"
                 )}
               </Button>
             </div>
