@@ -214,7 +214,7 @@ export default function VerificacionPage() {
             Verificacion de codigo
           </h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Ingresa los datos para verificar tu codigo Weincard.
+            Digite la cédula y el código único del usuario para validar el beneficio WEINCARD.
           </p>
 
           {/* Status Alert */}
