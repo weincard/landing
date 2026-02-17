@@ -10,3 +10,4 @@ export { NotesCard } from "./NotesCard";
 export { ManagerCard } from "./ManagerCard";
 export { AllyCard } from "./AllyCard";
 export { ActiveCard } from "./ActiveCard";
+export { WhatsAppCard } from "./WhatsAppCard";

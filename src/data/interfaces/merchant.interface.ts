@@ -36,6 +36,8 @@ export interface IBranch {
   latitude?: number;
   longitude?: number;
   phone: string;
+  whatsapp?: string;
+  canContact?: boolean;
   email: string;
   website?: string;
   note?: string;
