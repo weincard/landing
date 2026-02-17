@@ -211,7 +211,7 @@ export default function VerificacionPage() {
       <main className="container mx-auto px-4 py-12 max-w-2xl">
         <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12">
           <h1 className="font-clash font-bold text-3xl md:text-4xl mb-2 text-gray-900">
-            Verificación de codigo
+            Verificación de código
           </h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
             Digite la cédula y el código único del usuario para validar el beneficio WEINCARD.
@@ -232,7 +232,7 @@ export default function VerificacionPage() {
             {/* Identification */}
             <div>
               <label htmlFor="identification" className="block text-sm font-medium text-gray-700 mb-2">
-                Identificacion <span className="text-red-500">*</span>
+                Identificación <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -249,7 +249,7 @@ export default function VerificacionPage() {
             {/* Code */}
             <div>
               <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
-                Codigo <span className="text-red-500">*</span>
+                Código <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
