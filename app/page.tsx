@@ -497,9 +497,14 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
             <a href="#" className="hover:text-white/70 transition">
               SUBSCRÍBETE
             </a>
-          </div>
-        </div>
-      </footer>
+  </div>
+  <div className="mt-1 text-center">
+    <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
+      Desarrollado por agenciaidp.com
+    </a>
+  </div>
+  </div>
+  </footer>
     </main>
   )
 }
