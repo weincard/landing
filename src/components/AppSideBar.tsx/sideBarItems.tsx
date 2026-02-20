@@ -1,4 +1,4 @@
-import { Users, Store, CreditCard, Home, List, Tag } from "lucide-react";
+import { Users, Store, CreditCard, Home, List, Tag, Gift } from "lucide-react";
 import { BsCardChecklist } from "react-icons/bs";
 import { FaHandsHelping } from "react-icons/fa";
 import { MdCardMembership } from "react-icons/md";
@@ -35,6 +35,11 @@ const mainItems = [
     title: "Cupones",
     href: "/dashboard/coupons",
     icon: PiConfettiFill,
+  },
+  {
+    title: "Regalos",
+    href: "/dashboard/gifts",
+    icon: Gift,
   },
 ];
 

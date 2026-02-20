@@ -38,9 +38,12 @@ export const AppBar = ({ user, className, ...props }: AppBarProps) => {
   return (
     <header
       className={cn(
-        "h-16 px-4 flex items-center justify-between fixed top-0 right-0 left-0 z-30 bg-white border-b",
+        "h-16 px-4 flex items-center justify-between fixed top-0 right-0 left-0 z-30 bg-white",
         className
       )}
+      style={{
+        boxShadow: "0px 1px 4px 0px #15223214",
+      }}
       {...props}
     >
       {/* Sección izquierda */}

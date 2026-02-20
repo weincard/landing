@@ -30,6 +30,10 @@ import {
   RedemptionsRepositoryImpl,
 } from "@/modules/redemptions/data/repositories/redemptions.repository";
 import { CategoriesRepository } from "@/modules/categories/data/repositories/categories.repository";
+import {
+  GiftsRepository,
+  GiftsRepositoryImpl,
+} from "@/modules/gifts/data/repositories/gifts.repository";
 import { GetAllUsersUseCase } from "@/modules/users/domain/use-cases/get-all-users.use-case";
 import { CreateUserUseCase } from "@/modules/users/domain/use-cases/create-user.use-case";
 import { GetUserByIdUseCase } from "@/modules/users/domain/use-cases/get-user-by-id.use-case";
@@ -64,6 +68,11 @@ import { DeleteOfferUseCase } from "@/modules/offers/domain/use-cases/delete-off
 import { GetAllRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-all-redemptions.use-case";
 import { GetMyRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-my-redemptions.use-case";
 import { CreateRedemptionUseCase } from "@/modules/redemptions/domain/use-cases/create-redemption.use-case";
+import { GetAllGiftsUseCase } from "@/modules/gifts/domain/use-cases/get-all-gifts.use-case";
+import { GetOneGiftUseCase } from "@/modules/gifts/domain/use-cases/get-one-gift.use-case";
+import { CreateGiftUseCase } from "@/modules/gifts/domain/use-cases/create-gift.use-case";
+import { UpdateGiftUseCase } from "@/modules/gifts/domain/use-cases/update-gift.use-case";
+import { DeleteGiftUseCase } from "@/modules/gifts/domain/use-cases/delete-gift.use-case";
 import { MembershipPlansRepository } from "@/modules/membership-plans/data/repositories/membership-plans.repository";
 import { GetAllMembershipPlansUseCase } from "@/modules/membership-plans/domain/use-cases/get-all-membership-plans.use-case";
 import { GetOneMembershipPlanUseCase } from "@/modules/membership-plans/domain/use-cases/get-one-membership-plan.use-case";
@@ -102,6 +111,10 @@ container
   .bind("RedemptionsRepository")
   .to(RedemptionsRepositoryImpl)
   .inSingletonScope();
+container
+  .bind("GiftsRepository")
+  .to(GiftsRepositoryImpl)
+  .inSingletonScope();
 container.bind(CategoriesRepository).toSelf().inSingletonScope();
 container.bind(GetAllUsersUseCase).toSelf().inSingletonScope();
 container.bind(CreateUserUseCase).toSelf().inSingletonScope();
@@ -137,6 +150,11 @@ container.bind(DeleteOfferUseCase).toSelf().inSingletonScope();
 container.bind(GetAllRedemptionsUseCase).toSelf().inSingletonScope();
 container.bind(GetMyRedemptionsUseCase).toSelf().inSingletonScope();
 container.bind(CreateRedemptionUseCase).toSelf().inSingletonScope();
+container.bind(GetAllGiftsUseCase).toSelf().inSingletonScope();
+container.bind(GetOneGiftUseCase).toSelf().inSingletonScope();
+container.bind(CreateGiftUseCase).toSelf().inSingletonScope();
+container.bind(UpdateGiftUseCase).toSelf().inSingletonScope();
+container.bind(DeleteGiftUseCase).toSelf().inSingletonScope();
 container.bind(MembershipPlansRepository).toSelf().inSingletonScope();
 container.bind(GetAllMembershipPlansUseCase).toSelf().inSingletonScope();
 container.bind(GetOneMembershipPlanUseCase).toSelf().inSingletonScope();

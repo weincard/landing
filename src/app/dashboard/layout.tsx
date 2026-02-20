@@ -29,7 +29,7 @@ export default async function RootLayout({
             user={user!}
             className="fixed top-0 right-0 left-0 z-30 bg-white border-b"
           />
-          <main className="mt-16 p-6 bg-[#FFF6F4] h-full">{children}</main>
+          <main className="mt-16 p-6 h-full">{children}</main>
         </div>
       </div>
     </SidebarProvider>

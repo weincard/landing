@@ -60,4 +60,11 @@ export const apiUrls = {
     getAll: "/redemptions/all",
     getByMe: "/redemptions/by-me",
   },
+  gifts: {
+    create: "/gifts/create",
+    getAll: "/gifts/all",
+    getOne: "/gifts/one",
+    update: "/gifts/update",
+    delete: "/gifts/delete",
+  },
 };
