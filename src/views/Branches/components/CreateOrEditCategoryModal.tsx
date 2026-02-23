@@ -36,11 +36,24 @@ interface CreateOrEditCategoryModalProps {
   allCategories?: ICategoria[];
 }
 
+function findCategoryById(
+  categories: ICategoria[],
+  id: number
+): ICategoria | undefined {
+  for (const cat of categories) {
+    if (cat.categoryId === id) return cat;
+    if (cat.children?.length) {
+      const found = findCategoryById(cat.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
 export const CreateOrEditCategoryModal: React.FC<
   CreateOrEditCategoryModalProps
 > = ({ token, isOpen, onClose, onSuccess, categoryId, allCategories = [] }) => {
-  const { loading, createCategory, updateCategory, getOneCategory } =
-    useCategories();
+  const { loading, createCategory, updateCategory } = useCategories();
 
   // Form state
   const [name, setName] = useState("");
@@ -50,31 +63,21 @@ export const CreateOrEditCategoryModal: React.FC<
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
-  const [loadingCategory, setLoadingCategory] = useState(false);
-
-  // Load category data in edit mode
+  // Populate form from allCategories when editing
   useEffect(() => {
     if (categoryId && isOpen) {
-      setLoadingCategory(true);
-      getOneCategory(categoryId, token)
-        .then((category) => {
-          setName(category.name);
-          setDescription(category.description || "");
-          setParentCategoryId(category.parentCategory?.categoryId || null);
-          setExistingImageUrl(category.image || null);
-        })
-        .catch((error) => {
-          toast.error(error.message || "Error al cargar la categoría");
-          onClose();
-        })
-        .finally(() => {
-          setLoadingCategory(false);
-        });
+      const category = findCategoryById(allCategories, categoryId);
+      if (category) {
+        setName(category.name);
+        setDescription(category.description || "");
+        setParentCategoryId(category.parentCategory?.categoryId ?? null);
+        setExistingImageUrl(category.image || null);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, isOpen]);
 
-  // Reset form when modal opens/closes
+  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       setName("");
@@ -83,7 +86,6 @@ export const CreateOrEditCategoryModal: React.FC<
       setImageFile(null);
       setImagePreview(null);
       setExistingImageUrl(null);
-      setLoadingCategory(false);
     }
   }, [isOpen]);
 
@@ -180,12 +182,7 @@ export const CreateOrEditCategoryModal: React.FC<
           </DialogDescription>
         </DialogHeader>
 
-        {loadingCategory ? (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4">
             {/* Name */}
             <div className="grid gap-2">
               <Label htmlFor="name">
@@ -302,13 +299,12 @@ export const CreateOrEditCategoryModal: React.FC<
               </div>
             </div>
           </div>
-        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading || loadingCategory}>
+          <Button onClick={handleSave} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {categoryId ? "Actualizar" : "Crear"}
           </Button>

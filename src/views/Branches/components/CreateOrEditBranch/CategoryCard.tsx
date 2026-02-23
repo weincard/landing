@@ -10,6 +10,7 @@ interface CategoryCardProps {
   loadingCategories: boolean;
   onCategoryChange: (value: string) => void;
   onCreateCategory: () => void;
+  onEditCategory?: (categoryId: number) => void;
 }
 
 export function CategoryCard({
@@ -18,6 +19,7 @@ export function CategoryCard({
   loadingCategories,
   onCategoryChange,
   onCreateCategory,
+  onEditCategory,
 }: CategoryCardProps) {
   return (
     <Card>
@@ -34,6 +36,7 @@ export function CategoryCard({
             categoryId={categoryId}
             categories={categories}
             onCategoryChange={onCategoryChange}
+            onEditCategory={onEditCategory}
           />
         )}
 

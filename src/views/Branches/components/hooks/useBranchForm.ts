@@ -441,6 +441,11 @@ export function useBranchForm(token: string, branchId?: string) {
     }
   };
 
+  const handleInlineEditCategory = (categoryId: number) => {
+    setEditingCategoryId(categoryId);
+    setIsCategoryModalOpen(true);
+  };
+
   // Save handler
   const handleSave = async () => {
     const formData = form.getValues();
@@ -692,6 +697,7 @@ export function useBranchForm(token: string, branchId?: string) {
     handleOpenCategoryModal,
     handleCloseCategoryModal,
     handleCategorySuccess,
+    handleInlineEditCategory,
     handleSave,
     handleCancelUpload,
     handleCancel,

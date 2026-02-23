@@ -76,6 +76,7 @@ export function CreateOrEditBranch({
     handleOpenCategoryModal,
     handleCloseCategoryModal,
     handleCategorySuccess,
+    handleInlineEditCategory,
     handleSave,
     handleCancelUpload,
     handleCancel,
@@ -151,6 +152,7 @@ export function CreateOrEditBranch({
             loadingCategories={loadingCategories}
             onCategoryChange={(value) => setValue("categoryId", value)}
             onCreateCategory={handleOpenCategoryModal}
+            onEditCategory={handleInlineEditCategory}
           />
 
           {/* Address Card */}
