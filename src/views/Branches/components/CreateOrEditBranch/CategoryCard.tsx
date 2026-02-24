@@ -11,6 +11,7 @@ interface CategoryCardProps {
   onCategoryChange: (value: string) => void;
   onCreateCategory: () => void;
   onEditCategory?: (categoryId: number) => void;
+  onDeleteCategory?: (categoryId: number) => Promise<void>;
 }
 
 export function CategoryCard({
@@ -20,6 +21,7 @@ export function CategoryCard({
   onCategoryChange,
   onCreateCategory,
   onEditCategory,
+  onDeleteCategory,
 }: CategoryCardProps) {
   return (
     <Card>
@@ -37,6 +39,7 @@ export function CategoryCard({
             categories={categories}
             onCategoryChange={onCategoryChange}
             onEditCategory={onEditCategory}
+            onDeleteCategory={onDeleteCategory}
           />
         )}
 

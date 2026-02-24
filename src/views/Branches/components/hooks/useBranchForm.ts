@@ -87,7 +87,7 @@ export function useBranchForm(token: string, branchId?: string) {
   const { createBranch, getOneBranch, updateBranch, loading: branchLoading } = useBranches();
   const { createOffer, updateOffer, deleteOffer, getAllOffers, loading: offersLoading } = useOffers();
   const { getAllMerchants, loading: merchantsLoading } = useMerchants();
-  const { getAllCategories } = useCategories();
+  const { getAllCategories, deleteCategory } = useCategories();
   const { getAllUsers } = useUsers();
 
   // File states
@@ -446,6 +446,18 @@ export function useBranchForm(token: string, branchId?: string) {
     setIsCategoryModalOpen(true);
   };
 
+  const handleDeleteCategory = async (categoryId: number): Promise<void> => {
+    try {
+      await deleteCategory(categoryId, token);
+      toast.success("Categoría eliminada");
+      const categoriesList = await getAllCategories(token);
+      setCategories(categoriesList);
+    } catch (err: any) {
+      toast.error(err?.message || "Error al eliminar la categoría");
+      throw err;
+    }
+  };
+
   // Save handler
   const handleSave = async () => {
     const formData = form.getValues();
@@ -698,6 +710,7 @@ export function useBranchForm(token: string, branchId?: string) {
     handleCloseCategoryModal,
     handleCategorySuccess,
     handleInlineEditCategory,
+    handleDeleteCategory,
     handleSave,
     handleCancelUpload,
     handleCancel,
