@@ -150,7 +150,7 @@ export function CategoryRadioGroup({
             <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminará la categoría{" "}
-              <span className="font-semibold">"{confirmDelete?.name}"</span>
+              <span className="font-semibold">{confirmDelete?.name}</span>
               {confirmDelete?.children?.length ? (
                 <> y sus {confirmDelete.children.length} subcategoría(s)</>
               ) : null}
