@@ -168,7 +168,7 @@ export default function VerificacionPage() {
         }
       )
 
-      if (res.status === 200) {
+      if (res.status === 201) {
         const data = await res.json()
         setStatus({
           type: "success",
