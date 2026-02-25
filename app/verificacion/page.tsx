@@ -291,6 +291,7 @@ export default function VerificacionPage() {
                 type="number"
                 id="totalDiscount"
                 name="totalDiscount"
+                required
                 min="0"
                 step="any"
                 value={formData.totalDiscount}
