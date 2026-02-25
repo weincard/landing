@@ -285,7 +285,7 @@ export default function VerificacionPage() {
             {/* Total Discount */}
             <div>
               <label htmlFor="totalDiscount" className="block text-sm font-medium text-gray-700 mb-2">
-                Descuento Total <span className="text-gray-400 text-xs font-normal">(opcional)</span>
+                Descuento Total <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
