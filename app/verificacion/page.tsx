@@ -168,7 +168,7 @@ export default function VerificacionPage() {
         }
       )
 
-      if (res.status === 200) {
+      if (res.status === 201) {
         const data = await res.json()
         setStatus({
           type: "success",
@@ -285,12 +285,13 @@ export default function VerificacionPage() {
             {/* Total Discount */}
             <div>
               <label htmlFor="totalDiscount" className="block text-sm font-medium text-gray-700 mb-2">
-                Descuento Total <span className="text-gray-400 text-xs font-normal">(opcional)</span>
+                Descuento Total <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 id="totalDiscount"
                 name="totalDiscount"
+                required
                 min="0"
                 step="any"
                 value={formData.totalDiscount}
