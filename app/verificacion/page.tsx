@@ -7,6 +7,15 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
 interface RedemptionCode {
+  redemptionCodeId?: number
+  code?: string
+  user?: { userId?: number; name?: string }
+  branch?: { branchId?: number; name?: string }
+  identification?: string
+  totalPaid?: number
+  totalDiscount?: number
+  createdAt?: string
+  updatedAt?: string
   [key: string]: unknown
 }
 
@@ -97,18 +106,35 @@ function StatusAlert({ status }: { status: StatusState }) {
 }
 
 function RedemptionDetails({ data }: { data: RedemptionCode }) {
+  const formatCOPValue = (value?: number) => {
+    if (value == null) return "-"
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
+  const rows: { label: string; value: string }[] = [
+    { label: "Código", value: data.code ?? "-" },
+    { label: "Identificación", value: data.identification ?? "-" },
+    { label: "Total de la cuenta", value: formatCOPValue(data.totalPaid) },
+    { label: "Valor de ahorro", value: formatCOPValue(data.totalDiscount) },
+    { label: "Sucursal", value: data.branch?.name ?? "-" },
+    { label: "Usuario", value: data.user?.name ?? "-" },
+  ]
+
   return (
-    <div className="mt-4 rounded-lg border border-green-200 bg-green-50/50 overflow-hidden">
-      <div className="bg-green-100/60 px-4 py-3 border-b border-green-200">
-        <h3 className="font-clash font-bold text-green-900 text-sm">Detalles del codigo</h3>
+    <div className="mt-4 rounded-lg border border-[#b2dfdb] bg-[#e8f5e9] overflow-hidden">
+      <div className="px-5 py-3 border-b border-[#b2dfdb]">
+        <h3 className="font-clash font-bold text-[#1b5e20] text-sm">Detalles del codigo</h3>
       </div>
-      <div className="divide-y divide-green-100">
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key} className="flex items-start px-4 py-3 gap-4">
-            <span className="text-sm font-medium text-green-700 min-w-[140px] flex-shrink-0">{key}</span>
-            <span className="text-sm text-green-900 break-all">
-              {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value ?? "-")}
-            </span>
+      <div className="divide-y divide-[#c8e6c9]">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="flex items-center px-5 py-3 gap-4">
+            <span className="text-sm font-bold text-[#2e7d32] min-w-[160px] flex-shrink-0">{label}</span>
+            <span className="text-sm text-[#1b5e20]">{value}</span>
           </div>
         ))}
       </div>
@@ -141,9 +167,24 @@ export default function VerificacionPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<StatusState>({ type: null, message: "" })
 
+  const formatCOP = (raw: string): string => {
+    const digits = raw.replace(/\D/g, "")
+    if (!digits) return ""
+    return Number(digits).toLocaleString("es-CO")
+  }
+
+  const parseCOP = (formatted: string): string =>
+    formatted.replace(/\./g, "").replace(/,/g, "")
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name === "totalPaid" || name === "totalDiscount") {
+      const digits = value.replace(/\D/g, "")
+      const display = digits ? Number(digits).toLocaleString("es-CO") : ""
+      setFormData((prev) => ({ ...prev, [name]: display }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,8 +195,8 @@ export default function VerificacionPage() {
     const body = {
       identification: formData.identification.trim(),
       code: formData.code.trim(),
-      totalPaid: Number(formData.totalPaid),
-      totalDiscount: formData.totalDiscount ? Number(formData.totalDiscount) : 0,
+      totalPaid: Number(parseCOP(formData.totalPaid)),
+      totalDiscount: formData.totalDiscount ? Number(parseCOP(formData.totalDiscount)) : 0,
     }
 
     try {
@@ -269,16 +310,15 @@ export default function VerificacionPage() {
                 Total Pagado <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 id="totalPaid"
                 name="totalPaid"
                 required
-                min="0"
-                step="any"
+                inputMode="numeric"
                 value={formData.totalPaid}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="$ 0"
               />
             </div>
 
@@ -288,16 +328,15 @@ export default function VerificacionPage() {
                 Descuento Total <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 id="totalDiscount"
                 name="totalDiscount"
                 required
-                min="0"
-                step="any"
+                inputMode="numeric"
                 value={formData.totalDiscount}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="$ 0"
               />
             </div>
 
