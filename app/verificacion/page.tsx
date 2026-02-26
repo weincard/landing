@@ -106,11 +106,21 @@ function StatusAlert({ status }: { status: StatusState }) {
 }
 
 function RedemptionDetails({ data }: { data: RedemptionCode }) {
+  const formatCOPValue = (value?: number) => {
+    if (value == null) return "-"
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
   const rows: { label: string; value: string }[] = [
     { label: "Código", value: data.code ?? "-" },
     { label: "Identificación", value: data.identification ?? "-" },
-    { label: "Total de la cuenta", value: data.totalPaid != null ? String(data.totalPaid) : "-" },
-    { label: "Valor de ahorro", value: data.totalDiscount != null ? String(data.totalDiscount) : "-" },
+    { label: "Total de la cuenta", value: formatCOPValue(data.totalPaid) },
+    { label: "Valor de ahorro", value: formatCOPValue(data.totalDiscount) },
     { label: "Sucursal", value: data.branch?.name ?? "-" },
     { label: "Usuario", value: data.user?.name ?? "-" },
   ]
@@ -157,9 +167,24 @@ export default function VerificacionPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<StatusState>({ type: null, message: "" })
 
+  const formatCOP = (raw: string): string => {
+    const digits = raw.replace(/\D/g, "")
+    if (!digits) return ""
+    return Number(digits).toLocaleString("es-CO")
+  }
+
+  const parseCOP = (formatted: string): string =>
+    formatted.replace(/\./g, "").replace(/,/g, "")
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name === "totalPaid" || name === "totalDiscount") {
+      const digits = value.replace(/\D/g, "")
+      const display = digits ? Number(digits).toLocaleString("es-CO") : ""
+      setFormData((prev) => ({ ...prev, [name]: display }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,8 +195,8 @@ export default function VerificacionPage() {
     const body = {
       identification: formData.identification.trim(),
       code: formData.code.trim(),
-      totalPaid: Number(formData.totalPaid),
-      totalDiscount: formData.totalDiscount ? Number(formData.totalDiscount) : 0,
+      totalPaid: Number(parseCOP(formData.totalPaid)),
+      totalDiscount: formData.totalDiscount ? Number(parseCOP(formData.totalDiscount)) : 0,
     }
 
     try {
@@ -285,16 +310,15 @@ export default function VerificacionPage() {
                 Total Pagado <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 id="totalPaid"
                 name="totalPaid"
                 required
-                min="0"
-                step="any"
+                inputMode="numeric"
                 value={formData.totalPaid}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="$ 0"
               />
             </div>
 
@@ -304,16 +328,15 @@ export default function VerificacionPage() {
                 Descuento Total <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 id="totalDiscount"
                 name="totalDiscount"
                 required
-                min="0"
-                step="any"
+                inputMode="numeric"
                 value={formData.totalDiscount}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="$ 0"
               />
             </div>
 
