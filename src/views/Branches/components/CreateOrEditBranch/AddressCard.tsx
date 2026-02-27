@@ -46,6 +46,41 @@ export function AddressCard({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
 
+  // Keep latest callbacks in refs to avoid re-initializing the map when
+  // the parent re-renders and creates new inline arrow functions.
+  const onAddressChangeRef = useRef(onAddressChange);
+  const onCityChangeRef = useRef(onCityChange);
+  const onCountryChangeRef = useRef(onCountryChange);
+  const onLatitudeChangeRef = useRef(onLatitudeChange);
+  const onLongitudeChangeRef = useRef(onLongitudeChange);
+
+  useEffect(() => {
+    onAddressChangeRef.current = onAddressChange;
+  }, [onAddressChange]);
+  useEffect(() => {
+    onCityChangeRef.current = onCityChange;
+  }, [onCityChange]);
+  useEffect(() => {
+    onCountryChangeRef.current = onCountryChange;
+  }, [onCountryChange]);
+  useEffect(() => {
+    onLatitudeChangeRef.current = onLatitudeChange;
+  }, [onLatitudeChange]);
+  useEffect(() => {
+    onLongitudeChangeRef.current = onLongitudeChange;
+  }, [onLongitudeChange]);
+
+  // Keep latest coordinate values in refs so the dragend/place_changed
+  // closures can read them without being re-created on every render.
+  const latitudeRef = useRef(latitude);
+  const longitudeRef = useRef(longitude);
+  useEffect(() => {
+    latitudeRef.current = latitude;
+  }, [latitude]);
+  useEffect(() => {
+    longitudeRef.current = longitude;
+  }, [longitude]);
+
   // Extract address components from Google Maps data
   const extractAddressComponents = useCallback(
     (
@@ -72,11 +107,11 @@ export function AddressCard({
         }
       });
 
-      onAddressChange(streetAddress.trim() || formattedAddress);
-      if (cityName) onCityChange(cityName);
-      if (countryName) onCountryChange(countryName);
+      onAddressChangeRef.current(streetAddress.trim() || formattedAddress);
+      if (cityName) onCityChangeRef.current(cityName);
+      if (countryName) onCountryChangeRef.current(countryName);
     },
-    [onAddressChange, onCityChange, onCountryChange]
+    [] // stable — reads callbacks via refs
   );
 
   // Reverse geocode to get address from coordinates
@@ -129,7 +164,8 @@ export function AddressCard({
     [reverseGeocode]
   );
 
-  // Initialize Google Maps (once) using singleton loader
+  // Initialize Google Maps once — no coordinate props in deps to prevent
+  // re-mounting the map when lat/lng change after a place is selected.
   useEffect(() => {
     let isCancelled = false;
 
@@ -138,8 +174,10 @@ export function AddressCard({
         await loadGoogleMaps();
         if (isCancelled || !mapRef.current || !window.google) return;
 
-        const lat = parseFloat(latitude) || 6.244203;
-        const lng = parseFloat(longitude) || -75.581215;
+        // Read initial coordinates from refs so this effect doesn't need
+        // latitude/longitude as dependencies.
+        const lat = parseFloat(latitudeRef.current) || 6.244203;
+        const lng = parseFloat(longitudeRef.current) || -75.581215;
 
         const mapInstance = new google.maps.Map(mapRef.current, {
           center: { lat, lng },
@@ -159,8 +197,8 @@ export function AddressCard({
         markerInstance.addListener("dragend", () => {
           const position = markerInstance.getPosition();
           if (position) {
-            onLatitudeChange(position.lat().toString());
-            onLongitudeChange(position.lng().toString());
+            onLatitudeChangeRef.current(position.lat().toString());
+            onLongitudeChangeRef.current(position.lng().toString());
             reverseGeocode(position.lat(), position.lng());
           }
         });
@@ -190,13 +228,13 @@ export function AddressCard({
           autocompleteInstance.addListener("place_changed", () => {
             const place = autocompleteInstance.getPlace();
             if (place.geometry?.location) {
-              const lat = place.geometry.location.lat();
-              const lng = place.geometry.location.lng();
+              const placeLat = place.geometry.location.lat();
+              const placeLng = place.geometry.location.lng();
 
-              onLatitudeChange(lat.toString());
-              onLongitudeChange(lng.toString());
-              mapInstance.setCenter({ lat, lng });
-              markerInstance.setPosition({ lat, lng });
+              onLatitudeChangeRef.current(placeLat.toString());
+              onLongitudeChangeRef.current(placeLng.toString());
+              mapInstance.setCenter({ lat: placeLat, lng: placeLng });
+              markerInstance.setPosition({ lat: placeLat, lng: placeLng });
 
               // Extract address components
               if (place.address_components) {
@@ -230,19 +268,14 @@ export function AddressCard({
         );
       }
     };
-    // Dependencies intentionally exclude latitude/longitude to avoid re-init
-    // We include latitude/longitude to satisfy exhaustive-deps, but initialization
-    // is idempotent and further coordinate changes are handled by the separate effect below.
-  }, [
-    latitude,
-    longitude,
-    onLatitudeChange,
-    onLongitudeChange,
-    reverseGeocode,
-    extractAddressComponents,
-  ]);
+    // Intentionally empty deps: the map is initialized once on mount.
+    // Coordinate changes are handled by the effect below via isMapLoaded.
+    // Callbacks are accessed via stable refs, not captured in closures.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Update map when coordinates change externally
+  // Update map when coordinates change externally (e.g. after place selection
+  // updates the form state, or when editing an existing branch).
   useEffect(() => {
     if (isMapLoaded && mapInstanceRef.current && markerInstanceRef.current) {
       const lat = parseFloat(latitude);
@@ -263,8 +296,8 @@ export function AddressCard({
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          onLatitudeChange(lat.toString());
-          onLongitudeChange(lng.toString());
+          onLatitudeChangeRef.current(lat.toString());
+          onLongitudeChangeRef.current(lng.toString());
           if (mapInstanceRef.current && markerInstanceRef.current) {
             mapInstanceRef.current.setCenter({ lat, lng });
             markerInstanceRef.current.setPosition({ lat, lng });
