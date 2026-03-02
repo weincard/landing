@@ -24,11 +24,11 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRedemptions } from "@/modules/redemptions/domain/hooks/use-redemptions";
 
-interface RedemptionsViewProps {
+interface SavingsViewProps {
   token: string;
 }
 
-export default function RedemptionsView({ token }: RedemptionsViewProps) {
+export default function SavingsView({ token }: SavingsViewProps) {
   const { getAllRedemptions, loading } = useRedemptions();
 
   const [redemptions, setRedemptions] = useState<IRedemption[]>([]);
@@ -72,7 +72,7 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold">Redenciones</h1>
+      <h1 className="text-xl font-semibold">Ahorros</h1>
 
       <Card className="mt-4">
         <CardContent className="p-6 space-y-4">
@@ -117,22 +117,24 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Aliado</TableHead>
                   <TableHead>Sucursal</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Ahorro</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                        Cargando redenciones...
+                        Cargando ahorros...
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : redemptions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                      No se encontraron redenciones
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No se encontraron ahorros
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -155,6 +157,10 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
                       <TableCell>{r.user?.name || r.user?.email || "N/A"}</TableCell>
                       <TableCell>{r.branch?.merchant?.name || "N/A"}</TableCell>
                       <TableCell>{r.branch?.name || "N/A"}</TableCell>
+                      <TableCell>${r.value.toFixed(2)}</TableCell>
+                      <TableCell className="text-green-600 font-semibold">
+                        ${r.savings.toFixed(2)}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -169,7 +175,7 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
               {redemptions.length === 0
                 ? " 0 "
                 : ` ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, totalCount)} `}
-              de {totalCount} redenciones
+              de {totalCount} ahorros
             </div>
             <div className="flex items-center gap-2">
               <Select

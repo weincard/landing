@@ -1,4 +1,4 @@
-import { Users, Store, CreditCard, Home, List, Tag, Gift } from "lucide-react";
+import { Users, Store, CreditCard, Home, List, Tag, Gift, PiggyBank, BadgeCheck, ShieldCheck } from "lucide-react";
 import { BsCardChecklist } from "react-icons/bs";
 import { FaHandsHelping } from "react-icons/fa";
 import { MdCardMembership } from "react-icons/md";
@@ -17,9 +17,19 @@ const mainItems = [
     icon: Users,
   },
   {
+    title: "Ahorros",
+    href: "/dashboard/savings",
+    icon: PiggyBank,
+  },
+  {
     title: "Redenciones",
     href: "/dashboard/redemptions",
     icon: BsCardChecklist,
+  },
+  {
+    title: "Validaciones",
+    href: "/dashboard/validations",
+    icon: BadgeCheck,
   },
   {
     title: "Aliados",
