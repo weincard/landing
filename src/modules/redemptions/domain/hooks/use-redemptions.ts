@@ -3,11 +3,15 @@ import container from "@/lib/di/container";
 import { GetAllRedemptionsUseCase } from "../use-cases/get-all-redemptions.use-case";
 import { GetMyRedemptionsUseCase } from "../use-cases/get-my-redemptions.use-case";
 import { CreateRedemptionUseCase } from "../use-cases/create-redemption.use-case";
+import { GetGeneratedRedemptionsUseCase } from "../use-cases/get-generated-redemptions.use-case";
+import { GetUsedRedemptionsUseCase } from "../use-cases/get-used-redemptions.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllRedemptionsResponse,
   RedemptionResponse,
   CreateRedemptionRequest,
+  GeneratedRedemptionsResponse,
+  UsedRedemptionsResponse
 } from "../../data/interfaces/redemptions.response.interface";
 
 export const useRedemptions = () => {
@@ -37,6 +41,68 @@ export const useRedemptions = () => {
         const errorMessage = err?.message || "Error al cargar redenciones";
         setError(errorMessage);
         console.error("Error getting redemptions:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const getGeneratedRedemptions = useCallback(
+    async (
+      token?: string,
+      paginationParams?: IPaginationParams,
+      filters?: { branchId?: number | null; userId?: number | null }
+    ): Promise<GeneratedRedemptionsResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getGeneratedRedemptionsUseCase = container.get(
+          GetGeneratedRedemptionsUseCase
+        );
+        const response = await getGeneratedRedemptionsUseCase.execute(
+          token,
+          paginationParams,
+          filters
+        );
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al cargar códigos generados";
+        setError(errorMessage);
+        console.error("Error getting generated redemptions:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const getUsedRedemptions = useCallback(
+    async (
+      token?: string,
+      paginationParams?: IPaginationParams,
+      filters?: { branchId?: number | null; userId?: number | null }
+    ): Promise<UsedRedemptionsResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getUsedRedemptionsUseCase = container.get(
+          GetUsedRedemptionsUseCase
+        );
+        const response = await getUsedRedemptionsUseCase.execute(
+          token,
+          paginationParams,
+          filters
+        );
+        return response;
+      } catch (err: any) {
+        const errorMessage = err?.message || "Error al cargar códigos usados";
+        setError(errorMessage);
+        console.error("Error getting used redemptions:", err);
         return null;
       } finally {
         setLoading(false);
@@ -101,6 +167,8 @@ export const useRedemptions = () => {
 
   return {
     getAllRedemptions,
+    getGeneratedRedemptions,
+    getUsedRedemptions,
     getMyRedemptions,
     createRedemption,
     loading,

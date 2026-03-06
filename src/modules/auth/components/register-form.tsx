@@ -16,8 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
@@ -29,8 +27,6 @@ import { toast } from "sonner";
 import { useRouter } from "next-nprogress-bar";
 import container from "@/lib/di/container";
 import { AuthRepository } from "../data/repositories";
-import { setCookie } from "cookies-next";
-import { CookiesKeysEnum } from "@/utilities/enums";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 
 // 1. Ajusta el esquema de validación para Registro (si necesitas más campos, agrégalos)

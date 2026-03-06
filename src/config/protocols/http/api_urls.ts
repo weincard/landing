@@ -59,6 +59,8 @@ export const apiUrls = {
     create: "/redemptions/create",
     getAll: "/redemptions/all",
     getByMe: "/redemptions/by-me",
+    getGenerated: "/redemptions/codes/generated",
+    getUsed: "/redemptions/codes/used",
   },
   gifts: {
     create: "/gifts/create",

@@ -39,7 +39,9 @@ export default function SavingsView({ token }: SavingsViewProps) {
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [userFilter, setUserFilter] = useState<string>("");
 
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const totalPages = totalCount > 0
+    ? Math.ceil(totalCount / pageSize)
+    : currentPage + (redemptions.length === pageSize ? 1 : 0);
 
   const fetchData = useCallback(async () => {
     const skip = (currentPage - 1) * pageSize;
@@ -49,8 +51,8 @@ export default function SavingsView({ token }: SavingsViewProps) {
 
     const response = await getAllRedemptions(token, { limit: pageSize, skip }, filters);
     if (response) {
-      setRedemptions(response.redemptions);
-      setTotalCount(response.count);
+      setRedemptions(response.redemptions || []);
+      setTotalCount(response.count || 0);
     }
   }, [getAllRedemptions, token, currentPage, pageSize, branchFilter, userFilter]);
 
@@ -157,9 +159,9 @@ export default function SavingsView({ token }: SavingsViewProps) {
                       <TableCell>{r.user?.name || r.user?.email || "N/A"}</TableCell>
                       <TableCell>{r.branch?.merchant?.name || "N/A"}</TableCell>
                       <TableCell>{r.branch?.name || "N/A"}</TableCell>
-                      <TableCell>${r.value.toFixed(2)}</TableCell>
+                      <TableCell>${r.value?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell className="text-green-600 font-semibold">
-                        ${r.savings.toFixed(2)}
+                        ${r.savings?.toFixed(2) || '0.00'}
                       </TableCell>
                     </TableRow>
                   ))
@@ -174,8 +176,8 @@ export default function SavingsView({ token }: SavingsViewProps) {
               Mostrando
               {redemptions.length === 0
                 ? " 0 "
-                : ` ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, totalCount)} `}
-              de {totalCount} ahorros
+                : ` ${(currentPage - 1) * pageSize + 1} - ${totalCount > 0 ? Math.min(currentPage * pageSize, totalCount) : (currentPage - 1) * pageSize + redemptions.length} `}
+              {totalCount > 0 ? `de ${totalCount} ` : ""}ahorros
             </div>
             <div className="flex items-center gap-2">
               <Select
@@ -239,7 +241,7 @@ export default function SavingsView({ token }: SavingsViewProps) {
 
               <Button
                 variant="outline"
-                disabled={currentPage >= totalPages || loading}
+                disabled={currentPage >= totalPages || loading || redemptions.length === 0}
                 onClick={() => handlePageChange(currentPage + 1)}
               >
                 Siguiente

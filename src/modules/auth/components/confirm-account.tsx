@@ -1,22 +1,18 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardContent,
   CardFooter,
 } from "@/components/ui/card";
 
 
 
 export function ConfirmAccount() {
-  
+
   async function onSubmit() {
     console.log("OK");
   }
@@ -49,7 +45,7 @@ export function ConfirmAccount() {
         <Button
           variant="outline"
           className="bg-white text-blue-600 w-full hover:bg-gray-50"
-          // onClick={() => /* lógica para reenviar código */}
+        // onClick={() => /* lógica para reenviar código */}
         >
           Reenviar confirmación
         </Button>

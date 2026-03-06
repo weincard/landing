@@ -37,3 +37,30 @@ export interface CreateRedemptionRequest {
   savings: number;
   location?: string;
 }
+
+export interface IGeneratedRedemptionCode {
+  code: string;
+  branchName: string;
+  userName: string;
+  identification: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GeneratedRedemptionsResponse {
+  count: number;
+  redemptionCodes: IGeneratedRedemptionCode[];
+}
+
+export interface IUsedRedemptionCode {
+  branchName: string;
+  userName: string;
+  identification: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsedRedemptionsResponse {
+  count: number;
+  redemptionCodes: IUsedRedemptionCode[];
+}

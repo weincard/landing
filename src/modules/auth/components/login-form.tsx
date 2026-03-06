@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { AlertCircle, EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
-import Link from "next/link";
 import { routes } from "@/config";
 import { toast } from "sonner";
 import { useRouter } from "next-nprogress-bar";

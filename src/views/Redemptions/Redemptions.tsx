@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IRedemption } from "@/modules/redemptions/data/interfaces/redemptions.response.interface";
+import type { IGeneratedRedemptionCode } from "@/modules/redemptions/data/interfaces/redemptions.response.interface";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRedemptions } from "@/modules/redemptions/domain/hooks/use-redemptions";
@@ -29,17 +29,19 @@ interface RedemptionsViewProps {
 }
 
 export default function RedemptionsView({ token }: RedemptionsViewProps) {
-  const { getAllRedemptions, loading } = useRedemptions();
+  const { getGeneratedRedemptions, loading } = useRedemptions();
 
-  const [redemptions, setRedemptions] = useState<IRedemption[]>([]);
+  const [redemptions, setRedemptions] = useState<IGeneratedRedemptionCode[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [userFilter, setUserFilter] = useState<string>("");
 
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const totalPages = totalCount > 0
+    ? Math.ceil(totalCount / pageSize)
+    : currentPage + (redemptions.length === pageSize ? 1 : 0);
 
   const fetchData = useCallback(async () => {
     const skip = (currentPage - 1) * pageSize;
@@ -47,12 +49,12 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
     if (branchFilter) filters.branchId = parseInt(branchFilter) || null;
     if (userFilter) filters.userId = parseInt(userFilter) || null;
 
-    const response = await getAllRedemptions(token, { limit: pageSize, skip }, filters);
+    const response = await getGeneratedRedemptions(token, { limit: pageSize, skip }, filters);
     if (response) {
-      setRedemptions(response.redemptions);
+      setRedemptions(response.redemptionCodes);
       setTotalCount(response.count);
     }
-  }, [getAllRedemptions, token, currentPage, pageSize, branchFilter, userFilter]);
+  }, [getGeneratedRedemptions, token, currentPage, pageSize, branchFilter, userFilter]);
 
   useEffect(() => {
     fetchData();
@@ -108,15 +110,15 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
                     <Checkbox
                       checked={selected.length === redemptions.length && redemptions.length > 0}
                       onCheckedChange={(checked) => {
-                        setSelected(checked ? redemptions.map((r) => r.redemptionId) : []);
+                        setSelected(checked ? redemptions.map((r) => r.code) : []);
                       }}
                       disabled={loading || redemptions.length === 0}
                     />
                   </TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Aliado</TableHead>
                   <TableHead>Sucursal</TableHead>
+                  <TableHead>Código</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -137,24 +139,24 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
                   </TableRow>
                 ) : (
                   redemptions.map((r) => (
-                    <TableRow key={r.redemptionId}>
+                    <TableRow key={r.code}>
                       <TableCell>
                         <Checkbox
-                          checked={selected.includes(r.redemptionId)}
+                          checked={selected.includes(r.code)}
                           onCheckedChange={(checked) => {
                             setSelected(checked
-                              ? [...selected, r.redemptionId]
-                              : selected.filter((id) => id !== r.redemptionId)
+                              ? [...selected, r.code]
+                              : selected.filter((id) => id !== r.code)
                             );
                           }}
                         />
                       </TableCell>
                       <TableCell>
-                        {new Date(r.redeemedAt || r.createdAt).toLocaleDateString()}
+                        {new Date(r.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{r.user?.name || r.user?.email || "N/A"}</TableCell>
-                      <TableCell>{r.branch?.merchant?.name || "N/A"}</TableCell>
-                      <TableCell>{r.branch?.name || "N/A"}</TableCell>
+                      <TableCell>{r.userName?.replace("~", " ") || "N/A"}</TableCell>
+                      <TableCell>{r.branchName || "N/A"}</TableCell>
+                      <TableCell className="font-mono">{r.code}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -168,8 +170,8 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
               Mostrando
               {redemptions.length === 0
                 ? " 0 "
-                : ` ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, totalCount)} `}
-              de {totalCount} redenciones
+                : ` ${(currentPage - 1) * pageSize + 1} - ${totalCount > 0 ? Math.min(currentPage * pageSize, totalCount) : (currentPage - 1) * pageSize + redemptions.length} `}
+              {totalCount > 0 ? `de ${totalCount} ` : ""}redenciones
             </div>
             <div className="flex items-center gap-2">
               <Select
@@ -233,7 +235,7 @@ export default function RedemptionsView({ token }: RedemptionsViewProps) {
 
               <Button
                 variant="outline"
-                disabled={currentPage >= totalPages || loading}
+                disabled={currentPage >= totalPages || loading || redemptions.length === 0}
                 onClick={() => handlePageChange(currentPage + 1)}
               >
                 Siguiente
