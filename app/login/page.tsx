@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { saveAuth } from "@/lib/auth"
+import { saveToken } from "@/lib/auth"
 
 const API_BASE = "https://azucq9v6zc.execute-api.us-east-1.amazonaws.com/prod"
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
         return
       }
 
-      saveAuth(data.accessToken, data.user)
+      saveToken(data.accessToken)
       router.push("/")
     } catch {
       setError("Error de conexión. Intenta de nuevo.")
