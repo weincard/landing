@@ -14,33 +14,56 @@ import {
 } from "@/config/protocols/http/http_utilities";
 import { apiUrls } from "@/config/protocols/http/api_urls";
 import { CustomError } from "@/data/errors/custom-error";
-
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 export abstract class RedemptionsRepository {
   abstract create(
     redemptionData: CreateRedemptionRequest,
     token?: string
   ): Promise<RedemptionResponse>;
+
+  // -----------------------------------------------------
+  /**
+   * Devuelve el listado de ahorros generados
+   * @param token 
+   * @param paginationParams 
+   * @param filters 
+   */
   abstract getAll(
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { branchId?: number | null; userId?: number | null }
   ): Promise<AllRedemptionsResponse>;
+  // -----------------------------------------------------
+  /**
+   * Devuelve el listado de Redenciones generadas
+   * @param token 
+   * @param paginationParams 
+   * @param filters 
+   */
   abstract getGenerated(
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { branchId?: number | null; userId?: number | null }
   ): Promise<GeneratedRedemptionsResponse>;
+  // -----------------------------------------------------
+  /**
+   * Devuelve el listado de Validaciones realizadas
+   * @param token 
+   * @param paginationParams 
+   * @param filters 
+   */
   abstract getUsed(
     token?: string,
     paginationParams?: IPaginationParams,
     filters?: { branchId?: number | null; userId?: number | null }
   ): Promise<UsedRedemptionsResponse>;
+  // -----------------------------------------------------
   abstract getByMe(
     token?: string,
     paginationParams?: IPaginationParams
   ): Promise<AllRedemptionsResponse>;
 }
-
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @injectable()
 export class RedemptionsRepositoryImpl implements RedemptionsRepository {
   private httpClient: AxiosHttpClient;
@@ -49,6 +72,16 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
     this.httpClient = httpClient;
   }
 
+  // -----------------------------------------------------
+  /**
+   * Implementación del método abstracto getAll.
+   * 
+   * Este endpoint devuelve el listado de los ahorros generados.
+   * @param token
+   * @param paginationParams 
+   * @param filters 
+   * @returns 
+   */
   async getAll(
     token?: string,
     paginationParams?: IPaginationParams,
@@ -78,6 +111,16 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
     }
   }
 
+  // -----------------------------------------------------
+  /**
+   * Implementación del método abstracto getGenerated.
+   * 
+   * Este endpoint devuelve el listado de las redenciones generadas.
+   * @param token
+   * @param paginationParams 
+   * @param filters 
+   * @returns 
+   */
   async getGenerated(
     token?: string,
     paginationParams?: IPaginationParams,
@@ -107,6 +150,16 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
     }
   }
 
+  // -----------------------------------------------------
+  /**
+   * Implementación del método abstracto getUsed.
+   * 
+   * Este endpoint devuelve el listado de las validaciones realizadas.
+   * @param token
+   * @param paginationParams 
+   * @param filters 
+   * @returns 
+   */
   async getUsed(
     token?: string,
     paginationParams?: IPaginationParams,
@@ -192,3 +245,4 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
     }
   }
 }
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

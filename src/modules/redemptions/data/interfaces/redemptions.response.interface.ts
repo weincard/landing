@@ -56,6 +56,8 @@ export interface IUsedRedemptionCode {
   branchName: string;
   userName: string;
   identification: string | null;
+  totalPaid: number;
+  totalDiscount: number;
   createdAt: string;
   updatedAt: string;
 }
