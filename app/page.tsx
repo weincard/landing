@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import HeaderAuth from "@/components/header-auth"
 
 export default function RestaurantLandingPage() {
   return (
@@ -22,9 +23,7 @@ export default function RestaurantLandingPage() {
                   PLANES
                 </a>
               </nav>
-              <Button className="rounded-full bg-white text-black hover:bg-white/90 font-hepta-slab font-bold">
-                SUSCRÍBETE
-              </Button>
+              <HeaderAuth />
             </div>
           </div>
         </header>
