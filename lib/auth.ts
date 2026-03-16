@@ -4,10 +4,13 @@ const USER_KEY = "wc_user"
 export interface AuthUser {
   id: number
   name: string
+  lastname?: string
+  email?: string
   phone: string
   role?: string
   roleId?: number
   isVerified?: boolean
+  createdAt?: string
 }
 
 export function saveAuth(token: string, user: AuthUser) {
