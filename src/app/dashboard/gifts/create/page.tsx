@@ -1,4 +1,4 @@
-import { CreateOrEditGift } from "@/views/Gifts/components/CreateOrEditGift";
+import CreateOrEditGift from "@/views/Gifts/components/CreateOrEditGift";
 import { CookiesKeysEnum } from "@/utilities";
 import { cookies } from "next/headers";
 import React, { Suspense } from "react";

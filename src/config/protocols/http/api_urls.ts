@@ -63,10 +63,10 @@ export const apiUrls = {
     getUsed: "/redemptions/codes/used",
   },
   gifts: {
-    create: "/gifts/create",
-    getAll: "/gifts/all",
-    getOne: "/gifts/one",
-    update: "/gifts/update",
-    delete: "/gifts/delete",
+    create: "/gifts/admin/create",
+    getAll: "/gifts/admin/all",
+    getOne: "/gifts/admin/one",
+    update: "/gifts/admin/update",
+    delete: "/gifts/admin/delete",
   },
 };

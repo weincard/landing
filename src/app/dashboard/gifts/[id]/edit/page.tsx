@@ -1,5 +1,6 @@
 import { CookiesKeysEnum } from "@/utilities";
-import { CreateOrEditGift } from "@/views/Gifts/components/CreateOrEditGift";
+import CreateOrEditGift from "@/views/Gifts/components/CreateOrEditGift";
+
 import { cookies } from "next/headers";
 import React from "react";
 

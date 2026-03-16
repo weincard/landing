@@ -20,7 +20,7 @@ export const useGifts = () => {
     async (
       token?: string,
       paginationParams?: IPaginationParams,
-      filters?: { name?: string; isActive?: boolean }
+      filters?: { search?: string; isActive?: boolean }
     ): Promise<AllGiftsResponse | null> => {
       setLoading(true);
       setError(null);

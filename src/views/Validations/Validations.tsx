@@ -119,6 +119,9 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Identificación</TableHead>
                   <TableHead>Sucursal</TableHead>
+                  {/* TODO: Descomentar */}
+                  {/* <TableHead>Valor</TableHead> */}
+                  {/* <TableHead>Ahorro</TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,6 +160,11 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
                       <TableCell>{r.userName?.replace("~", " ") || "N/A"}</TableCell>
                       <TableCell>{r.identification || "N/A"}</TableCell>
                       <TableCell>{r.branchName || "N/A"}</TableCell>
+                      {/* TODO: Descomentar */}
+                      {/* <TableCell>${r.value?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell className="text-green-600 font-semibold">
+                        ${r.savings?.toFixed(2) || '0.00'}
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}

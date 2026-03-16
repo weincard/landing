@@ -3,11 +3,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, ChevronDown, Search, Camera, User as UserIcon } from "lucide-react";
+import {
+  Loader2,
+  X,
+  ChevronDown,
+  Search,
+  Camera,
+  User as UserIcon,
+  ChevronLeft,
+  Plus,
+  Calendar as CalendarIcon
+} from "lucide-react";
 import { useGifts } from "@/modules/gifts/domain/hooks/use-gifts";
+import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { IGift } from "@/data/interfaces/gift.interface";
+import type { IBranch } from "@/data/interfaces/merchant.interface";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
@@ -21,9 +33,9 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import Image from "next/image";
-import { validateImageFile } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface CreateOrEditGiftProps {
   token: string;
@@ -38,22 +50,20 @@ const validateForm = (data: {
   membershipPlanIds: number[];
   quantity: string;
   expirationDate?: Date;
-  code?: string;
+  conditions: string;
 }) => {
   const {
     name,
     description,
     branchIds,
-    membershipPlanIds,
     quantity,
     expirationDate,
-    code,
+    conditions,
   } = data;
 
   if (!name.trim()) return "El nombre del regalo es requerido";
   if (!description.trim()) return "La descripción es requerida";
   if (branchIds.length === 0) return "Debe seleccionar al menos una sucursal";
-  if (membershipPlanIds.length === 0) return "Debe seleccionar al menos una membresía";
   if (!quantity) return "Debe ingresar la cantidad de regalos";
 
   const quantityNum = Number(quantity);
@@ -61,8 +71,7 @@ const validateForm = (data: {
     return "La cantidad debe ser un número positivo";
   }
 
-  if (code && !code.trim()) return "El código no puede estar vacío";
-
+  if (!conditions.trim()) return "Las condiciones son requeridas";
   if (!expirationDate) return "La fecha de expiración es requerida";
 
   return null;
@@ -74,12 +83,12 @@ const buildGiftData = (formData: {
   branchIds: number[];
   membershipPlanIds: number[];
   quantity: string;
-  code?: string;
   expirationDate: Date;
   isActive: boolean;
-  randomDistribution: boolean;
   conditions: string;
-  assignedUserIds: number[];
+  applyWithoutMembership: boolean;
+  manualCodes: string[];
+  manualUserIds: number[];
 }) => {
   const {
     name,
@@ -87,59 +96,57 @@ const buildGiftData = (formData: {
     branchIds,
     membershipPlanIds,
     quantity,
-    code,
     expirationDate,
     isActive,
-    randomDistribution,
     conditions,
-    assignedUserIds,
+    applyWithoutMembership,
+    manualCodes,
+    manualUserIds,
   } = formData;
 
-  const baseGiftData: Partial<IGift> = {
+  const giftData: Partial<IGift> = {
     name: name.trim(),
     description: description.trim(),
+    conditions: conditions.trim(),
     branchIds,
     membershipPlanIds,
-    quantity: Number(quantity),
+    applyWithoutMembership,
+    totalQuantity: Number(quantity),
     expirationDate: expirationDate.toISOString(),
     isActive,
+    manualCodes: manualCodes,
+    manualUserIds: manualUserIds,
   };
 
-  if (code && code.trim()) {
-    baseGiftData.code = code.trim();
-  }
-
-  return baseGiftData;
+  return giftData;
 };
 
 // Form field component
 const FormField = ({
   label,
   children,
-  className = "",
+  className,
 }: {
   label: string;
   children: React.ReactNode;
   className?: string;
 }) => (
   <div className={cn("space-y-2", className)}>
-    <label className="text-sm text-gray-600">
-      {label}
-    </label>
+    <Label className="text-sm font-medium text-gray-700">{label}</Label>
     {children}
   </div>
 );
 
-export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
+export default function CreateOrEditGift({
+  token,
+  giftId,
+}: CreateOrEditGiftProps) {
   const router = useRouter();
-  const { createGift, getOneGift, updateGift, loading } = useGifts();
+  const { createGift, updateGift, getOneGift } = useGifts();
+  const { getAllBranches, loading: branchesLoading } = useBranches();
+  const [loading, setLoading] = useState(false);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
-  // Image state
-  const [avatar, setAvatar] = useState<string>("");
-  const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [shouldRemoveAvatar, setShouldRemoveAvatar] = useState(false);
-
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -148,24 +155,20 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
     membershipPlanIds: [] as number[],
     quantity: "",
     code: "",
-    randomDistribution: true,
-    assignedUserIds: [] as number[],
+    applyWithoutMembership: false,
+    manualCodes: [] as string[],
+    manualUserIds: [] as number[],
     isActive: true,
   });
   const [expirationDate, setExpirationDate] = useState<Date>();
-  
+
   // Search states
   const [branchSearchTerm, setBranchSearchTerm] = useState("");
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
-  // Mock data - Replace with actual API calls
-  const [branches] = useState([
-    { branchId: 1, name: "BBQ Poblado", city: "Medellín" },
-    { branchId: 2, name: "BBQ Bello", city: "Bello" },
-    { branchId: 3, name: "BBQ Laureles", city: "Medellín" },
-    { branchId: 4, name: "BBQ Manrique", city: "Medellín" },
-    { branchId: 5, name: "BBQ Los Colores", city: "Medellín" },
-  ]);
+  // Branch states
+  const [availableBranches, setAvailableBranches] = useState<IBranch[]>([]);
+  const [selectedBranches, setSelectedBranches] = useState<IBranch[]>([]);
 
   const [membershipPlans] = useState([
     { membershipPlanId: 1, name: "Weincard Mensual", price: "100", duration: "monthly" },
@@ -174,16 +177,31 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
   ]);
 
   const [users] = useState([
+    { userId: 331, name: "facebooktwitter1@hotmail.com" },
+    { userId: 711, name: "andreagui18@gmail.com" },
     { userId: 1, name: "Carlos Lopez" },
-    { userId: 2, name: "Ana Ortega" },
-    { userId: 3, name: "Pedro Florez" },
-    { userId: 4, name: "Antonio Cruz" },
-    { userId: 5, name: "Emerson Benavides" },
   ]);
 
   // Dropdown states
   const [branchesDropdownOpen, setBranchesDropdownOpen] = useState(false);
   const [membershipDropdownOpen, setMembershipDropdownOpen] = useState(false);
+
+  // Branch search with debounce
+  useEffect(() => {
+    const searchBranches = async () => {
+      if (branchSearchTerm.trim().length >= 2) {
+        const response = await getAllBranches(undefined, token, { limit: 20, skip: 0 }, { name: branchSearchTerm });
+        if (response && response.branches) {
+          setAvailableBranches(response.branches);
+        }
+      } else {
+        setAvailableBranches([]);
+      }
+    };
+
+    const timeoutId = setTimeout(searchBranches, 500);
+    return () => clearTimeout(timeoutId);
+  }, [branchSearchTerm, getAllBranches, token]);
 
   // Load existing gift data if editing
   useEffect(() => {
@@ -195,21 +213,27 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
 
   const loadGiftData = async () => {
     try {
+      setLoading(true);
       const response = await getOneGift(Number(giftId), token);
       if (response && response.gift) {
         const gift = response.gift;
         setFormData({
           name: gift.name || "",
           description: gift.description || "",
-          conditions: "",
-          branchIds: gift.branchIds || [],
-          membershipPlanIds: gift.membershipPlanIds || [],
-          quantity: gift.quantity?.toString() || "",
-          code: gift.code || "",
-          randomDistribution: true,
-          assignedUserIds: [],
+          conditions: gift.conditions || "",
+          branchIds: gift.branchIds || (gift.branches?.map(b => b.branchId) || []),
+          membershipPlanIds: gift.membershipPlanIds || (gift.membershipPlans?.map(m => m.membershipPlanId) || []),
+          quantity: (gift.totalQuantity || gift.totalQuantity || "").toString(),
+          code: gift.giftCodes?.[0]?.code || "",
+          applyWithoutMembership: gift.applyWithoutMembership || false,
+          manualCodes: gift.manualCodes || (gift.giftCodes?.map(gc => gc.code) || []),
+          manualUserIds: gift.manualUserIds || (gift.giftCodes?.map(gc => gc.user?.userId).filter(Boolean) as number[] || []),
           isActive: gift.isActive ?? true,
         });
+
+        if (gift.branches) {
+          setSelectedBranches(gift.branches as IBranch[]);
+        }
 
         if (gift.expirationDate) {
           setExpirationDate(new Date(gift.expirationDate));
@@ -218,105 +242,95 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
     } catch (error) {
       console.error("Error loading gift:", error);
       toast.error("Error al cargar el regalo");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAvatarChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        const file = e.target.files[0];
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-        // Validate image
-        const validation = await validateImageFile(file);
-        if (!validation.isValid) {
-          toast.error(validation.error || "Error al validar la imagen");
-          e.target.value = "";
-          return;
-        }
-
-        setProfileFile(file);
-        setShouldRemoveAvatar(false);
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          setAvatar(base64);
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-    []
-  );
-
-  const handleRemoveAvatar = useCallback(() => {
-    setAvatar("");
-    setProfileFile(null);
-    setShouldRemoveAvatar(true);
-    const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = "";
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }, []);
+  };
 
-  const handleInputChange = useCallback(
-    (field: string, value: string | boolean | number[]) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-    },
-    []
-  );
+  const handleRemoveAvatar = () => {
+    setAvatar(null);
+  };
 
-  const handleBranchToggle = (branchId: number) => {
+  const handleBranchToggle = (branch: IBranch) => {
+    const branchId = branch.branchId;
+    if (branchId === undefined) return;
+
     setFormData((prev) => {
-      const newBranchIds = prev.branchIds.includes(branchId)
+      const isSelected = prev.branchIds.includes(branchId);
+      const newBranchIds = isSelected
         ? prev.branchIds.filter((id) => id !== branchId)
         : [...prev.branchIds, branchId];
+      
       return { ...prev, branchIds: newBranchIds };
+    });
+
+    setSelectedBranches((prev) => {
+      const isSelected = prev.some(b => b.branchId === branchId);
+      return isSelected
+        ? prev.filter(b => b.branchId !== branchId)
+        : [...prev, branch];
     });
   };
 
-  const handleRemoveBranch = (branchId: number) => {
+  const handleRemoveBranch = (branchId: number | undefined) => {
+    if (branchId === undefined) return;
     setFormData((prev) => ({
       ...prev,
       branchIds: prev.branchIds.filter((id) => id !== branchId),
     }));
+    setSelectedBranches((prev) => prev.filter(b => b.branchId !== branchId));
   };
 
-  const handleMembershipToggle = (membershipPlanId: number) => {
+  const handleMembershipToggle = (membershipId: number) => {
     setFormData((prev) => {
-      const newMembershipPlanIds = prev.membershipPlanIds.includes(membershipPlanId)
-        ? prev.membershipPlanIds.filter((id) => id !== membershipPlanId)
-        : [...prev.membershipPlanIds, membershipPlanId];
-      return { ...prev, membershipPlanIds: newMembershipPlanIds };
+      const newMembershipIds = prev.membershipPlanIds.includes(membershipId)
+        ? prev.membershipPlanIds.filter((id) => id !== membershipId)
+        : [...prev.membershipPlanIds, membershipId];
+      return { ...prev, membershipPlanIds: newMembershipIds };
     });
   };
 
-  const handleRemoveMembership = (membershipPlanId: number) => {
+  const handleRemoveMembership = (membershipId: number) => {
     setFormData((prev) => ({
       ...prev,
-      membershipPlanIds: prev.membershipPlanIds.filter((id) => id !== membershipPlanId),
+      membershipPlanIds: prev.membershipPlanIds.filter((id) => id !== membershipId),
     }));
   };
 
   const handleUserToggle = (userId: number) => {
     setFormData((prev) => {
-      const newUserIds = prev.assignedUserIds.includes(userId)
-        ? prev.assignedUserIds.filter((id) => id !== userId)
-        : [...prev.assignedUserIds, userId];
-      return { ...prev, assignedUserIds: newUserIds };
+      const newUserIds = prev.manualUserIds.includes(userId)
+        ? prev.manualUserIds.filter((id) => id !== userId)
+        : [...prev.manualUserIds, userId];
+      return { ...prev, manualUserIds: newUserIds };
     });
   };
 
   const handleRemoveUser = (userId: number) => {
     setFormData((prev) => ({
       ...prev,
-      assignedUserIds: prev.assignedUserIds.filter((id) => id !== userId),
+      manualUserIds: prev.manualUserIds.filter((id) => id !== userId),
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
-    // Validate form
     const validationError = validateForm({
       ...formData,
       expirationDate,
@@ -332,25 +346,23 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
       return;
     }
 
+    setLoading(true);
     try {
       const giftData = buildGiftData({
         ...formData,
         expirationDate,
       });
 
-      let response;
-      if (giftId) {
-        response = await updateGift(Number(giftId), giftData, token);
-      } else {
-        response = await createGift(giftData, token);
-      }
+      const response = giftId
+        ? await updateGift(Number(giftId), giftData, token)
+        : await createGift(giftData as IGift, token);
 
       if (response) {
         toast.success(
           response.message ||
-            (giftId
-              ? "Regalo actualizado exitosamente"
-              : "Regalo creado exitosamente")
+          (giftId
+            ? "Regalo actualizado exitosamente"
+            : "Regalo creado exitosamente")
         );
         router.push("/dashboard/gifts");
       }
@@ -359,20 +371,14 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
       toast.error(
         error?.message || `Error al ${giftId ? "actualizar" : "crear"} el regalo`
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancel = () => {
     router.push("/dashboard/gifts");
   };
-
-  const filteredBranches = branches.filter((branch) =>
-    branch.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
-  );
-
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(userSearchTerm.toLowerCase())
-  );
 
   return (
     <div className="p-4">
@@ -383,7 +389,7 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-2"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
+          Volver
         </Link>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Regalos</h1>
@@ -391,7 +397,7 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
             <Button variant="outline" onClick={handleCancel} disabled={loading}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
+            <Button onClick={() => handleSubmit()} disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -405,168 +411,110 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {/* Avatar + Name */}
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="relative group">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
-                    {avatar ? (
-                      <Image
-                        src={avatar}
-                        alt="Regalo avatar"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-purple-200">
-                        <UserIcon className="h-8 w-8 text-purple-700" />
-                      </div>
-                    )}
-                    <label
-                      htmlFor="avatar-upload"
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer rounded-full transition-opacity"
-                    >
-                      <Camera className="h-6 w-6 text-white" />
-                    </label>
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarChange}
-                      disabled={loading}
-                    />
-                    {avatar && (
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg"
-                        onClick={handleRemoveAvatar}
-                        disabled={loading}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Basic Info */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+            <h3 className="text-lg font-semibold">Información General</h3>
+
+            <div className="flex gap-4 items-start">
+              <div className="relative group w-20 h-20">
+                <div className="w-full h-full rounded-full overflow-hidden border-2 border-gray-100 bg-purple-50 flex items-center justify-center">
+                  {avatar ? (
+                    <Image src={avatar} alt="Avatar" fill className="object-cover" />
+                  ) : (
+                    <UserIcon className="h-10 w-10 text-purple-600" />
+                  )}
                 </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
+                  <Camera className="h-6 w-6 text-white" />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                </label>
               </div>
-              <div className="flex-1">
-                <FormField label="Nombre del regalo">
+
+              <div className="flex-1 space-y-4">
+                <FormField label="Nombre del regalo*">
                   <Input
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Alitas BBQ x10"
-                    disabled={loading}
-                    className="text-base"
+                    placeholder="Ej: Plato de cortesía"
                   />
                 </FormField>
               </div>
             </div>
 
-            {/* Description */}
             <FormField label="Descripción">
               <Textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Descuento del 50%"
-                disabled={loading}
-                rows={3}
-                className="text-base resize-none"
+                placeholder="Descripción del regalo para el usuario"
+                className="min-h-[80px]"
               />
             </FormField>
 
-            {/* Conditions */}
-            <FormField label="Condiciones Principales">
-              <Input
+            <FormField label="Condiciones">
+              <Textarea
                 value={formData.conditions}
                 onChange={(e) => handleInputChange("conditions", e.target.value)}
-                placeholder="No incluye Bebidas"
-                disabled={loading}
-                className="text-base"
+                placeholder="Términos y condiciones específicos"
+                className="min-h-[80px]"
               />
             </FormField>
+          </div>
 
-            {/* Where it applies (Branches) */}
-            <FormField label="Donde Aplica">
+          <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+            <h3 className="text-lg font-semibold">Ubicaciones y Membresías</h3>
+
+              <FormField label="Sucursales donde aplica">
               <div className="space-y-2">
-                {/* Selected branches as badges */}
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.branchIds.map((branchId) => {
-                    const branch = branches.find((b) => b.branchId === branchId);
-                    if (!branch) return null;
-                    return (
-                      <Badge
-                        key={branchId}
-                        variant="secondary"
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm"
-                      >
-                        {branch.name}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveBranch(branchId)}
-                          className="ml-2 hover:text-red-200"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {selectedBranches.map((branch) => (
+                    <Badge key={branch.branchId} variant="secondary" className="gap-1 px-2 py-1">
+                      {branch.name}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveBranch(branch.branchId)} />
+                    </Badge>
+                  ))}
                 </div>
-
-                {/* Search input with dropdown */}
                 <div className="relative">
+                  <div className="absolute left-2 top-2.5 h-4 w-4">
+                    {branchesLoading ? (
+                      <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4 text-gray-400" />
+                    )}
+                  </div>
                   <Input
+                    placeholder="Buscar sucursal (mín. 2 letras)..."
+                    className="pl-8"
                     value={branchSearchTerm}
                     onChange={(e) => {
                       setBranchSearchTerm(e.target.value);
-                      if (e.target.value) {
-                        setBranchesDropdownOpen(true);
-                      }
+                      setBranchesDropdownOpen(true);
                     }}
-                    onFocus={() => {
-                      if (branchSearchTerm || filteredBranches.length > 0) {
-                        setBranchesDropdownOpen(true);
-                      }
-                    }}
-                    placeholder="BBQ Los Colores"
-                    disabled={loading}
-                    className="pr-8"
+                    onFocus={() => setBranchesDropdownOpen(true)}
                   />
-                  <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  
-                  {/* Dropdown results */}
-                  {branchesDropdownOpen && (branchSearchTerm || filteredBranches.length > 0) && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
-                      {filteredBranches.map((branch) => (
-                        <div
-                          key={branch.branchId}
-                          className="flex items-center justify-between py-2 px-3 hover:bg-gray-100 cursor-pointer"
-                          onMouseDown={(e) => {
-                            e.preventDefault(); // Prevent input blur
-                            handleBranchToggle(branch.branchId);
-                            setBranchSearchTerm("");
-                            setBranchesDropdownOpen(false);
-                          }}
-                        >
-                          <span className="text-sm">
+                  {branchesDropdownOpen && branchSearchTerm && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {availableBranches.length === 0 && !branchesLoading && branchSearchTerm.length >= 2 ? (
+                        <div className="px-3 py-2 text-sm text-gray-500 italic">No se encontraron sucursales</div>
+                      ) : (
+                        availableBranches.map((branch) => (
+                          <div
+                            key={branch.branchId}
+                            className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm flex justify-between items-center"
+                            onClick={() => {
+                              if (branch.branchId !== undefined) {
+                                handleBranchToggle(branch);
+                                setBranchSearchTerm("");
+                                setBranchesDropdownOpen(false);
+                              }
+                            }}
+                          >
                             {branch.name}
-                            {branch.city && ` - ${branch.city}`}
-                          </span>
-                          {formData.branchIds.includes(branch.branchId) && (
-                            <span className="text-green-600 font-bold">✓</span>
-                          )}
-                        </div>
-                      ))}
-                      {filteredBranches.length === 0 && (
-                        <div className="py-2 px-3 text-sm text-gray-500">
-                          No se encontraron sucursales
-                        </div>
+                            {branch.branchId !== undefined && formData.branchIds.includes(branch.branchId) && <span>✓</span>}
+                          </div>
+                        ))
                       )}
                     </div>
                   )}
@@ -574,238 +522,160 @@ export function CreateOrEditGift({ token, giftId }: CreateOrEditGiftProps) {
               </div>
             </FormField>
 
-            {/* Membership applied */}
-            <FormField label="Membresía aplicada">
-              <Popover open={membershipDropdownOpen} onOpenChange={setMembershipDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    type="button"
-                    className="w-full justify-between text-base font-normal min-h-[40px] h-auto"
-                    disabled={loading}
-                  >
-                    <div className="flex flex-wrap gap-2 flex-1">
-                      {formData.membershipPlanIds.length === 0 ? (
-                        <span className="text-gray-500">Seleccionar membresía</span>
-                      ) : (
-                        formData.membershipPlanIds.map((planId) => {
-                          const plan = membershipPlans.find((p) => p.membershipPlanId === planId);
-                          if (!plan) return null;
-                          return (
-                            <Badge
-                              key={planId}
-                              variant="secondary"
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveMembership(planId);
-                              }}
-                            >
-                              {plan.name}
-                              <span className="ml-2">×</span>
-                            </Badge>
-                          );
-                        })
-                      )}
-                    </div>
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-2" align="start">
-                  <div className="max-h-[200px] overflow-y-auto">
-                    {membershipPlans.map((plan) => (
-                      <div
-                        key={plan.membershipPlanId}
-                        className="flex items-center justify-between py-2 px-3 hover:bg-gray-100 rounded cursor-pointer"
-                        onClick={() => handleMembershipToggle(plan.membershipPlanId)}
-                      >
-                        <span className="text-sm">
-                          {plan.name}
-                        </span>
-                        {formData.membershipPlanIds.includes(plan.membershipPlanId) && (
-                          <span className="text-green-600 font-bold">✓</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </FormField>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Quantity */}
-            <FormField label="Cantidad de Regalos">
-              <Input
-                type="text"
-                value={formData.quantity}
-                onChange={(e) => {
-                  // Only allow numbers
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  handleInputChange("quantity", value);
-                }}
-                placeholder="100"
-                disabled={loading}
-                className="text-base"
-              />
-            </FormField>
-
-            {/* Random Distribution */}
-            <FormField label="Distribución Aleatoria">
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="randomDistribution"
-                    checked={formData.randomDistribution === true}
-                    onChange={() => handleInputChange("randomDistribution", true)}
-                    className="w-4 h-4 text-purple-600"
-                  />
-                  <span className="text-sm">SI</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="randomDistribution"
-                    checked={formData.randomDistribution === false}
-                    onChange={() => handleInputChange("randomDistribution", false)}
-                    className="w-4 h-4 text-purple-600"
-                  />
-                  <span className="text-sm">NO</span>
-                </label>
-              </div>
-            </FormField>
-
-            {/* Assign to Users */}
-            <FormField label="Asignar a Usuarios">
+            <FormField label="Membresías requeridas">
               <div className="space-y-2">
-                {/* Selected users as badges */}
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.assignedUserIds.map((userId) => {
-                    const user = users.find((u) => u.userId === userId);
-                    if (!user) return null;
+                <div className="flex flex-wrap gap-2">
+                  {formData.membershipPlanIds.map((id) => {
+                    const plan = membershipPlans.find((p) => p.membershipPlanId === id);
                     return (
-                      <Badge
-                        key={userId}
-                        variant="secondary"
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm"
-                      >
-                        {user.name}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveUser(userId)}
-                          className="ml-2 hover:text-red-200"
-                        >
-                          ×
-                        </button>
+                      <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
+                        {plan?.name}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveMembership(id)} />
                       </Badge>
                     );
                   })}
                 </div>
-
-                {/* User search input */}
-                <div className="relative">
-                  <Input
-                    value={userSearchTerm}
-                    onChange={(e) => setUserSearchTerm(e.target.value)}
-                    placeholder="Emerson Benavides"
-                    disabled={loading}
-                    className="pr-8"
-                  />
-                  <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-
-                {/* User search results */}
-                {userSearchTerm && (
-                  <div className="border rounded-md p-2 max-h-[150px] overflow-y-auto bg-white shadow-sm">
-                    {filteredUsers.map((user) => (
-                      <div
-                        key={user.userId}
-                        className="flex items-center justify-between py-2 px-3 hover:bg-gray-100 rounded cursor-pointer"
-                        onClick={() => {
-                          handleUserToggle(user.userId);
-                          setUserSearchTerm("");
-                        }}
-                      >
-                        <span className="text-sm">{user.name}</span>
-                        {formData.assignedUserIds.includes(user.userId) && (
-                          <span className="text-green-600 font-bold">✓</span>
-                        )}
-                      </div>
-                    ))}
-                    {filteredUsers.length === 0 && (
-                      <div className="text-sm text-gray-500 py-2 px-3">
-                        No se encontraron usuarios
-                      </div>
-                    )}
-                  </div>
-                )}
+                <Popover open={membershipDropdownOpen} onOpenChange={setMembershipDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal">
+                      Seleccionar membresías
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <div className="p-2 space-y-1">
+                      {membershipPlans.map((plan) => (
+                        <div
+                          key={plan.membershipPlanId}
+                          className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          onClick={() => handleMembershipToggle(plan.membershipPlanId)}
+                        >
+                          <Checkbox checked={formData.membershipPlanIds.includes(plan.membershipPlanId)} />
+                          <span className="text-sm">{plan.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </FormField>
+          </div>
+        </div>
 
-            {/* Code */}
-            <FormField label="Código">
-              <Input
-                value={formData.code}
-                onChange={(e) => handleInputChange("code", e.target.value)}
-                placeholder="121KSA"
-                disabled={loading}
-                className="text-base"
-              />
-            </FormField>
+        {/* Right Column: Settings & Distribution */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+            <h3 className="text-lg font-semibold">Configuración de Redención</h3>
 
-            {/* Expiration Date */}
-            <FormField label="Fecha de expiración">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Cantidad Total">
+                <Input
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleInputChange("quantity", e.target.value)}
+                  placeholder="Ej: 100"
+                />
+              </FormField>
+
+              <FormField label="Fecha Expiración">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !expirationDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {expirationDate ? format(expirationDate, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={expirationDate}
+                      onSelect={setExpirationDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormField>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label>Activo</Label>
+                <div className="text-sm text-gray-500">Habilitar redención del regalo</div>
+              </div>
+              <Switch checked={formData.isActive} onCheckedChange={(val) => handleInputChange("isActive", val)} />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label>Aplicar sin membresía</Label>
+                <div className="text-sm text-gray-500">Usuarios sin plan pueden redimir</div>
+              </div>
+              <Switch checked={formData.applyWithoutMembership} onCheckedChange={(val) => handleInputChange("applyWithoutMembership", val)} />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Asignación Manual</h3>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className={cn(
-                      "w-full justify-between text-left font-normal text-base",
-                      !expirationDate && "text-muted-foreground"
-                    )}
-                    disabled={loading}
-                  >
-                    {expirationDate ? (
-                      format(expirationDate, "dd-MM-yyyy", { locale: es })
-                    ) : (
-                      <span>12-02-2026</span>
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Asignar
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={expirationDate}
-                    onSelect={setExpirationDate}
-                    initialFocus
-                    disabled={(date) => date < new Date()}
-                  />
+                <PopoverContent className="w-80 p-0" align="end">
+                  <div className="p-2 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Buscar usuario..."
+                        className="pl-8"
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+                    {users.filter(u => u.name.toLowerCase().includes(userSearchTerm.toLowerCase())).map(user => (
+                      <div
+                        key={user.userId}
+                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                        onClick={() => handleUserToggle(user.userId)}
+                      >
+                        <Checkbox checked={formData.manualUserIds.includes(user.userId)} />
+                        <span className="text-sm">{user.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </PopoverContent>
               </Popover>
-            </FormField>
+            </div>
 
-            {/* Active Toggle */}
-            <div className="flex items-center justify-between pt-4">
-              <div className="flex items-center gap-3">
-                <span className="text-base font-medium">Activo</span>
-                <Switch
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => handleInputChange("isActive", checked)}
-                  disabled={loading}
-                />
-                <span className="text-sm text-gray-600">
-                  {formData.isActive ? "sí" : "no"}
-                </span>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.manualUserIds.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">No hay usuarios asignados manualmente.</p>
+              ) : (
+                formData.manualUserIds.map((id) => {
+                  const user = users.find((u) => u.userId === id);
+                  return (
+                    <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
+                      {user?.name}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveUser(id)} />
+                    </Badge>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ export const allGiftsResponseAdapter = (data: any): AllGiftsResponse => {
   return {
     message: data.message || "Regalos obtenidos exitosamente",
     count: data.count || 0,
-    gifts: data.gifts || [],
+    gifts: data.gifts || (Array.isArray(data) ? data : []),
   };
 };
 

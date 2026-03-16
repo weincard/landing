@@ -52,14 +52,14 @@ export class GiftsRepositoryImpl implements GiftsRepository {
   async getAll(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { name?: string; isActive?: boolean }
+    filters?: { search?: string; isActive?: boolean }
   ): Promise<AllGiftsResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.gifts.getAll}?limit=${limit}&skip=${skip}`,
-      method: "get",
-      body: filters || {},
+      method: "post",
+      body: { search: filters?.search || "" },
       isAuth: true,
       token,
     });
@@ -137,7 +137,7 @@ export class GiftsRepositoryImpl implements GiftsRepository {
   ): Promise<GiftResponse> {
     const axiosRequest = await this.httpClient.request({
       url: `${apiUrls.gifts.update}/${giftId}`,
-      method: "put",
+      method: "patch",
       body: giftData,
       isAuth: true,
       token,

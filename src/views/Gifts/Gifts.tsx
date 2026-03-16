@@ -50,78 +50,8 @@ interface GiftsViewProps {
   token: string;
 }
 
-// Mock data
-const MOCK_GIFTS: IGift[] = [
-  {
-    giftId: 1,
-    name: "Regalo 1",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: true,
-    redemptionsCount: 45,
-    quantity: 1,
-    expirationDate: "2025-12-31",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-15",
-  },
-  {
-    giftId: 2,
-    name: "Regalo 2",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: false,
-    redemptionsCount: 656,
-    quantity: 3,
-    expirationDate: "2025-11-30",
-    createdAt: "2024-02-10",
-    updatedAt: "2024-02-10",
-  },
-  {
-    giftId: 3,
-    name: "Regalo 3",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: true,
-    redemptionsCount: 6784,
-    quantity: 4,
-    expirationDate: "2024-12-31",
-    createdAt: "2023-12-01",
-    updatedAt: "2024-01-05",
-  },
-  {
-    giftId: 4,
-    name: "Regalo 4",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: false,
-    redemptionsCount: 2323,
-    quantity: 2,
-    expirationDate: "2025-06-30",
-    createdAt: "2024-03-20",
-    updatedAt: "2024-03-20",
-  },
-  {
-    giftId: 5,
-    name: "Regalo 5",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: true,
-    redemptionsCount: 34,
-    quantity: 5,
-    expirationDate: "2025-10-31",
-    createdAt: "2024-01-25",
-    updatedAt: "2024-02-15",
-  },
-  {
-    giftId: 6,
-    name: "Regalo 6",
-    description: "Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto",
-    isActive: true,
-    redemptionsCount: 45,
-    quantity: 6,
-    expirationDate: "2026-01-31",
-    createdAt: "2024-02-05",
-    updatedAt: "2024-02-05",
-  },
-];
-
 export function GiftsView({ token }: GiftsViewProps) {
-  const { getAllGifts, deleteGift } = useGifts();
+  const { getAllGifts, deleteGift, updateGift } = useGifts();
   const [gifts, setGifts] = useState<IGift[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -138,36 +68,26 @@ export function GiftsView({ token }: GiftsViewProps) {
   const fetchGifts = useCallback(async () => {
     setLoading(true);
     try {
-      // Simulamos un delay de red
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await getAllGifts(
+        token,
+        { limit: pageSize, skip: (currentPage - 1) * pageSize },
+        {
+          search: searchTerm,
+          isActive: filterStatus === "active" ? true : filterStatus === "inactive" ? false : undefined
+        }
+      );
 
-      // Filtramos los datos mock
-      let filteredGifts = [...MOCK_GIFTS];
-
-      if (searchTerm) {
-        filteredGifts = filteredGifts.filter((gift) =>
-          gift.name?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      if (response) {
+        setGifts(response.gifts || []);
+        setTotalItems(response.count || 0);
       }
-
-      if (filterStatus === "active") {
-        filteredGifts = filteredGifts.filter((gift) => gift.isActive);
-      } else if (filterStatus === "inactive") {
-        filteredGifts = filteredGifts.filter((gift) => !gift.isActive);
-      }
-
-      // Paginación
-      const skip = (currentPage - 1) * pageSize;
-      const paginatedGifts = filteredGifts.slice(skip, skip + pageSize);
-
-      setGifts(paginatedGifts);
-      setTotalItems(filteredGifts.length);
     } catch (error) {
       console.error("Error fetching gifts:", error);
+      toast.error("Error al cargar los regalos");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, filterStatus]);
+  }, [currentPage, pageSize, searchTerm, filterStatus, getAllGifts, token]);
 
   useEffect(() => {
     fetchGifts();
@@ -192,11 +112,12 @@ export function GiftsView({ token }: GiftsViewProps) {
   };
 
   const handleConfirmDelete = async () => {
-    if (!giftToDelete) return;
+    const idToDelete = giftToDelete?.id || giftToDelete?.giftId;
+    if (!idToDelete) return;
 
     setIsDeleting(true);
     try {
-      const response = await deleteGift(giftToDelete.giftId || 0, token);
+      const response = await deleteGift(idToDelete, token);
       if (response) {
         toast.success(response.message || "Regalo eliminado exitosamente");
         setGiftToDelete(null);
@@ -206,6 +127,21 @@ export function GiftsView({ token }: GiftsViewProps) {
       toast.error(error?.message || "Error al eliminar el regalo");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleStatusChange = async (gift: IGift, isActive: boolean) => {
+    const idToUpdate = gift.id || gift.giftId;
+    if (!idToUpdate) return;
+
+    try {
+      const response = await updateGift(idToUpdate, { isActive }, token);
+      if (response) {
+        toast.success("Estado actualizado correctamente");
+        fetchGifts();
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Error al actualizar el estado");
     }
   };
 
@@ -315,85 +251,77 @@ export function GiftsView({ token }: GiftsViewProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  gifts.map((gift) => (
-                    <TableRow key={gift.giftId}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedGifts.includes(
-                            gift.giftId || 0
-                          )}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedGifts([
-                                ...selectedGifts,
-                                gift.giftId || 0,
-                              ]);
-                            } else {
-                              setSelectedGifts(
-                                selectedGifts.filter(
-                                  (id) => id !== gift.giftId
-                                )
-                              );
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {gift.name}
-                      </TableCell>
-                      <TableCell className="text-gray-600 max-w-xs">
-                        {gift.description}
-                      </TableCell>
-                      <TableCell>{gift.quantity || 0}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={gift.isActive ? "si" : "no"}
-                          onValueChange={(value) => {
-                            // Aquí iría la lógica para actualizar el estado
-                            console.log("Cambiar estado:", value);
-                          }}
-                        >
-                          <SelectTrigger
-                            className={`w-[90px] h-8 px-3 py-1 text-sm font-medium ${
-                              gift.isActive
+                  gifts.map((gift) => {
+                    const id = gift.id || gift.giftId;
+                    return (
+                      <TableRow key={id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedGifts.includes(id || 0)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGifts([...selectedGifts, id || 0]);
+                              } else {
+                                setSelectedGifts(
+                                  selectedGifts.filter((sid) => sid !== id)
+                                );
+                              }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {gift.name}
+                        </TableCell>
+                        <TableCell className="text-gray-600 max-w-xs truncate">
+                          {gift.description}
+                        </TableCell>
+                        <TableCell>{gift.totalQuantity || gift.quantity || 0}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={gift.isActive ? "si" : "no"}
+                            onValueChange={(value) => handleStatusChange(gift, value === "si")}
+                          >
+                            <SelectTrigger
+                              className={`w-[90px] h-8 px-3 py-1 text-sm font-medium ${gift.isActive
                                 ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-700 [&>svg]:text-white"
                                 : "bg-red-500 text-white border-red-500 hover:bg-red-600 [&>svg]:text-white"
-                            }`}
-                          >
-                            <SelectValue className="text-white" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="si">Sí</SelectItem>
-                            <SelectItem value="no">No</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>{gift.redemptionsCount || 0}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <Link
-                              href={`/dashboard/gifts/${gift.giftId}/edit`}
+                                }`}
                             >
-                              <Pencil className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteClick(gift)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                              <SelectValue className="text-white" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="si">Sí</SelectItem>
+                              <SelectItem value="no">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>{gift.totalRedemptions || gift.redemptionsCount || 0}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <Link
+                                href={`/dashboard/gifts/${id}/edit`}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteClick(gift)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

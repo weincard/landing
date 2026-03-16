@@ -13,7 +13,7 @@ export class GetAllGiftsUseCase {
   async execute(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { name?: string; isActive?: boolean }
+    filters?: { search?: string; isActive?: boolean }
   ): Promise<AllGiftsResponse> {
     return await this.giftsRepository.getAll(
       token,

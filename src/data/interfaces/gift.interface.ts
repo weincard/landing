@@ -1,14 +1,21 @@
 export interface IGift {
-  giftId?: number;
+  id?: number;
+  giftId?: number; // Keep for backward compatibility if needed, but 'id' seems to be the one used in responses
   name?: string;
   description?: string;
+  conditions?: string;
   branchIds?: number[];
   membershipPlanIds?: number[];
-  quantity?: number;
-  code?: string;
+  applyWithoutMembership?: boolean;
+  quantity?: number; // Legacy field
+  totalQuantity?: number;
+  manualCodes?: string[];
+  manualUserIds?: number[];
   expirationDate?: string;
   isActive?: boolean;
-  redemptionsCount?: number;
+  redemptionsCount?: number; // Legacy field
+  totalRedemptions?: number;
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
 
@@ -24,5 +31,15 @@ export interface IGift {
     description?: string;
     price: string;
     duration: string;
+  }>;
+  giftCodes?: Array<{
+    id: number;
+    code: string;
+    viewedAt: string | null;
+    user: {
+      userId: number;
+      phone: string;
+      email: string;
+    };
   }>;
 }
