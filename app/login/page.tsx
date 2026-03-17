@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { saveToken } from "@/lib/auth"
-
-const API_BASE = "https://azucq9v6zc.execute-api.us-east-1.amazonaws.com/prod"
+import API_BASE from "@/lib/api"
 
 type Step = "phone" | "otp"
 

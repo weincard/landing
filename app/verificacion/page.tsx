@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import API_BASE from "@/lib/api"
 
 interface RedemptionCode {
   redemptionCodeId?: number
@@ -201,7 +202,7 @@ export default function VerificacionPage() {
 
     try {
       const res = await fetch(
-        "https://azucq9v6zc.execute-api.us-east-1.amazonaws.com/prod/redemptions/codes/verify",
+        `${API_BASE}/redemptions/codes/verify`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

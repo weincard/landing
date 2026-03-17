@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import HeaderAuth from "@/components/header-auth"
 import { getToken } from "@/lib/auth"
+import API_BASE from "@/lib/api"
 
-const API_URL = "https://azucq9v6zc.execute-api.us-east-1.amazonaws.com/prod/branches/filter"
+const API_URL = `${API_BASE}/branches/filter`
 const PAGE_SIZE = 10
 
 const DAY_ES: Record<string, string> = {
