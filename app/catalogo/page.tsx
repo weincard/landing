@@ -422,10 +422,13 @@ export default function CatalogoPage() {
               type="text"
               value={inputValue}
               onChange={(e) => handleInput(e.target.value)}
-              placeholder="Buscar restaurante o ciudad..."
+              placeholder="Buscar restaurante..."
               className="w-full bg-white rounded-full pl-12 pr-5 py-3.5 text-sm font-hepta-slab text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/40"
             />
           </div>
+          <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
+            <span className="font-bold text-white">Todos los beneficios</span>
+          </p>
           <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
             {loading ? "Buscando..." : <><span className="font-bold text-white">{count}</span> resultados</>}
           </p>
