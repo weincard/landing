@@ -426,9 +426,7 @@ export default function CatalogoPage() {
               className="w-full bg-white rounded-full pl-12 pr-5 py-3.5 text-sm font-hepta-slab text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/40"
             />
           </div>
-          <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
-            <span className="font-bold text-white">Todos los beneficios</span>
-          </p>
+          
           <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
             {loading ? "Buscando..." : <><span className="font-bold text-white">{count}</span> resultados</>}
           </p>
@@ -437,6 +435,9 @@ export default function CatalogoPage() {
 
       {/* Grid */}
       <section className="container mx-auto px-4 py-8 max-w-7xl">
+      <p className="text-white/60 text-xl font-hepta-slab mt-3 pl-1">
+            <span className="font-bold text-white">Todos los beneficios</span>
+          </p>
         {loading && branches.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
