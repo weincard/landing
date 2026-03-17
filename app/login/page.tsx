@@ -118,7 +118,7 @@ export default function LoginPage() {
       }
 
       saveToken(data.accessToken)
-      router.push("/")
+      router.push("/catalogo")
     } catch {
       setError("Error de conexión. Intenta de nuevo.")
     } finally {
