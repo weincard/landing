@@ -15,7 +15,7 @@ export default function RestaurantLandingPage() {
             </div>
             <div className="flex gap-8 items-center">
               <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab">
-                <a href="#restaurantes" className="hover:opacity-70 transition">
+                <a href="/catalogo" className="hover:opacity-70 transition">
                   RESTAURANTES
                 </a>
                 <span className="text-white">|</span>

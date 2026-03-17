@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { getToken, clearAuth, type AuthUser } from "@/lib/auth"
+import API_BASE from "@/lib/api"
 
-const ME_URL = "https://azucq9v6zc.execute-api.us-east-1.amazonaws.com/prod/auth/me"
+const ME_URL = `${API_BASE}/auth/me`
 
 export default function HeaderAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
