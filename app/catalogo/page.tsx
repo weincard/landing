@@ -435,8 +435,8 @@ export default function CatalogoPage() {
 
       {/* Grid */}
       <section className="container mx-auto px-4 py-8 max-w-7xl">
-      <p className="text-white/60 text-xl font-hepta-slab mt-3 pl-1">
-            <span className="font-bold text-white">Todos los beneficios</span>
+      <p className="text-xl font-hepta-slab mx-3 pl-1">
+            <span className="font-bold ">Todos los beneficios</span>
           </p>
         {loading && branches.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
