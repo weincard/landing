@@ -435,7 +435,7 @@ export default function CatalogoPage() {
 
       {/* Grid */}
       <section className="container mx-auto px-4 py-8 max-w-7xl">
-      <p className="text-xl font-hepta-slab mx-3 pl-1">
+      <p className="text-black text-xl font-hepta-slab my-3 pl-1">
             <span className="font-bold ">Todos los beneficios</span>
           </p>
         {loading && branches.length === 0 ? (
