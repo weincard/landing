@@ -155,6 +155,19 @@ export default function HeaderAuth() {
               Sesión iniciada
             </p>
             <p className="font-bold text-sm text-black font-clash truncate">{fullName}</p>
+            {user.membership?.status === "active" || user.membership?.status === "ACTIVE" ? (
+              <span className="inline-block mt-2 text-xs font-clash font-bold px-3 py-1 rounded-full bg-green-100 text-green-700">
+                {user.membership.planName ?? "Plan activo"}
+              </span>
+            ) : (
+              <a
+                href="/planes"
+                onClick={() => setOpen(false)}
+                className="inline-block mt-2 text-xs font-clash font-bold px-3 py-1 rounded-full bg-[#FF3B47]/10 text-[#FF3B47] hover:bg-[#FF3B47]/20 transition"
+              >
+                Ver planes
+              </a>
+            )}
           </div>
           <div className="px-3 py-3 flex flex-col gap-1">
             <button

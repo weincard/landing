@@ -19,7 +19,7 @@ export default function RestaurantLandingPage() {
                   RESTAURANTES
                 </a>
                 <span className="text-white">|</span>
-                <a href="#planes" className="hover:opacity-70 transition">
+                <a href="/planes" className="hover:opacity-70 transition">
                   PLANES
                 </a>
               </nav>
