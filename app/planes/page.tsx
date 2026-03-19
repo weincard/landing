@@ -1,22 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
-
-const ME_URL = `${API_BASE}/auth/me`
-const PLANS_URL = `${API_BASE}/membership-plans`
-
-interface Plan {
-  id: number
-  name: string
-  description: string
-  price: number
-  durationDays: number
-  features?: string[]
-}
+import HeaderAuth from "@/components/header-auth"
 
 interface UserMe {
   id: number
@@ -24,123 +12,123 @@ interface UserMe {
   lastname?: string
   email?: string
   phone: string
-  roleId?: number
-  isVerified?: boolean
-  membership?: {
-    planName?: string
-    status?: string
-    expiresAt?: string
-  }
 }
+
+interface Membership {
+  id: number
+  status: string
+  planName?: string
+  plan?: { name?: string }
+  expiresAt?: string
+  endDate?: string
+}
+
+const PLANS = [
+  {
+    key: "monthly" as const,
+    label: "PLAN\nMENSUAL",
+    price: "$18.900 COP/MES",
+    priceNote: "por mes",
+    description: "Accede a descuentos y beneficios exclusivos en los mejores restaurantes mes a mes.",
+    highlighted: false,
+  },
+  {
+    key: "yearly" as const,
+    label: "PLAN\nANUAL",
+    price: "$189.000 COP",
+    priceNote: "por año — ahorra 2 meses",
+    description: "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
+    highlighted: true,
+  },
+]
 
 export default function PlanesPage() {
   const router = useRouter()
-  const [plans, setPlans] = useState<Plan[]>([])
   const [user, setUser] = useState<UserMe | null>(null)
-  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [membership, setMembership] = useState<Membership | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
   const [purchasing, setPurchasing] = useState(false)
-  const [purchaseStatus, setPurchaseStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
-  const [showModal, setShowModal] = useState(false)
+  const [checkoutOpened, setCheckoutOpened] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchPlans()
-    fetchUser()
-  }, [])
-
-  async function fetchPlans() {
-    try {
-      const res = await fetch(PLANS_URL)
-      if (res.ok) {
-        const data = await res.json()
-        setPlans(Array.isArray(data) ? data : data.plans ?? [])
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoadingPlans(false)
-    }
-  }
-
-  async function fetchUser() {
     const token = getToken()
     if (!token) {
       setLoadingUser(false)
       return
     }
-    try {
-      const res = await fetch(ME_URL, {
-        headers: { Authorization: `Bearer ${token}` },
+    Promise.all([
+      fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API_BASE}/memberships/by-user`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([meData, membershipData]) => {
+        if (meData) setUser(meData)
+        if (membershipData) {
+          const m = Array.isArray(membershipData) ? membershipData[0] : membershipData
+          if (m) setMembership(m)
+        }
       })
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data)
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoadingUser(false)
-    }
-  }
+      .catch(() => {})
+      .finally(() => setLoadingUser(false))
+  }, [])
 
-  function handleSelectPlan(plan: Plan) {
+  async function handleSelectPlan(planKey: "monthly" | "yearly") {
     const token = getToken()
     if (!token) {
       router.push("/login?redirect=/planes")
       return
     }
-    setSelectedPlan(plan)
-    setPurchaseStatus(null)
-    setShowModal(true)
-  }
+    if (!user?.email) {
+      setError("Tu cuenta no tiene un correo electrónico asociado. Actualiza tu perfil e intenta de nuevo.")
+      return
+    }
 
-  async function handleConfirmPurchase() {
-    if (!selectedPlan || !user) return
+    setError(null)
     setPurchasing(true)
-    setPurchaseStatus(null)
+    setCheckoutOpened(false)
 
     try {
-      const token = getToken()
-      const res = await fetch(`${API_BASE}/memberships/purchase`, {
+      const res = await fetch(`${API_BASE}/memberships/session/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: user.id,
-          planId: selectedPlan.id,
+          email: user.email,
+          membershipPlan: planKey,
         }),
       })
 
-      if (res.ok) {
-        setPurchaseStatus({ type: "success", message: "Plan adquirido exitosamente. ¡Bienvenido a Weincard!" })
-        await fetchUser()
-      } else {
+      if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setPurchaseStatus({
-          type: "error",
-          message: err?.message ?? "No se pudo completar la compra. Intenta de nuevo.",
-        })
+        throw new Error(err?.message ?? "No se pudo iniciar el proceso de pago.")
       }
-    } catch {
-      setPurchaseStatus({ type: "error", message: "Error de conexión. Intenta de nuevo." })
+
+      const data = await res.json()
+      if (data?.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer")
+        setCheckoutOpened(true)
+      } else {
+        throw new Error("No se recibió la URL de pago.")
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al procesar el pago.")
     } finally {
       setPurchasing(false)
     }
   }
 
-  const formatCOP = (value: number) =>
-    new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
-
   const hasMembership =
-    user?.membership?.status === "active" || user?.membership?.status === "ACTIVE"
+    membership?.status === "active" ||
+    membership?.status === "ACTIVE"
+
+  const membershipName =
+    membership?.planName ?? membership?.plan?.name ?? "Plan activo"
+
+  const membershipExpiry = membership?.expiresAt ?? membership?.endDate
 
   return (
     <main className="min-h-screen bg-[#F5F1E8]">
@@ -150,36 +138,39 @@ export default function PlanesPage() {
           <a href="/">
             <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
           </a>
-          <nav className="flex gap-4 text-xl font-extralight font-hepta-slab text-white">
-            <a href="/catalogo" className="hover:opacity-70 transition">RESTAURANTES</a>
-            <span>|</span>
-            <a href="/planes" className="hover:opacity-70 transition">PLANES</a>
-          </nav>
+          <div className="flex gap-8 items-center">
+            <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab text-white">
+              <a href="/catalogo" className="hover:opacity-70 transition">RESTAURANTES</a>
+              <span>|</span>
+              <a href="/planes" className="hover:opacity-70 transition">PLANES</a>
+            </nav>
+            <HeaderAuth />
+          </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Title */}
-        <div className="text-center mb-12">
-          <h1 className="font-clash font-bold text-4xl md:text-5xl text-black mb-4">
-            Elige tu plan
+        <div className="text-center mb-14">
+          <h1 className="font-clash font-black text-4xl md:text-5xl text-black tracking-tight mb-4">
+            ELIGE TU PLAN
           </h1>
-          <p className="font-hepta-slab text-gray-600 text-lg max-w-xl mx-auto">
-            Accede a descuentos exclusivos en los mejores restaurantes con tu membresía Weincard.
+          <p className="font-hepta-slab text-gray-600 text-lg max-w-xl mx-auto leading-relaxed">
+            Multiplica tus salidas a comer. Cancela cuando quieras.
           </p>
         </div>
 
         {/* Active membership banner */}
         {!loadingUser && hasMembership && (
-          <div className="mb-10 rounded-2xl bg-black text-white px-6 py-5 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+          <div className="mb-12 rounded-2xl bg-black text-white px-6 py-5 flex flex-col md:flex-row md:items-center gap-3 justify-between">
             <div>
               <p className="font-clash font-bold text-lg">
-                Tienes una membresía activa: {user?.membership?.planName ?? "Plan activo"}
+                Tienes una membresía activa: {membershipName}
               </p>
-              {user?.membership?.expiresAt && (
-                <p className="text-sm text-white/70 mt-1">
-                  Vigente hasta:{" "}
-                  {new Date(user.membership.expiresAt).toLocaleDateString("es-CO", {
+              {membershipExpiry && (
+                <p className="text-sm text-white/60 mt-1">
+                  Vigente hasta{" "}
+                  {new Date(membershipExpiry).toLocaleDateString("es-CO", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -187,162 +178,91 @@ export default function PlanesPage() {
                 </p>
               )}
             </div>
-            <span className="inline-block bg-[#FF3B47] text-white text-sm font-bold font-clash px-4 py-1.5 rounded-full">
+            <span className="inline-block self-start md:self-auto bg-[#FF3B47] text-white text-xs font-bold font-clash px-4 py-1.5 rounded-full tracking-wider">
               ACTIVA
             </span>
           </div>
         )}
 
-        {/* Plans grid */}
-        {loadingPlans ? (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : plans.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 font-hepta-slab text-lg">
-            No hay planes disponibles por el momento.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan, i) => {
-              const isHighlighted = i === 1
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-2xl flex flex-col overflow-hidden border transition-all ${
-                    isHighlighted
-                      ? "bg-black text-white border-black shadow-2xl scale-105"
-                      : "bg-white text-black border-gray-200 shadow-md hover:shadow-lg"
-                  }`}
-                >
-                  {isHighlighted && (
-                    <div className="bg-[#FF3B47] text-white text-xs font-clash font-bold text-center py-2 tracking-widest">
-                      RECOMENDADO
-                    </div>
-                  )}
-                  <div className="p-8 flex flex-col flex-1">
-                    <h2 className={`font-clash font-bold text-2xl mb-2 ${isHighlighted ? "text-white" : "text-black"}`}>
-                      {plan.name}
-                    </h2>
-                    <p className={`font-hepta-slab text-sm mb-6 leading-relaxed ${isHighlighted ? "text-white/70" : "text-gray-500"}`}>
-                      {plan.description}
-                    </p>
-
-                    <div className="mb-6">
-                      <span className={`font-clash font-bold text-4xl ${isHighlighted ? "text-white" : "text-black"}`}>
-                        {formatCOP(plan.price)}
-                      </span>
-                      <span className={`text-sm ml-2 font-hepta-slab ${isHighlighted ? "text-white/60" : "text-gray-400"}`}>
-                        / {plan.durationDays} días
-                      </span>
-                    </div>
-
-                    {plan.features && plan.features.length > 0 && (
-                      <ul className="flex flex-col gap-2 mb-8 flex-1">
-                        {plan.features.map((f, fi) => (
-                          <li key={fi} className={`flex items-start gap-2 text-sm font-hepta-slab ${isHighlighted ? "text-white/80" : "text-gray-600"}`}>
-                            <span className="mt-0.5 text-[#FF3B47] font-bold flex-shrink-0">✓</span>
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <button
-                      onClick={() => handleSelectPlan(plan)}
-                      className={`mt-auto w-full py-3 rounded-xl font-clash font-bold text-sm transition ${
-                        isHighlighted
-                          ? "bg-[#FF3B47] text-white hover:bg-[#e02e3a]"
-                          : "bg-black text-white hover:bg-black/80"
-                      }`}
-                    >
-                      {hasMembership ? "Cambiar a este plan" : "Adquirir plan"}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+        {/* Checkout opened message */}
+        {checkoutOpened && (
+          <div className="mb-10 rounded-2xl border border-green-300 bg-green-50 px-6 py-5">
+            <p className="font-clash font-bold text-green-800 text-base mb-1">
+              Pasarela de pago abierta en otra pestaña
+            </p>
+            <p className="font-hepta-slab text-green-700 text-sm leading-relaxed">
+              Si ya completaste el pago exitosamente,{" "}
+              <button
+                onClick={() => window.location.reload()}
+                className="underline font-bold hover:text-green-900 transition"
+              >
+                recarga esta página
+              </button>{" "}
+              para que los cambios se vean reflejados en tu cuenta.
+            </p>
           </div>
         )}
-      </div>
 
-      {/* Confirmation Modal */}
-      {showModal && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
-            <button
-              onClick={() => { setShowModal(false); setPurchaseStatus(null) }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-black text-xl font-bold"
-            >
-              ×
-            </button>
-
-            {purchaseStatus?.type === "success" ? (
-              <div className="text-center py-4">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="font-clash font-bold text-xl text-black mb-2">Plan adquirido</h3>
-                <p className="font-hepta-slab text-gray-500 text-sm">{purchaseStatus.message}</p>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="mt-6 w-full py-3 rounded-xl bg-black text-white font-clash font-bold text-sm hover:bg-black/80 transition"
-                >
-                  Cerrar
-                </button>
-              </div>
-            ) : (
-              <>
-                <h3 className="font-clash font-bold text-2xl text-black mb-1">Confirmar compra</h3>
-                <p className="font-hepta-slab text-gray-500 text-sm mb-6">
-                  Estás a punto de adquirir el siguiente plan:
-                </p>
-
-                <div className="rounded-xl bg-[#F5F1E8] p-5 mb-6 flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-hepta-slab text-sm text-gray-600">Plan</span>
-                    <span className="font-clash font-bold text-black">{selectedPlan.name}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-hepta-slab text-sm text-gray-600">Duración</span>
-                    <span className="font-clash font-bold text-black">{selectedPlan.durationDays} días</span>
-                  </div>
-                  <div className="flex justify-between items-center border-t border-gray-300 pt-3 mt-1">
-                    <span className="font-hepta-slab text-sm text-gray-600">Total</span>
-                    <span className="font-clash font-bold text-xl text-black">{formatCOP(selectedPlan.price)}</span>
-                  </div>
-                </div>
-
-                {purchaseStatus?.type === "error" && (
-                  <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 font-hepta-slab">
-                    {purchaseStatus.message}
-                  </div>
-                )}
-
-                <button
-                  onClick={handleConfirmPurchase}
-                  disabled={purchasing}
-                  className="w-full py-3 rounded-xl bg-[#FF3B47] text-white font-clash font-bold text-sm hover:bg-[#e02e3a] transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {purchasing && (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {purchasing ? "Procesando..." : "Confirmar y pagar"}
-                </button>
-
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="mt-3 w-full py-3 rounded-xl border border-gray-200 text-black font-hepta-slab text-sm hover:bg-gray-50 transition"
-                >
-                  Cancelar
-                </button>
-              </>
-            )}
+        {/* Error message */}
+        {error && (
+          <div className="mb-10 rounded-2xl border border-red-200 bg-red-50 px-6 py-4">
+            <p className="font-hepta-slab text-red-600 text-sm">{error}</p>
           </div>
+        )}
+
+        {/* Plans grid — same style as homepage */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {PLANS.map((plan) => (
+            <div
+              key={plan.key}
+              className={`rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${
+                plan.highlighted
+                  ? "bg-black text-white border-white/10 shadow-2xl"
+                  : "bg-black text-white border-white/10 shadow-md"
+              }`}
+              style={
+                plan.highlighted
+                  ? { background: "linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1), transparent)", border: "1px solid rgba(255,255,255,0.1)" }
+                  : { background: "linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1), transparent)", border: "1px solid rgba(255,255,255,0.1)" }
+              }
+            >
+              {plan.highlighted && (
+                <span className="self-start text-xs font-clash font-bold px-3 py-1 rounded-full bg-[#FF3B47] text-white tracking-widest">
+                  RECOMENDADO
+                </span>
+              )}
+              <div>
+                <h2 className="font-hepta-slab font-light text-2xl md:text-3xl tracking-tight whitespace-pre-line leading-tight">
+                  <span className="font-clash font-bold">PLAN</span>
+                  {"\n"}
+                  {plan.key === "monthly" ? "MENSUAL" : "ANUAL"}
+                </h2>
+              </div>
+              <div>
+                <p className="font-hepta-slab text-2xl md:text-3xl">{plan.price}</p>
+                <p className="text-sm text-white/60 font-hepta-slab mt-1">{plan.priceNote}</p>
+              </div>
+              <p className="font-hepta-slab text-sm text-white/70 leading-relaxed flex-1">
+                {plan.description}
+              </p>
+              <button
+                onClick={() => handleSelectPlan(plan.key)}
+                disabled={purchasing}
+                className="w-full py-3 rounded-xl font-clash font-bold text-sm transition bg-white text-black hover:bg-white/90 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {purchasing && (
+                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                )}
+                {hasMembership ? "Cambiar a este plan" : "Adquirir plan"}
+              </button>
+            </div>
+          ))}
         </div>
-      )}
+
+        <p className="text-center font-hepta-slab text-gray-500 text-sm mt-8">
+          Cancela cuando quieras. Sin permanencia.
+        </p>
+      </div>
     </main>
   )
 }
