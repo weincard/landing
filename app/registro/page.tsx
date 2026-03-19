@@ -178,7 +178,12 @@ export default function RegistroPage() {
         return
       }
 
-      const userId = meData.id
+      const userId = meData.id ?? meData.userId ?? meData.user?.id
+
+      if (!userId) {
+        setError("No se pudo obtener el ID del usuario. Intenta de nuevo.")
+        return
+      }
 
       // Update name
       const updateRes = await fetch(`${API_BASE}/users/update/${userId}`, {
