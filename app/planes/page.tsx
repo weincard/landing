@@ -239,7 +239,7 @@ export default function PlanesPage() {
                 </h2>
               </div>
               <div>
-                <p className="font-hepta-slab text-2xl md:text-3xl">{plan.price}</p>
+                <p className="font-hepta-slab text-2xl md:text-3xl text-black">{plan.price}</p>
                 <p className="text-sm text-white/60 font-hepta-slab mt-1">{plan.priceNote}</p>
               </div>
               <p className="font-hepta-slab text-sm text-white/70 leading-relaxed flex-1">
