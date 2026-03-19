@@ -174,14 +174,14 @@ export default function HeaderAuth() {
                   placeholder="Nombre"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
+                  className="text-black w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
                 />
                 <input
                   type="text"
                   placeholder="Apellido"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
+                  className="text-black w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
                 />
                 {updateStatus && (
                   <p className={`text-xs px-1 ${updateStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
