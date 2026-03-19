@@ -233,7 +233,7 @@ export default function PlanesPage() {
               )}
               <div>
                 <h2 className="font-hepta-slab font-light text-2xl md:text-3xl tracking-tight whitespace-pre-line leading-tight">
-                  <span className="font-clash font-bold">PLAN</span>
+                  <span className="font-clash font-bold text-black">PLAN</span>
                   {"\n"}
                   {plan.key === "monthly" ? "MENSUAL" : "ANUAL"}
                 </h2>
