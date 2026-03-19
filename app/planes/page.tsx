@@ -215,7 +215,7 @@ export default function PlanesPage() {
           {PLANS.map((plan) => (
             <div
               key={plan.key}
-              className={`rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${
+              className={`text-black rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${
                 plan.highlighted
                   ? "bg-black text-white border-white/10 shadow-2xl"
                   : "bg-black text-white border-white/10 shadow-md"
