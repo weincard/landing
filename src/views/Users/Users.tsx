@@ -70,13 +70,14 @@ export default function UsersView({ token }: UsersViewProps) {
     const response = await getAllUsers(
       token,
       paginationParams,
-      selectedRole === "all" ? undefined : selectedRole
+      selectedRole === "all" ? undefined : selectedRole,
+      searchTerm
     );
     if (response) {
       setUsers(response.users || []);
       setTotalCount(response.count || 0);
     }
-  }, [currentPage, pageSize, token, selectedRole, getAllUsers]);
+  }, [currentPage, pageSize, token, selectedRole, searchTerm, getAllUsers]);
 
   useEffect(() => {
     fetchUsers();
@@ -120,14 +121,7 @@ export default function UsersView({ token }: UsersViewProps) {
     [deleteUser, token, fetchUsers]
   );
 
-  const filteredUsers = users.filter((user) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      user.name?.toLowerCase().includes(term) ||
-      user.email?.toLowerCase().includes(term) ||
-      user.phone?.toLowerCase().includes(term)
-    );
-  });
+  const displayUsers = users;
 
   return (
     <div>
@@ -219,7 +213,7 @@ export default function UsersView({ token }: UsersViewProps) {
                       {error}
                     </TableCell>
                   </TableRow>
-                ) : filteredUsers.length === 0 ? (
+                ) : displayUsers.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={9}
@@ -229,7 +223,7 @@ export default function UsersView({ token }: UsersViewProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
+                  displayUsers.map((user) => (
                     <TableRow key={user.idUsuario}>
                       <TableCell>
                         <Checkbox
@@ -336,7 +330,7 @@ export default function UsersView({ token }: UsersViewProps) {
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               Mostrando{" "}
-              {filteredUsers.length === 0
+              {displayUsers.length === 0
                 ? "0"
                 : `${(currentPage - 1) * pageSize + 1} - ${Math.min(
                     currentPage * pageSize,

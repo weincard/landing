@@ -36,7 +36,8 @@ export abstract class UsersRepository {
   abstract getAll(
     token?: string,
     paginationParams?: IPaginationParams,
-    role?: UserRole
+    role?: UserRole,
+    search?: string
   ): Promise<AllUsersResponse>;
   abstract getByRole(
     roleName: UserRole,
@@ -62,13 +63,17 @@ export class UsersRepositoryImpl implements UsersRepository {
   async getAll(
     token?: string,
     paginationParams?: IPaginationParams,
-    role?: UserRole
+    role?: UserRole,
+    search?: string
   ): Promise<AllUsersResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
     const requestBody: any = {};
     if (role) {
       requestBody.roleName = role;
+    }
+    if (search) {
+      requestBody.search = search;
     }
 
     const axiosRequest = await this.httpClient.request({

@@ -13,8 +13,9 @@ export class GetAllUsersUseCase {
   async execute(
     token?: string,
     paginationParams?: IPaginationParams,
-    role?: UserRole
+    role?: UserRole,
+    search?: string
   ): Promise<AllUsersResponse> {
-    return await this.usersRepository.getAll(token, paginationParams, role);
+    return await this.usersRepository.getAll(token, paginationParams, role, search);
   }
 }

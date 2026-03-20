@@ -16,10 +16,14 @@ import {
 } from "lucide-react";
 import { useGifts } from "@/modules/gifts/domain/hooks/use-gifts";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import { useMembershipPlans } from "@/modules/membership-plans/domain/hooks/use-membership-plans";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { IGift } from "@/data/interfaces/gift.interface";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
+import type { IUser } from "@/data/interfaces/user.interface";
+import type { IMembershipPlan } from "@/data/interfaces/membership-plan.interface";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
@@ -144,6 +148,8 @@ export default function CreateOrEditGift({
   const router = useRouter();
   const { createGift, updateGift, getOneGift } = useGifts();
   const { getAllBranches, loading: branchesLoading } = useBranches();
+  const { getAllUsers, loading: usersLoading } = useUsers();
+  const { getAllMembershipPlans, loading: membershipPlansLoading } = useMembershipPlans();
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
 
@@ -170,17 +176,29 @@ export default function CreateOrEditGift({
   const [availableBranches, setAvailableBranches] = useState<IBranch[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<IBranch[]>([]);
 
-  const [membershipPlans] = useState([
-    { membershipPlanId: 1, name: "Weincard Mensual", price: "100", duration: "monthly" },
-    { membershipPlanId: 2, name: "Weincard Trimestral", price: "250", duration: "quarterly" },
-    { membershipPlanId: 3, name: "Weincard Anual", price: "900", duration: "yearly" },
-  ]);
+  // Membership states
+  const [availableMembershipPlans, setAvailableMembershipPlans] = useState<IMembershipPlan[]>([]);
 
-  const [users] = useState([
-    { userId: 331, name: "facebooktwitter1@hotmail.com" },
-    { userId: 711, name: "andreagui18@gmail.com" },
-    { userId: 1, name: "Carlos Lopez" },
-  ]);
+
+  // User states
+  const [availableUsers, setAvailableUsers] = useState<IUser[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+
+  // Fetch membership plans
+  useEffect(() => {
+    const fetchMembershipPlans = async () => {
+      try {
+        const plans = await getAllMembershipPlans(token);
+        if (plans) {
+          setAvailableMembershipPlans(plans);
+        }
+      } catch (error) {
+        console.error("Error fetching membership plans:", error);
+      }
+    };
+    fetchMembershipPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // Dropdown states
   const [branchesDropdownOpen, setBranchesDropdownOpen] = useState(false);
@@ -202,6 +220,23 @@ export default function CreateOrEditGift({
     const timeoutId = setTimeout(searchBranches, 500);
     return () => clearTimeout(timeoutId);
   }, [branchSearchTerm, getAllBranches, token]);
+
+  // User search with debounce
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (userSearchTerm.trim().length >= 2) {
+        const response = await getAllUsers(token, { limit: 20, skip: 0 }, undefined, userSearchTerm);
+        if (response && response.users) {
+          setAvailableUsers(response.users);
+        }
+      } else {
+        setAvailableUsers([]);
+      }
+    };
+
+    const timeoutId = setTimeout(searchUsers, 500);
+    return () => clearTimeout(timeoutId);
+  }, [userSearchTerm, getAllUsers, token]);
 
   // Load existing gift data if editing
   useEffect(() => {
@@ -237,6 +272,14 @@ export default function CreateOrEditGift({
 
         if (gift.expirationDate) {
           setExpirationDate(new Date(gift.expirationDate));
+        }
+
+        // Load selected users information
+        if (gift.giftCodes) {
+          const userObjects = gift.giftCodes
+            .map(gc => gc.user as unknown as IUser)
+            .filter((u): u is IUser => !!u && !!u.userId);
+          setSelectedUsers(userObjects);
         }
       }
     } catch (error) {
@@ -275,7 +318,7 @@ export default function CreateOrEditGift({
       const newBranchIds = isSelected
         ? prev.branchIds.filter((id) => id !== branchId)
         : [...prev.branchIds, branchId];
-      
+
       return { ...prev, branchIds: newBranchIds };
     });
 
@@ -312,12 +355,23 @@ export default function CreateOrEditGift({
     }));
   };
 
-  const handleUserToggle = (userId: number) => {
+  const handleUserToggle = (user: IUser) => {
+    const userId = user.userId || user.idUsuario;
+    if (userId === undefined) return;
+
     setFormData((prev) => {
-      const newUserIds = prev.manualUserIds.includes(userId)
+      const isSelected = prev.manualUserIds.includes(userId);
+      const newUserIds = isSelected
         ? prev.manualUserIds.filter((id) => id !== userId)
         : [...prev.manualUserIds, userId];
       return { ...prev, manualUserIds: newUserIds };
+    });
+
+    setSelectedUsers((prev) => {
+      const isSelected = prev.some(u => (u.userId || u.idUsuario) === userId);
+      return isSelected
+        ? prev.filter(u => (u.userId || u.idUsuario) !== userId)
+        : [...prev, user];
     });
   };
 
@@ -326,6 +380,7 @@ export default function CreateOrEditGift({
       ...prev,
       manualUserIds: prev.manualUserIds.filter((id) => id !== userId),
     }));
+    setSelectedUsers((prev) => prev.filter(u => (u.userId || u.idUsuario) !== userId));
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -352,6 +407,8 @@ export default function CreateOrEditGift({
         ...formData,
         expirationDate,
       });
+      console.log(giftData);
+
 
       const response = giftId
         ? await updateGift(Number(giftId), giftData, token)
@@ -466,7 +523,7 @@ export default function CreateOrEditGift({
           <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
             <h3 className="text-lg font-semibold">Ubicaciones y Membresías</h3>
 
-              <FormField label="Sucursales donde aplica">
+            <FormField label="Sucursales donde aplica">
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {selectedBranches.map((branch) => (
@@ -526,7 +583,7 @@ export default function CreateOrEditGift({
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {formData.membershipPlanIds.map((id) => {
-                    const plan = membershipPlans.find((p) => p.membershipPlanId === id);
+                    const plan = availableMembershipPlans.find((p) => p.membershipPlanId === id);
                     return (
                       <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
                         {plan?.name}
@@ -537,23 +594,34 @@ export default function CreateOrEditGift({
                 </div>
                 <Popover open={membershipDropdownOpen} onOpenChange={setMembershipDropdownOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal">
-                      Seleccionar membresías
+                    <Button variant="outline" className="w-full justify-between font-normal" disabled={membershipPlansLoading}>
+                      {membershipPlansLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Cargando membresías...
+                        </>
+                      ) : (
+                        "Seleccionar membresías"
+                      )}
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                     <div className="p-2 space-y-1">
-                      {membershipPlans.map((plan) => (
-                        <div
-                          key={plan.membershipPlanId}
-                          className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                          onClick={() => handleMembershipToggle(plan.membershipPlanId)}
-                        >
-                          <Checkbox checked={formData.membershipPlanIds.includes(plan.membershipPlanId)} />
-                          <span className="text-sm">{plan.name}</span>
-                        </div>
-                      ))}
+                      {availableMembershipPlans.length === 0 && !membershipPlansLoading ? (
+                        <div className="px-3 py-2 text-sm text-gray-500 italic">No hay planes disponibles</div>
+                      ) : (
+                        availableMembershipPlans.map((plan) => (
+                          <div
+                            key={plan.membershipPlanId}
+                            className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                            onClick={() => handleMembershipToggle(plan.membershipPlanId!)}
+                          >
+                            <Checkbox checked={formData.membershipPlanIds.includes(plan.membershipPlanId!)} />
+                            <span className="text-sm">{plan.name}</span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -633,9 +701,15 @@ export default function CreateOrEditGift({
                 <PopoverContent className="w-80 p-0" align="end">
                   <div className="p-2 border-b">
                     <div className="relative">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                      <div className="absolute left-2 top-2.5 h-4 w-4">
+                        {usersLoading ? (
+                          <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
                       <Input
-                        placeholder="Buscar usuario..."
+                        placeholder="Buscar usuario (mín. 2 letras)..."
                         className="pl-8"
                         value={userSearchTerm}
                         onChange={(e) => setUserSearchTerm(e.target.value)}
@@ -643,16 +717,24 @@ export default function CreateOrEditGift({
                     </div>
                   </div>
                   <div className="max-h-60 overflow-y-auto p-2 space-y-1">
-                    {users.filter(u => u.name.toLowerCase().includes(userSearchTerm.toLowerCase())).map(user => (
-                      <div
-                        key={user.userId}
-                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                        onClick={() => handleUserToggle(user.userId)}
-                      >
-                        <Checkbox checked={formData.manualUserIds.includes(user.userId)} />
-                        <span className="text-sm">{user.name}</span>
-                      </div>
-                    ))}
+                    {availableUsers.length === 0 && !usersLoading && userSearchTerm.length >= 2 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500 italic">No se encontraron usuarios</div>
+                    ) : (
+                      availableUsers.map((user) => {
+                        const userId = user.userId || user.idUsuario;
+                        if (!userId) return null;
+                        return (
+                          <div
+                            key={userId}
+                            className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                            onClick={() => handleUserToggle(user)}
+                          >
+                            <Checkbox checked={formData.manualUserIds.includes(userId)} />
+                            <span className="text-sm">{user.name || user.email}</span>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -663,10 +745,10 @@ export default function CreateOrEditGift({
                 <p className="text-sm text-gray-500 italic">No hay usuarios asignados manualmente.</p>
               ) : (
                 formData.manualUserIds.map((id) => {
-                  const user = users.find((u) => u.userId === id);
+                  const user = selectedUsers.find((u) => (u.userId || u.idUsuario) === id);
                   return (
                     <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
-                      {user?.name}
+                      {user?.name || user?.email || `Usuario #${id}`}
                       <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveUser(id)} />
                     </Badge>
                   );

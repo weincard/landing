@@ -27,7 +27,8 @@ export const useUsers = () => {
     async (
       token?: string,
       paginationParams?: IPaginationParams,
-      role?: UserRole
+      role?: UserRole,
+      search?: string
     ): Promise<AllUsersResponse | null> => {
       setLoading(true);
       setError(null);
@@ -37,7 +38,8 @@ export const useUsers = () => {
         const response = await getAllUsersUseCase.execute(
           token,
           paginationParams,
-          role
+          role,
+          search
         );
         return response;
       } catch (err: any) {
