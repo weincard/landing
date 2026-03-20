@@ -16,6 +16,7 @@ export default function RegistroPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [emailProfile, setEmailProfile] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
@@ -192,7 +193,10 @@ export default function RegistroPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: `${firstName.trim()} ${lastName.trim()}` }),
+        body: JSON.stringify({
+          name: `${firstName.trim()} ${lastName.trim()}`,
+          ...(emailProfile.trim() ? { email: emailProfile.trim() } : {}),
+        }),
       })
 
       const updateData = await updateRes.json()
@@ -434,6 +438,22 @@ export default function RegistroPage() {
                     placeholder="Pérez"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="emailProfile" className="block text-sm font-medium text-gray-700">
+                    Correo electrónico
+                  </label>
+                  <input
+                    id="emailProfile"
+                    type="email"
+                    autoComplete="email"
+                    value={emailProfile}
+                    onChange={(e) => setEmailProfile(e.target.value)}
+                    placeholder="juan@ejemplo.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
+                  />
+                  <p className="text-xs text-gray-400">Opcional. Lo necesitarás para adquirir una membresía.</p>
                 </div>
 
                 {error && (
