@@ -60,6 +60,7 @@ export function BranchesView({ token }: BranchesViewProps) {
   const [loadingMerchants, setLoadingMerchants] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [committedSearch, setCommittedSearch] = useState("");
   const [selectedMerchantId, setSelectedMerchantId] = useState<string>("all");
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,7 +111,7 @@ export function BranchesView({ token }: BranchesViewProps) {
           skip,
           limit: pageSize,
         },
-        searchTerm ? { name: searchTerm } : undefined
+        committedSearch ? { name: committedSearch } : undefined
       );
 
       if (response) {
@@ -129,7 +130,7 @@ export function BranchesView({ token }: BranchesViewProps) {
     token,
     currentPage,
     pageSize,
-    searchTerm,
+    committedSearch,
     selectedMerchantId,
   ]);
 
@@ -143,8 +144,8 @@ export function BranchesView({ token }: BranchesViewProps) {
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
-    fetchBranches();
-  }, [fetchBranches]);
+    setCommittedSearch(searchTerm);
+  }, [searchTerm]);
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize);

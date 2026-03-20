@@ -38,6 +38,8 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
   const [pageSize, setPageSize] = useState(10);
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [userFilter, setUserFilter] = useState<string>("");
+  const [committedBranchFilter, setCommittedBranchFilter] = useState<string>("");
+  const [committedUserFilter, setCommittedUserFilter] = useState<string>("");
 
   const totalPages = totalCount > 0
     ? Math.ceil(totalCount / pageSize)
@@ -46,15 +48,15 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
   const fetchData = useCallback(async () => {
     const skip = (currentPage - 1) * pageSize;
     const filters: { branchId?: number | null; userId?: number | null } = {};
-    if (branchFilter) filters.branchId = parseInt(branchFilter) || null;
-    if (userFilter) filters.userId = parseInt(userFilter) || null;
+    if (committedBranchFilter) filters.branchId = parseInt(committedBranchFilter) || null;
+    if (committedUserFilter) filters.userId = parseInt(committedUserFilter) || null;
 
     const response = await getUsedRedemptions(token, { limit: pageSize, skip }, filters);
     if (response) {
       setRedemptions(response.redemptionCodes || []);
       setTotalCount(response.count || 0);
     }
-  }, [getUsedRedemptions, token, currentPage, pageSize, branchFilter, userFilter]);
+  }, [getUsedRedemptions, token, currentPage, pageSize, committedBranchFilter, committedUserFilter]);
 
   useEffect(() => {
     fetchData();
@@ -69,8 +71,9 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
-    fetchData();
-  }, [fetchData]);
+    setCommittedBranchFilter(branchFilter);
+    setCommittedUserFilter(userFilter);
+  }, [branchFilter, userFilter]);
 
   return (
     <div>
