@@ -16,6 +16,7 @@ export default function HeaderAuth() {
   const [showUpdateName, setShowUpdateName] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
   const [updateStatus, setUpdateStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -69,7 +70,9 @@ export default function HeaderAuth() {
 
   async function handleUpdateName(e: React.FormEvent) {
     e.preventDefault()
-    if (!firstName.trim() && !lastName.trim()) return
+    const hasName = firstName.trim() || lastName.trim()
+    const hasEmail = email.trim()
+    if (!hasName && !hasEmail) return
     setIsUpdating(true)
     setUpdateStatus(null)
 
@@ -84,22 +87,38 @@ export default function HeaderAuth() {
 
       if (!userId) throw new Error("ID de usuario no disponible")
 
-      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
+      const body: Record<string, string> = {}
+      if (hasName) {
+        body.name = `${firstName.trim()} ${lastName.trim()}`.trim()
+      }
+      if (hasEmail) {
+        body.email = email.trim()
+      }
+
       const updateRes = await fetch(`${API_BASE}/users/update/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: fullName }),
+        body: JSON.stringify(body),
       })
 
-      if (!updateRes.ok) throw new Error("No se pudo actualizar el nombre")
+      if (!updateRes.ok) throw new Error("No se pudo actualizar el perfil")
 
-      setUser((prev) => prev ? { ...prev, name: firstName.trim(), lastname: lastName.trim() } : prev)
-      setUpdateStatus({ type: "success", message: "Nombre actualizado correctamente" })
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...(hasName ? { name: firstName.trim(), lastname: lastName.trim() } : {}),
+              ...(hasEmail ? { email: email.trim() } : {}),
+            }
+          : prev
+      )
+      setUpdateStatus({ type: "success", message: "Perfil actualizado correctamente" })
       setFirstName("")
       setLastName("")
+      setEmail("")
     } catch (err: unknown) {
       setUpdateStatus({
         type: "error",
@@ -184,7 +203,7 @@ export default function HeaderAuth() {
               }}
               className="w-full text-left px-3 py-2 rounded-xl text-sm font-hepta-slab text-black font-semibold hover:bg-gray-100 transition"
             >
-              Actualizar nombre
+              Actualizar perfil
             </button>
 
             {showUpdateName && (
@@ -203,6 +222,13 @@ export default function HeaderAuth() {
                   onChange={(e) => setLastName(e.target.value)}
                   className="text-black w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
                 />
+                <input
+                  type="email"
+                  placeholder="Correo electrónico"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="text-black w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent"
+                />
                 {updateStatus && (
                   <p className={`text-xs px-1 ${updateStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
                     {updateStatus.message}
@@ -210,7 +236,7 @@ export default function HeaderAuth() {
                 )}
                 <button
                   type="submit"
-                  disabled={isUpdating || (!firstName.trim() && !lastName.trim())}
+                  disabled={isUpdating || (!firstName.trim() && !lastName.trim() && !email.trim())}
                   className="w-full py-2 rounded-xl text-sm font-hepta-slab font-bold bg-black text-white hover:bg-black/80 transition disabled:opacity-50"
                 >
                   {isUpdating ? "Guardando..." : "Guardar"}
