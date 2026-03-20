@@ -50,6 +50,10 @@ export default function PlanesPage() {
   const [purchasing, setPurchasing] = useState(false)
   const [checkoutOpened, setCheckoutOpened] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingPlan, setPendingPlan] = useState<"monthly" | "yearly" | null>(null)
+  const [emailInput, setEmailInput] = useState("")
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -74,21 +78,11 @@ export default function PlanesPage() {
       .finally(() => setLoadingUser(false))
   }, [])
 
-  async function handleSelectPlan(planKey: "monthly" | "yearly") {
-    const token = getToken()
-    if (!token) {
-      router.push("/login?redirect=/planes")
-      return
-    }
-    if (!user?.email) {
-      setError("Tu cuenta no tiene un correo electrónico asociado. Actualiza tu perfil e intenta de nuevo.")
-      return
-    }
-
+  async function startCheckout(planKey: "monthly" | "yearly", emailToUse: string) {
     setError(null)
     setPurchasing(true)
     setCheckoutOpened(false)
-
+    const token = getToken()
     try {
       const res = await fetch(`${API_BASE}/memberships/session/create`, {
         method: "POST",
@@ -96,21 +90,17 @@ export default function PlanesPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          email: user.email,
-          membershipPlan: planKey,
-        }),
+        body: JSON.stringify({ email: emailToUse, membershipPlan: planKey }),
       })
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err?.message ?? "No se pudo iniciar el proceso de pago.")
       }
-
       const data = await res.json()
       if (data?.url) {
         window.open(data.url, "_blank", "noopener,noreferrer")
         setCheckoutOpened(true)
+        setPendingPlan(null)
       } else {
         throw new Error("No se recibió la URL de pago.")
       }
@@ -118,6 +108,63 @@ export default function PlanesPage() {
       setError(err instanceof Error ? err.message : "Error al procesar el pago.")
     } finally {
       setPurchasing(false)
+    }
+  }
+
+  async function handleSelectPlan(planKey: "monthly" | "yearly") {
+    const token = getToken()
+    if (!token) {
+      router.push("/login?redirect=/planes")
+      return
+    }
+
+    // Re-fetch user to get latest email
+    const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    const meData: UserMe | null = meRes.ok ? await meRes.json() : null
+    if (meData) setUser(meData)
+
+    if (!meData?.email) {
+      // Show inline email form before checkout
+      setPendingPlan(planKey)
+      setEmailInput("")
+      setEmailError(null)
+      return
+    }
+
+    await startCheckout(planKey, meData.email)
+  }
+
+  async function handleSaveEmailAndCheckout(e: React.FormEvent) {
+    e.preventDefault()
+    if (!emailInput.trim() || !pendingPlan) return
+    setEmailError(null)
+    setSavingEmail(true)
+
+    try {
+      const token = getToken()
+      const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!meRes.ok) throw new Error("No se pudo obtener el usuario.")
+      const meData: UserMe = await meRes.json()
+      const userId = meData.id ?? (meData as unknown as Record<string, unknown>).userId
+
+      if (!userId) throw new Error("ID de usuario no disponible.")
+
+      const updateRes = await fetch(`${API_BASE}/users/update/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: emailInput.trim() }),
+      })
+      if (!updateRes.ok) throw new Error("No se pudo guardar el correo.")
+
+      setUser((prev) => prev ? { ...prev, email: emailInput.trim() } : prev)
+      await startCheckout(pendingPlan, emailInput.trim())
+    } catch (err: unknown) {
+      setEmailError(err instanceof Error ? err.message : "Error al guardar el correo.")
+    } finally {
+      setSavingEmail(false)
     }
   }
 
@@ -207,6 +254,52 @@ export default function PlanesPage() {
         {error && (
           <div className="mb-10 rounded-2xl border border-red-200 bg-red-50 px-6 py-4">
             <p className="font-hepta-slab text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Inline email capture when missing */}
+        {pendingPlan && (
+          <div className="mb-10 rounded-2xl border border-yellow-300 bg-yellow-50 px-6 py-6">
+            <p className="font-clash font-bold text-yellow-900 text-base mb-1">
+              Necesitamos tu correo electrónico
+            </p>
+            <p className="font-hepta-slab text-yellow-800 text-sm mb-4 leading-relaxed">
+              Para procesar el pago del{" "}
+              <span className="font-bold">{pendingPlan === "monthly" ? "Plan Mensual" : "Plan Anual"}</span>{" "}
+              necesitamos asociar un correo a tu cuenta.
+            </p>
+            <form onSubmit={handleSaveEmailAndCheckout} className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                required
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="tu@correo.com"
+                className="flex-1 px-4 py-3 border border-yellow-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={savingEmail || !emailInput.trim()}
+                  className="px-6 py-3 rounded-xl bg-black text-white font-clash font-bold text-sm hover:bg-black/80 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  {savingEmail && (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {savingEmail ? "Guardando..." : "Guardar y pagar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingPlan(null)}
+                  className="px-4 py-3 rounded-xl border border-gray-300 text-sm font-hepta-slab hover:bg-gray-100 transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+            {emailError && (
+              <p className="mt-3 text-sm text-red-600 font-hepta-slab">{emailError}</p>
+            )}
           </div>
         )}
 
