@@ -12,16 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ArrowUpIcon,
-  ArrowDownIcon,
-  DollarSignIcon,
   UsersIcon,
   ShoppingCartIcon,
   TargetIcon,
@@ -31,19 +21,7 @@ import {
   TrendingUpIcon,
   TrendingDownIcon,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+
 import Image from "next/image";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
@@ -51,12 +29,14 @@ import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
 import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
 import { useUserMetrics } from "@/modules/users/domain/hooks/use-user-metrics";
 import { useMembershipMetrics } from "@/modules/memberships/domain/hooks/use-membership-metrics";
+import { useRedemptions } from "@/modules/redemptions/domain/hooks/use-redemptions";
 import { AllUsersResponse } from "@/modules/users/data/interfaces/users.response.interface";
 import { AllMerchantsResponse } from "@/modules/merchants/data/interfaces/merchants.response.interface";
 import { AllBranchesResponse } from "@/modules/branches/data/interfaces/branches.response.interface";
 import { AllCouponsResponse } from "@/modules/coupons/data/interfaces/coupons.response.interface";
 import { UserMetricsResponse } from "@/modules/users/domain/hooks/use-user-metrics";
 import { MembershipMetricsResponse } from "@/modules/memberships/domain/hooks/use-membership-metrics";
+import { RedemptionMetricsResponse } from "@/modules/redemptions/data/interfaces/redemptions.response.interface";
 import { UserMetricsChart, MembershipChart } from "@/components";
 
 interface MetricCardProps {
@@ -95,9 +75,8 @@ function MetricCard({
               {typeof value === "number" ? value.toLocaleString() : value}
             </p>
             <div
-              className={`flex items-center gap-1 text-xs ${
-                trend === "up" ? "text-green-600" : "text-red-600"
-              }`}
+              className={`flex items-center gap-1 text-xs ${trend === "up" ? "text-green-600" : "text-red-600"
+                }`}
             >
               <TrendIcon className="h-3 w-3" />
               <span>{percentage}%</span>
@@ -149,20 +128,28 @@ export default function DashboardView({ token }: DashboardViewProps) {
     error: membershipMetricsError,
   } = useMembershipMetrics();
 
+  const {
+    getMetrics: getRedemptionMetrics,
+    loading: isLoadingRedemptionMetrics,
+    error: redemptionMetricsError,
+  } = useRedemptions();
+
   const loading =
     isLoadingUsers ||
     isLoadingMerchants ||
     isLoadingBranches ||
     isLoadingCoupons ||
     isLoadingUserMetrics ||
-    isLoadingMembershipMetrics;
+    isLoadingMembershipMetrics ||
+    isLoadingRedemptionMetrics;
   const error =
     usersError ||
     merchantsError ||
     branchesError ||
     couponsError ||
     userMetricsError ||
-    membershipMetricsError;
+    membershipMetricsError ||
+    redemptionMetricsError;
 
   const [userData, setUserData] = useState<AllUsersResponse>();
   const [merchantData, setMerchantData] = useState<AllMerchantsResponse>();
@@ -171,6 +158,8 @@ export default function DashboardView({ token }: DashboardViewProps) {
   const [userMetrics, setUserMetrics] = useState<UserMetricsResponse>();
   const [membershipMetrics, setMembershipMetrics] =
     useState<MembershipMetricsResponse>();
+  const [redemptionMetrics, setRedemptionMetrics] =
+    useState<RedemptionMetricsResponse>();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isLoadingYearChange, setIsLoadingYearChange] = useState(false);
 
@@ -215,6 +204,10 @@ export default function DashboardView({ token }: DashboardViewProps) {
       // Obtener métricas de membresías
       const membershipMetricsData = await getMembershipCountAndProfits(token);
       setMembershipMetrics(membershipMetricsData || undefined);
+
+      // Obtener métricas de redenciones
+      const redemptionMetricsData = await getRedemptionMetrics(token);
+      setRedemptionMetrics(redemptionMetricsData || undefined);
     };
 
     fetchData();
@@ -284,7 +277,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <MetricCard
           title="Total Usuarios"
           value={userData?.count || 0}
@@ -313,15 +306,6 @@ export default function DashboardView({ token }: DashboardViewProps) {
           bgColor="bg-purple-100"
         />
         <MetricCard
-          title="Cupones Disponibles"
-          value={couponData?.count || 0}
-          percentage={5}
-          trend="up"
-          icon={<GiftIcon className="h-6 w-6" />}
-          color="text-indigo-600"
-          bgColor="bg-indigo-100"
-        />
-        <MetricCard
           title="Membresías Vendidas"
           value={membershipMetrics?.count || 0}
           percentage={22}
@@ -338,6 +322,51 @@ export default function DashboardView({ token }: DashboardViewProps) {
           icon={<TrendingUpIcon className="h-6 w-6" />}
           color="text-emerald-600"
           bgColor="bg-emerald-100"
+        />
+        <MetricCard
+          title="Ahorros Logrados"
+          value={redemptionMetrics?.totalRedemptions || 0}
+          percentage={25}
+          trend="up"
+          icon={<ShoppingCartIcon className="h-6 w-6" />}
+          color="text-rose-600"
+          bgColor="bg-rose-100"
+        />
+        <MetricCard
+          title="Códigos Generados"
+          value={redemptionMetrics?.totalRedemptionCodesGenerated || 0}
+          percentage={10}
+          trend="up"
+          icon={<CreditCardIcon className="h-6 w-6" />}
+          color="text-amber-600"
+          bgColor="bg-amber-100"
+        />
+        <MetricCard
+          title="Códigos Validados"
+          value={redemptionMetrics?.totalRedemptionCodesUsed || 0}
+          percentage={5}
+          trend="up"
+          icon={<TargetIcon className="h-6 w-6" />}
+          color="text-cyan-600"
+          bgColor="bg-cyan-100"
+        />
+        <MetricCard
+          title="Premios Totales"
+          value={redemptionMetrics?.totalGifts || 0}
+          percentage={15}
+          trend="up"
+          icon={<GiftIcon className="h-6 w-6" />}
+          color="text-pink-600"
+          bgColor="bg-pink-100"
+        />
+        <MetricCard
+          title="Cupones Disponibles"
+          value={couponData?.count || 0}
+          percentage={5}
+          trend="up"
+          icon={<GiftIcon className="h-6 w-6" />}
+          color="text-indigo-600"
+          bgColor="bg-indigo-100"
         />
       </div>
 
@@ -410,11 +439,10 @@ export default function DashboardView({ token }: DashboardViewProps) {
                     <TableCell>{branch.city}</TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          branch.isActive
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${branch.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
-                        }`}
+                          }`}
                       >
                         {branch.isActive ? "Activa" : "Inactiva"}
                       </span>
@@ -520,11 +548,10 @@ export default function DashboardView({ token }: DashboardViewProps) {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          user.isVerified
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.isVerified
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"
-                        }`}
+                          }`}
                       >
                         {user.isVerified ? "Verificado" : "Pendiente"}
                       </span>

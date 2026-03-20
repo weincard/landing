@@ -66,3 +66,10 @@ export interface UsedRedemptionsResponse {
   count: number;
   redemptionCodes: IUsedRedemptionCode[];
 }
+
+export interface RedemptionMetricsResponse {
+  totalRedemptions: number;
+  totalRedemptionCodesGenerated: number;
+  totalRedemptionCodesUsed: number;
+  totalGifts: number;
+}

@@ -70,6 +70,7 @@ import { GetMyRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/
 import { CreateRedemptionUseCase } from "@/modules/redemptions/domain/use-cases/create-redemption.use-case";
 import { GetGeneratedRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-generated-redemptions.use-case";
 import { GetUsedRedemptionsUseCase } from "@/modules/redemptions/domain/use-cases/get-used-redemptions.use-case";
+import { GetRedemptionMetricsUseCase } from "@/modules/redemptions/domain/use-cases/get-redemption-metrics.use-case";
 import { GetAllGiftsUseCase } from "@/modules/gifts/domain/use-cases/get-all-gifts.use-case";
 import { GetOneGiftUseCase } from "@/modules/gifts/domain/use-cases/get-one-gift.use-case";
 import { CreateGiftUseCase } from "@/modules/gifts/domain/use-cases/create-gift.use-case";
@@ -154,6 +155,7 @@ container.bind(GetMyRedemptionsUseCase).toSelf().inSingletonScope();
 container.bind(CreateRedemptionUseCase).toSelf().inSingletonScope();
 container.bind(GetGeneratedRedemptionsUseCase).toSelf().inSingletonScope();
 container.bind(GetUsedRedemptionsUseCase).toSelf().inSingletonScope();
+container.bind(GetRedemptionMetricsUseCase).toSelf().inSingletonScope();
 container.bind(GetAllGiftsUseCase).toSelf().inSingletonScope();
 container.bind(GetOneGiftUseCase).toSelf().inSingletonScope();
 container.bind(CreateGiftUseCase).toSelf().inSingletonScope();

@@ -5,18 +5,44 @@ import { GetMyRedemptionsUseCase } from "../use-cases/get-my-redemptions.use-cas
 import { CreateRedemptionUseCase } from "../use-cases/create-redemption.use-case";
 import { GetGeneratedRedemptionsUseCase } from "../use-cases/get-generated-redemptions.use-case";
 import { GetUsedRedemptionsUseCase } from "../use-cases/get-used-redemptions.use-case";
+import { GetRedemptionMetricsUseCase } from "../use-cases/get-redemption-metrics.use-case";
 import type { IPaginationParams } from "@/data/interfaces/pagination-params.interface";
 import type {
   AllRedemptionsResponse,
   RedemptionResponse,
   CreateRedemptionRequest,
   GeneratedRedemptionsResponse,
-  UsedRedemptionsResponse
+  UsedRedemptionsResponse,
+  RedemptionMetricsResponse
 } from "../../data/interfaces/redemptions.response.interface";
 
 export const useRedemptions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const getMetrics = useCallback(
+    async (token?: string): Promise<RedemptionMetricsResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const getRedemptionMetricsUseCase = container.get(
+          GetRedemptionMetricsUseCase
+        );
+        const response = await getRedemptionMetricsUseCase.execute(token);
+        return response;
+      } catch (err: any) {
+        const errorMessage =
+          err?.message || "Error al cargar métricas de redenciones";
+        setError(errorMessage);
+        console.error("Error getting redemption metrics:", err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const getAllRedemptions = useCallback(
     async (
@@ -171,6 +197,7 @@ export const useRedemptions = () => {
     getUsedRedemptions,
     getMyRedemptions,
     createRedemption,
+    getMetrics,
     loading,
     error,
   };

@@ -61,6 +61,7 @@ export const apiUrls = {
     getByMe: "/redemptions/by-me",
     getGenerated: "/redemptions/codes/generated",
     getUsed: "/redemptions/codes/used",
+    metrics: "/redemptions/metrics",
   },
   gifts: {
     create: "/gifts/admin/create",

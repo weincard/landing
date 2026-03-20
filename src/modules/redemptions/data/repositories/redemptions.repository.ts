@@ -5,7 +5,8 @@ import type {
   RedemptionResponse,
   CreateRedemptionRequest,
   GeneratedRedemptionsResponse,
-  UsedRedemptionsResponse
+  UsedRedemptionsResponse,
+  RedemptionMetricsResponse
 } from "../interfaces/redemptions.response.interface";
 import type { AxiosHttpClient } from "@/config/protocols/http/axios-http-client";
 import {
@@ -62,6 +63,8 @@ export abstract class RedemptionsRepository {
     token?: string,
     paginationParams?: IPaginationParams
   ): Promise<AllRedemptionsResponse>;
+
+  abstract getMetrics(token?: string): Promise<RedemptionMetricsResponse>;
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @injectable()
@@ -241,6 +244,25 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
     } else {
       throw new CustomError(
         axiosRequest.body.message || "Error al crear redención"
+      );
+    }
+  }
+
+  async getMetrics(token?: string): Promise<RedemptionMetricsResponse> {
+    const axiosRequest = await this.httpClient.request({
+      url: apiUrls.redemptions.metrics,
+      method: "get",
+      isAuth: true,
+      token,
+    });
+
+    console.log("Get Redemption Metrics Response:", axiosRequest.body);
+
+    if (axiosRequest.statusCode === HttpStatusCode.ok) {
+      return axiosRequest.body as RedemptionMetricsResponse;
+    } else {
+      throw new CustomError(
+        axiosRequest.body.message || "Error al obtener métricas de redenciones"
       );
     }
   }
