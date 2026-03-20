@@ -6,9 +6,11 @@ import { getToken, clearAuth, type AuthUser } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
 const ME_URL = `${API_BASE}/auth/me`
+const MEMBERSHIP_URL = `${API_BASE}/memberships/by-user`
 
 export default function HeaderAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [membershipName, setMembershipName] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showUpdateName, setShowUpdateName] = useState(false)
@@ -25,18 +27,23 @@ export default function HeaderAuth() {
       return
     }
 
-    fetch(ME_URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          clearAuth()
-          return null
+    Promise.all([
+      fetch(ME_URL, { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => {
+          if (!res.ok) { clearAuth(); return null }
+          return res.json()
+        }),
+      fetch(MEMBERSHIP_URL, { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => (res.ok ? res.json() : null)),
+    ])
+      .then(([meData, membershipData]) => {
+        if (meData) setUser(meData)
+        if (membershipData) {
+          const m = Array.isArray(membershipData) ? membershipData[0] : membershipData
+          if (m && (m.status === "active" || m.status === "ACTIVE")) {
+            setMembershipName(m.planName ?? m.plan?.name ?? "Plan activo")
+          }
         }
-        return res.json()
-      })
-      .then((data: AuthUser | null) => {
-        if (data) setUser(data)
       })
       .catch(() => clearAuth())
       .finally(() => setLoading(false))
@@ -155,6 +162,19 @@ export default function HeaderAuth() {
               Sesión iniciada
             </p>
             <p className="font-bold text-sm text-black font-clash truncate">{fullName}</p>
+            {membershipName ? (
+              <span className="inline-block mt-2 text-xs font-clash font-bold px-3 py-1 rounded-full bg-green-100 text-green-700">
+                {membershipName}
+              </span>
+            ) : (
+              <a
+                href="/planes"
+                onClick={() => setOpen(false)}
+                className="inline-block mt-2 text-xs font-clash font-bold px-3 py-1 rounded-full bg-[#FF3B47]/10 text-[#FF3B47] hover:bg-[#FF3B47]/20 transition"
+              >
+                Ver planes
+              </a>
+            )}
           </div>
           <div className="px-3 py-3 flex flex-col gap-1">
             <button

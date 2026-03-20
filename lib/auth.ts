@@ -10,6 +10,11 @@ export interface AuthUser {
   roleId?: number
   isVerified?: boolean
   createdAt?: string
+  membership?: {
+    planName?: string
+    status?: string
+    expiresAt?: string
+  }
 }
 
 export function saveToken(token: string) {
