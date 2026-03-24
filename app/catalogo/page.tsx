@@ -316,7 +316,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
                 : "bg-black text-white hover:bg-black/80"
             }`}
           >
-            {loggedIn ? "Activa tu weincard" : "Iniciar sesión"}
+            {loggedIn ? "Activa tu Weincard" : "Iniciar sesión"}
           </button>
         </div>
       </div>
