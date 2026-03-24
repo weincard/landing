@@ -252,7 +252,7 @@ export default function RestaurantLandingPage() {
             <p className="text-2xl md:text-3xl font-bold font-clash">QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.</p>
             <p className="text-lg md:text-xl text-white font-hepta-slab">Cancela cuando quieras.</p>
             <a href="/registro">
-            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6">
+            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
               Únete ahora
             </Button>
             </a>
