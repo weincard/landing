@@ -341,7 +341,7 @@ export default function PlanesPage() {
               <button
                 onClick={() => handleSelectPlan(plan.key)}
                 disabled={purchasing}
-                className="w-full py-3 rounded-xl font-clash font-bold text-sm transition bg-white text-black hover:bg-white/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl font-clash font-bold text-sm transition bg-white text-black hover:bg-white/90 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {purchasing && (
                   <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
