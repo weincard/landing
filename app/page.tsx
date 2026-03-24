@@ -495,7 +495,7 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
               PLANES
             </a>
             <span className="hidden md:inline text-white">|</span>
-            <a href="#" className="hover:text-white/70 transition">
+            <a href="/registro" className="hover:text-white/70 transition">
               SUBSCRÍBETE
             </a>
   </div>
