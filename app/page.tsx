@@ -297,7 +297,7 @@ export default function RestaurantLandingPage() {
                       className="h-10 md:h-14"
                     />
                   </a>
-                  <a href="#" className="hover:opacity-90 transition">
+                  <a href="https://apps.apple.com/co/app/weincard/id6754571134" className="hover:opacity-90 transition">
                     <img
                       src="/images/app-store-image-weincard-402x.png"
                       alt="Descargar en App Store"
