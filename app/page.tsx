@@ -290,7 +290,7 @@ export default function RestaurantLandingPage() {
                   <span className="font-bold">1.</span> Obtén tu membresía.
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <a href="#" className="hover:opacity-90 transition">
+                  <a href="https://play.google.com/store/apps/details?id=com.weincard.app.idp" target="_blank" className="hover:opacity-90 transition">
                     <img
                       src="/images/play-store-image-weincard-402x.png"
                       alt="Descargar en Google Play"
