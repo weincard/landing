@@ -251,9 +251,11 @@ export default function RestaurantLandingPage() {
           <div className="space-y-6">
             <p className="text-2xl md:text-3xl font-bold font-clash">QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.</p>
             <p className="text-lg md:text-xl text-white font-hepta-slab">Cancela cuando quieras.</p>
-            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6">
+            <a href="/registro">
+            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
               Únete ahora
             </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -288,14 +290,14 @@ export default function RestaurantLandingPage() {
                   <span className="font-bold">1.</span> Obtén tu membresía.
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <a href="#" className="hover:opacity-90 transition">
+                  <a href="https://play.google.com/store/apps/details?id=com.weincard.app.idp" target="_blank" className="hover:opacity-90 transition">
                     <img
                       src="/images/play-store-image-weincard-402x.png"
                       alt="Descargar en Google Play"
                       className="h-10 md:h-14"
                     />
                   </a>
-                  <a href="#" className="hover:opacity-90 transition">
+                  <a href="https://apps.apple.com/co/app/weincard/id6754571134" target="_blank" className="hover:opacity-90 transition">
                     <img
                       src="/images/app-store-image-weincard-402x.png"
                       alt="Descargar en App Store"
@@ -493,7 +495,7 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
               PLANES
             </a>
             <span className="hidden md:inline text-white">|</span>
-            <a href="#" className="hover:text-white/70 transition">
+            <a href="/registro" className="hover:text-white/70 transition">
               SUBSCRÍBETE
             </a>
   </div>
