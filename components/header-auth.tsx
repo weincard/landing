@@ -34,9 +34,21 @@ export default function HeaderAuth() {
       .then(([meData, membershipData]) => {
         if (meData) setUser(meData)
         if (membershipData) {
-          const m = Array.isArray(membershipData) ? membershipData[0] : membershipData
+          // Response shape: { userMemberships: [...] }
+          const memberships = membershipData.userMemberships ?? membershipData
+          const m = Array.isArray(memberships) ? memberships[0] : memberships
           if (m && (m.status === "active" || m.status === "ACTIVE")) {
-            setMembershipName(m.planName ?? m.plan?.name ?? "Plan activo")
+            // Map duration to Spanish
+            const durationMap: Record<string, string> = {
+              MONTHLY: "Mensual",
+              YEARLY: "Anual",
+              monthly: "Mensual",
+              yearly: "Anual",
+            }
+            const duration = m.membershipPlan?.duration ?? m.duration
+            const durationLabel = durationMap[duration] ?? ""
+            const planName = m.membershipPlan?.name ?? m.planName ?? m.plan?.name
+            setMembershipName(planName ?? (durationLabel ? `Plan ${durationLabel}` : "Plan activo"))
           }
         }
       })

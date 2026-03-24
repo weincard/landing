@@ -485,11 +485,11 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
       <footer className="bg-black text-white py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 text-sm text-white font-hepta-slab">
-            <a href="#restaurantes" className="hover:text-white/70 transition">
+            <a href="/catalogo" className="hover:text-white/70 transition">
               RESTAURANTES
             </a>
             <span className="hidden md:inline text-white">|</span>
-            <a href="#planes" className="hover:text-white/70 transition">
+            <a href="/planes" className="hover:text-white/70 transition">
               PLANES
             </a>
             <span className="hidden md:inline text-white">|</span>

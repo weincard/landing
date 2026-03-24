@@ -155,23 +155,58 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
 function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void }) {
   const [imgIndex, setImgIndex] = useState(0)
   const [loggedIn, setLoggedIn] = useState(false)
+  const [hasMembership, setHasMembership] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    setLoggedIn(!!getToken())
+    const token = getToken()
+    setLoggedIn(!!token)
     document.body.style.overflow = "hidden"
+
+    if (token) {
+      fetch(`${API_BASE}/memberships/by-user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            const memberships = data.userMemberships ?? data
+            const m = Array.isArray(memberships) ? memberships[0] : memberships
+            if (m && (m.status === "active" || m.status === "ACTIVE")) {
+              setHasMembership(true)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+
     return () => { document.body.style.overflow = "" }
   }, [])
 
   const images = branch.images?.length ? branch.images : branch.coverImageUrl ? [branch.coverImageUrl] : []
 
+  function getAppStoreUrl(): string {
+    if (typeof window === "undefined") return "https://play.google.com/store/apps/details?id=com.weincard.app.idp"
+    const ua = navigator.userAgent || navigator.vendor || ""
+    const isApple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua)
+    return isApple
+      ? "https://apps.apple.com/co/app/weincard/id6754571134"
+      : "https://play.google.com/store/apps/details?id=com.weincard.app.idp"
+  }
+
   function handleCta() {
     if (!loggedIn) {
       const params = new URLSearchParams(searchParams.toString())
       router.push(`/login?redirect=/catalogo${params.toString() ? `?${params}` : ""}`)
+      return
     }
-    // logged in: future feature
+    if (hasMembership) {
+      window.open(getAppStoreUrl(), "_blank", "noopener,noreferrer")
+      return
+    }
+    // logged in but no membership - redirect to plans
+    router.push("/planes")
   }
 
   return (
@@ -310,13 +345,9 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
           {/* CTA button */}
           <button
             onClick={handleCta}
-            className={`w-full py-4 rounded-2xl font-bold font-clash text-base transition ${
-              loggedIn
-                ? "bg-black text-white hover:bg-black/80"
-                : "bg-black text-white hover:bg-black/80"
-            }`}
+            className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80"
           >
-            {loggedIn ? "Activa tu weincard" : "Iniciar sesión"}
+            {!loggedIn ? "Iniciar sesión" : hasMembership ? "Abrir Weincard" : "Activa tu Weincard"}
           </button>
         </div>
       </div>
