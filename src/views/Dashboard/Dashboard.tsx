@@ -333,7 +333,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
           bgColor="bg-rose-100"
         />
         <MetricCard
-          title="Códigos Generados"
+          title="Redenciones Generadas"
           value={redemptionMetrics?.totalRedemptionCodesGenerated || 0}
           percentage={10}
           trend="up"
@@ -342,7 +342,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
           bgColor="bg-amber-100"
         />
         <MetricCard
-          title="Códigos Validados"
+          title="Validaciones Generadas"
           value={redemptionMetrics?.totalRedemptionCodesUsed || 0}
           percentage={5}
           trend="up"
@@ -440,8 +440,8 @@ export default function DashboardView({ token }: DashboardViewProps) {
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${branch.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
                           }`}
                       >
                         {branch.isActive ? "Activa" : "Inactiva"}
@@ -549,8 +549,8 @@ export default function DashboardView({ token }: DashboardViewProps) {
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.isVerified
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
                           }`}
                       >
                         {user.isVerified ? "Verificado" : "Pendiente"}

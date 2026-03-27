@@ -117,7 +117,7 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
                   </TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Identificación</TableHead>
+                  {/* <TableHead>Identificación</TableHead> */}
                   <TableHead>Sucursal</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Ahorro</TableHead>
@@ -157,7 +157,7 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
                         {new Date(r.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>{r.userName?.replace("~", " ") || "N/A"}</TableCell>
-                      <TableCell>{r.identification || "N/A"}</TableCell>
+                      {/* <TableCell>{r.identification || "N/A"}</TableCell> */}
                       <TableCell>{r.branchName || "N/A"}</TableCell>
                       <TableCell>${r.totalPaid?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell className="text-green-600 font-semibold">
