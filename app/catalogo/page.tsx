@@ -134,12 +134,10 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
 
       <div className="p-4 space-y-1">
         <h3 className="font-bold text-sm font-clash leading-tight line-clamp-2">{branch.name}</h3>
-        {validDays.length > 0 && (
-          <p className="text-xs text-gray-500 font-hepta-slab">
-            <span className="font-semibold text-gray-700">Disponible</span>{" "}
-            {daysToSpanish(validDays)}
-          </p>
-        )}
+        <p className="text-xs text-gray-500 font-hepta-slab">
+          <span className="font-semibold text-gray-700">Disponible</span>{" "}
+          {validDays.length === 0 ? "Todos los días" : daysToSpanish(validDays)}
+        </p>
         {branch.category?.name && (
           <span className="inline-block text-xs font-hepta-slab text-gray-400 border border-gray-200 rounded-full px-2 py-0.5 mt-1">
             {branch.category.name}
@@ -178,7 +176,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             }
           }
         })
-        .catch(() => {})
+        .catch(() => { })
     }
 
     return () => { document.body.style.overflow = "" }
@@ -306,18 +304,16 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
                       <span className="text-sm font-bold font-clash">{offer.title}</span>
                     </div>
                     {/* Days */}
-                    {offer.validDays.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0 text-black">
-                          <path d="M12.75 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM7.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM8.25 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM9.75 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM10.5 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM16.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM15 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM16.5 17.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" />
-                          <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-sm font-hepta-slab text-gray-600">
-                          <span className="font-semibold text-gray-800">Disponible</span>{" "}
-                          {daysToSpanish(offer.validDays)}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0 text-black">
+                        <path d="M12.75 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM7.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM8.25 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM9.75 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM10.5 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM16.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM15 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM16.5 17.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" />
+                        <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-hepta-slab text-gray-600">
+                        <span className="font-semibold text-gray-800">Disponible</span>{" "}
+                        {offer.validDays.length > 0 ? daysToSpanish(offer.validDays) : "Todos los días"}
+                      </span>
+                    </div>
                     {/* Conditions */}
                     {offer.conditions && (
                       <div className="flex items-start gap-2">
@@ -457,7 +453,7 @@ export default function CatalogoPage() {
               className="w-full bg-white rounded-full pl-12 pr-5 py-3.5 text-sm font-hepta-slab text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/40"
             />
           </div>
-          
+
           <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
             {loading ? "Buscando..." : <><span className="font-bold text-white">{count}</span> resultados</>}
           </p>
@@ -466,9 +462,9 @@ export default function CatalogoPage() {
 
       {/* Grid */}
       <section className="container mx-auto px-4 py-8 max-w-7xl">
-      <p className="text-black text-xl font-hepta-slab mb-4 pl-1">
-            <span className="font-bold ">Todos los beneficios</span>
-          </p>
+        <p className="text-black text-xl font-hepta-slab mb-4 pl-1">
+          <span className="font-bold ">Todos los beneficios</span>
+        </p>
         {loading && branches.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
