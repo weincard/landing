@@ -337,6 +337,15 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
               <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.description}</p>
             </div>
           )}
+          {/* Ubicación */}
+          {branch.address && (
+            <div className="space-y-2">
+              <h3 className="font-black text-lg font-clash">Ubicación</h3>
+              <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.address}</p>
+              {branch.city && <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.city}</p>}
+              {branch.country && <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.country}</p>}
+            </div>
+          )}
 
           {/* CTA button */}
           <button
