@@ -529,7 +529,9 @@ export default function CreateOrEditGift({
                   {selectedBranches.map((branch) => (
                     <Badge key={branch.branchId} variant="secondary" className="gap-1 px-2 py-1">
                       {branch.name}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveBranch(branch.branchId)} />
+                      {!giftId && (
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveBranch(branch.branchId)} />
+                      )}
                     </Badge>
                   ))}
                 </div>
@@ -545,6 +547,7 @@ export default function CreateOrEditGift({
                     placeholder="Buscar sucursal (mín. 2 letras)..."
                     className="pl-8"
                     value={branchSearchTerm}
+                    disabled={!!giftId}
                     onChange={(e) => {
                       setBranchSearchTerm(e.target.value);
                       setBranchesDropdownOpen(true);
@@ -587,14 +590,16 @@ export default function CreateOrEditGift({
                     return (
                       <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
                         {plan?.name}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveMembership(id)} />
+                        {!giftId && (
+                          <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveMembership(id)} />
+                        )}
                       </Badge>
                     );
                   })}
                 </div>
                 <Popover open={membershipDropdownOpen} onOpenChange={setMembershipDropdownOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal" disabled={membershipPlansLoading}>
+                    <Button variant="outline" className="w-full justify-between font-normal" disabled={membershipPlansLoading || !!giftId}>
                       {membershipPlansLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -640,6 +645,7 @@ export default function CreateOrEditGift({
                 <Input
                   type="number"
                   value={formData.quantity}
+                  disabled={!!giftId}
                   onChange={(e) => handleInputChange("quantity", e.target.value)}
                   placeholder="Ej: 100"
                 />
@@ -650,6 +656,7 @@ export default function CreateOrEditGift({
                   <PopoverTrigger asChild>
                     <Button
                       variant={"outline"}
+                      disabled={!!giftId}
                       className={cn(
                         "w-full justify-start text-left font-normal",
                         !expirationDate && "text-muted-foreground"
@@ -676,7 +683,7 @@ export default function CreateOrEditGift({
                 <Label>Activo</Label>
                 <div className="text-sm text-gray-500">Habilitar redención del regalo</div>
               </div>
-              <Switch checked={formData.isActive} onCheckedChange={(val) => handleInputChange("isActive", val)} />
+              <Switch checked={formData.isActive} onCheckedChange={(val) => handleInputChange("isActive", val)} disabled={!!giftId} />
             </div>
 
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -684,7 +691,7 @@ export default function CreateOrEditGift({
                 <Label>Aplicar sin membresía</Label>
                 <div className="text-sm text-gray-500">Usuarios sin plan pueden redimir</div>
               </div>
-              <Switch checked={formData.applyWithoutMembership} onCheckedChange={(val) => handleInputChange("applyWithoutMembership", val)} />
+              <Switch checked={formData.applyWithoutMembership} onCheckedChange={(val) => handleInputChange("applyWithoutMembership", val)} disabled={!!giftId} />
             </div>
           </div>
 
@@ -693,7 +700,7 @@ export default function CreateOrEditGift({
               <h3 className="text-lg font-semibold">Asignación Manual</h3>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2" disabled={!!giftId}>
                     <Plus className="h-4 w-4" />
                     Asignar
                   </Button>
@@ -749,7 +756,9 @@ export default function CreateOrEditGift({
                   return (
                     <Badge key={id} variant="secondary" className="gap-1 px-2 py-1">
                       {user?.name || user?.email || `Usuario #${id}`}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveUser(id)} />
+                      {!giftId && (
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveUser(id)} />
+                      )}
                     </Badge>
                   );
                 })
