@@ -12,7 +12,6 @@ interface RedemptionCode {
   code?: string
   user?: { userId?: number; name?: string }
   branch?: { branchId?: number; name?: string }
-  identification?: string
   totalPaid?: number
   totalDiscount?: number
   createdAt?: string
@@ -119,7 +118,6 @@ function RedemptionDetails({ data }: { data: RedemptionCode }) {
 
   const rows: { label: string; value: string }[] = [
     { label: "Código", value: data.code ?? "-" },
-    { label: "Identificación", value: data.identification ?? "-" },
     { label: "Total de la cuenta", value: formatCOPValue(data.totalPaid) },
     { label: "Valor de ahorro", value: formatCOPValue(data.totalDiscount) },
     { label: "Sucursal", value: data.branch?.name ?? "-" },
@@ -160,7 +158,6 @@ function Spinner() {
 
 export default function VerificacionPage() {
   const [formData, setFormData] = useState({
-    identification: "",
     code: "",
     totalPaid: "",
     totalDiscount: "",
@@ -194,7 +191,6 @@ export default function VerificacionPage() {
     setStatus({ type: null, message: "" })
 
     const body = {
-      identification: formData.identification.trim(),
       code: formData.code.trim(),
       totalPaid: Number(parseCOP(formData.totalPaid)),
       totalDiscount: formData.totalDiscount ? Number(parseCOP(formData.totalDiscount)) : 0,
@@ -217,7 +213,7 @@ export default function VerificacionPage() {
           message: "Codigo verificado y actualizado.",
           redemptionCode: data.redemptionCode ?? data,
         })
-        setFormData({ identification: "", code: "", totalPaid: "", totalDiscount: "" })
+        setFormData({ code: "", totalPaid: "", totalDiscount: "" })
       } else if (res.status === 400) {
         setStatus({ type: "used", message: "El codigo ya fue usado." })
       } else if (res.status === 404) {
@@ -256,7 +252,7 @@ export default function VerificacionPage() {
             Verificación de código
           </h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Digite la cédula y el código único del usuario para validar el beneficio WEINCARD.
+            Digite el código único del usuario para validar el beneficio WEINCARD.
           </p>
 
           {/* Status Alert */}
@@ -271,23 +267,6 @@ export default function VerificacionPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-            {/* Identification */}
-            <div>
-              <label htmlFor="identification" className="block text-sm font-medium text-gray-700 mb-2">
-                Identificación <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="identification"
-                name="identification"
-                required
-                value={formData.identification}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition"
-                placeholder="Número de identificación"
-              />
-            </div>
-
             {/* Code */}
             <div>
               <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
@@ -345,7 +324,7 @@ export default function VerificacionPage() {
             <div className="pt-2">
               <Button
                 type="submit"
-                disabled={isLoading || !formData.identification || !formData.code || !formData.totalPaid}
+                disabled={isLoading || !formData.code || !formData.totalPaid}
                 className="w-full bg-[#FF3B47] hover:bg-[#FF3B47]/90 text-white py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
