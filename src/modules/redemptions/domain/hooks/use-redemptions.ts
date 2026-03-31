@@ -48,7 +48,7 @@ export const useRedemptions = () => {
     async (
       token?: string,
       paginationParams?: IPaginationParams,
-      filters?: { branchId?: number | null; userId?: number | null }
+      filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
     ): Promise<AllRedemptionsResponse | null> => {
       setLoading(true);
       setError(null);
@@ -79,7 +79,7 @@ export const useRedemptions = () => {
     async (
       token?: string,
       paginationParams?: IPaginationParams,
-      filters?: { branchId?: number | null; userId?: number | null }
+      filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
     ): Promise<GeneratedRedemptionsResponse | null> => {
       setLoading(true);
       setError(null);
@@ -110,7 +110,7 @@ export const useRedemptions = () => {
     async (
       token?: string,
       paginationParams?: IPaginationParams,
-      filters?: { branchId?: number | null; userId?: number | null }
+      filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
     ): Promise<UsedRedemptionsResponse | null> => {
       setLoading(true);
       setError(null);

@@ -47,9 +47,9 @@ export default function ValidationsView({ token }: ValidationsViewProps) {
 
   const fetchData = useCallback(async () => {
     const skip = (currentPage - 1) * pageSize;
-    const filters: { branchId?: number | null; userId?: number | null } = {};
-    if (committedBranchFilter) filters.branchId = parseInt(committedBranchFilter) || null;
-    if (committedUserFilter) filters.userId = parseInt(committedUserFilter) || null;
+    const filters: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string } = {};
+    if (committedBranchFilter) filters.branchName = committedBranchFilter;
+    if (committedUserFilter) filters.userName = committedUserFilter;
 
     const response = await getUsedRedemptions(token, { limit: pageSize, skip }, filters);
     if (response) {
