@@ -5,7 +5,7 @@ import HeaderAuth from "@/components/header-auth"
 export default function RestaurantLandingPage() {
   return (
     <main className="min-h-screen bg-black">
-      {/* Hero Section */}
+      {/* Hero Section  */}
       <section className="bg-cream text-black">
         {/* Header */}
         <header className="bg-black text-white">
@@ -224,7 +224,7 @@ export default function RestaurantLandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="bg-black text-white py-16 md:py-24 rounded-b-[60px] relative z-10" id="planes">
+      <section className="bg-black text-white py-16 md:py-24 rounded-b-[60px] relative z-10">
         <div className="container mx-auto px-4 text-center space-y-12">
           <h2 className="font-black text-4xl md:text-5xl tracking-tight font-clash">ELIGE TU PLAN</h2>
 
@@ -252,9 +252,9 @@ export default function RestaurantLandingPage() {
             <p className="text-2xl md:text-3xl font-bold font-clash">QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.</p>
             <p className="text-lg md:text-xl text-white font-hepta-slab">Cancela cuando quieras.</p>
             <a href="/registro">
-            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
-              Únete ahora
-            </Button>
+              <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
+                Únete ahora
+              </Button>
             </a>
           </div>
         </div>
@@ -423,7 +423,7 @@ export default function RestaurantLandingPage() {
                 1. ¿QUÉ ES WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Weincard es una membresía digital con beneficios, regalos y descuentos exclusivos en los mejores restaurantes de Medellín, perfecta para los que buscan multiplicar sus salidas. 
+                Weincard es una membresía digital con beneficios, regalos y descuentos exclusivos en los mejores restaurantes de Medellín, perfecta para los que buscan multiplicar sus salidas.
               </AccordionContent>
             </AccordionItem>
 
@@ -433,7 +433,7 @@ export default function RestaurantLandingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
                 La suscripción mensual cuesta $18.900 COP y el plan anual podrás adquirirlo por $189.000 COP. <br />
-*Que podrías librar desde tu primera salida. 
+                *Que podrías librar desde tu primera salida.
 
               </AccordionContent>
             </AccordionItem>
@@ -443,7 +443,7 @@ export default function RestaurantLandingPage() {
                 3. ¿DÓNDE PUEDO USAR WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Tu membresía es válida en Medellín y el Área Metropolitana. 
+                Tu membresía es válida en Medellín y el Área Metropolitana.
               </AccordionContent>
             </AccordionItem>
 
@@ -461,7 +461,7 @@ export default function RestaurantLandingPage() {
                 5. ¿QUÉ INCLUYE WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Tu membresía incluye los mejores beneficios en los mejores restaurantes de Medellín: 30% OFF en Sushi Market, 20% OFF en Olivia, Menú Weincard en Mistura y muchísimos más restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
+                Tu membresía incluye los mejores beneficios en los mejores restaurantes de Medellín: 30% OFF en Sushi Market, 20% OFF en Olivia, Menú Weincard en Mistura y muchísimos más restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes.
               </AccordionContent>
             </AccordionItem>
 
@@ -470,8 +470,8 @@ export default function RestaurantLandingPage() {
                 6. ¿QUÉ RESTAURANTES ESTÁN EN WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Solo los mejores. 
-Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
+                Solo los mejores.
+                Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -498,14 +498,14 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
             <a href="/registro" className="hover:text-white/70 transition">
               SUBSCRÍBETE
             </a>
-  </div>
-  <div className="mt-1 text-center">
-    <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
-      Desarrollado por agenciaidp.com
-    </a>
-  </div>
-  </div>
-  </footer>
+          </div>
+          <div className="mt-1 text-center">
+            <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
+              Desarrollado por agenciaidp.com
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   )
 }
