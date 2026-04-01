@@ -13,7 +13,6 @@ interface RedemptionCode {
   user?: { userId?: number; name?: string; phone?: string | null }
   branch?: { branchId?: number; name?: string }
   totalPaid?: number
-  totalDiscount?: number
   createdAt?: string
   updatedAt?: string
   [key: string]: unknown
@@ -151,8 +150,9 @@ function RedemptionDetails({ data }: { data: RedemptionCode }) {
     )
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Código", value: data.code ?? "-" },
-    { label: "Total de la cuenta", value: formatCOPValue(data.totalPaid) },
-    { label: "Valor de ahorro", value: formatCOPValue(data.totalDiscount) },
+    ...(data.totalPaid != null && data.totalPaid > 0
+      ? [{ label: "Total de la cuenta", value: formatCOPValue(data.totalPaid) }]
+      : []),
     { label: "Sucursal", value: data.branch?.name ?? "-" },
     { label: "Usuario", value: data.user?.name ?? "-" },
     { label: "Celular", value: celularValue },
@@ -194,23 +194,16 @@ export default function VerificacionPage() {
   const [formData, setFormData] = useState({
     code: "",
     totalPaid: "",
-    totalDiscount: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<StatusState>({ type: null, message: "" })
-
-  const formatCOP = (raw: string): string => {
-    const digits = raw.replace(/\D/g, "")
-    if (!digits) return ""
-    return Number(digits).toLocaleString("es-CO")
-  }
 
   const parseCOP = (formatted: string): string =>
     formatted.replace(/\./g, "").replace(/,/g, "")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    if (name === "totalPaid" || name === "totalDiscount") {
+    if (name === "totalPaid") {
       const digits = value.replace(/\D/g, "")
       const display = digits ? Number(digits).toLocaleString("es-CO") : ""
       setFormData((prev) => ({ ...prev, [name]: display }))
@@ -224,10 +217,12 @@ export default function VerificacionPage() {
     setIsLoading(true)
     setStatus({ type: null, message: "" })
 
-    const body = {
+    const paidRaw = parseCOP(formData.totalPaid)
+    const body: { code: string; totalPaid?: number } = {
       code: formData.code.trim(),
-      totalPaid: Number(parseCOP(formData.totalPaid)),
-      totalDiscount: formData.totalDiscount ? Number(parseCOP(formData.totalDiscount)) : 0,
+    }
+    if (paidRaw) {
+      body.totalPaid = Number(paidRaw)
     }
 
     try {
@@ -247,7 +242,7 @@ export default function VerificacionPage() {
           message: "Codigo verificado y actualizado.",
           redemptionCode: data.redemptionCode ?? data,
         })
-        setFormData({ code: "", totalPaid: "", totalDiscount: "" })
+        setFormData({ code: "", totalPaid: "" })
       } else if (res.status === 400) {
         setStatus({ type: "used", message: "El codigo ya fue usado." })
       } else if (res.status === 404) {
@@ -321,33 +316,14 @@ export default function VerificacionPage() {
             {/* Total Paid */}
             <div>
               <label htmlFor="totalPaid" className="block text-sm font-medium text-gray-700 mb-2">
-                Total Pagado <span className="text-red-500">*</span>
+                Total pagado
               </label>
               <input
                 type="text"
                 id="totalPaid"
                 name="totalPaid"
-                required
                 inputMode="numeric"
                 value={formData.totalPaid}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="$ 0"
-              />
-            </div>
-
-            {/* Total Discount */}
-            <div>
-              <label htmlFor="totalDiscount" className="block text-sm font-medium text-gray-700 mb-2">
-                Descuento Total <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="totalDiscount"
-                name="totalDiscount"
-                required
-                inputMode="numeric"
-                value={formData.totalDiscount}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3B47] focus:border-transparent outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="$ 0"
@@ -358,7 +334,7 @@ export default function VerificacionPage() {
             <div className="pt-2">
               <Button
                 type="submit"
-                disabled={isLoading || !formData.code || !formData.totalPaid}
+                disabled={isLoading || !formData.code}
                 className="w-full bg-[#FF3B47] hover:bg-[#FF3B47]/90 text-white py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (

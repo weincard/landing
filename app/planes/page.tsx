@@ -340,8 +340,8 @@ export default function PlanesPage() {
             <div
               key={plan.key}
               className={`text-black rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${plan.highlighted
-                  ? "bg-black text-white border-white/10 shadow-2xl"
-                  : "bg-black text-white border-white/10 shadow-md"
+                ? "bg-black text-white border-white/10 shadow-2xl"
+                : "bg-black text-white border-white/10 shadow-md"
                 }`}
               style={
                 plan.highlighted
