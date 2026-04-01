@@ -19,8 +19,32 @@ interface Membership {
   status: string
   planName?: string
   plan?: { name?: string }
+  membershipPlan?: { name?: string; duration?: string }
+  duration?: string
   expiresAt?: string
   endDate?: string
+}
+
+/** Duración del plan activo según memberships/by-user (misma lógica que header-auth). */
+function getActivePlanKey(m: Membership | null): "monthly" | "yearly" | null {
+  if (!m) return null
+  const active = m.status === "active" || m.status === "ACTIVE"
+  if (!active) return null
+  const raw = m.membershipPlan?.duration ?? m.duration
+  if (raw) {
+    const u = String(raw).toUpperCase()
+    if (u === "MONTHLY" || u === "MONTH") return "monthly"
+    if (u === "YEARLY" || u === "YEAR") return "yearly"
+  }
+  const name = (
+    m.membershipPlan?.name ??
+    m.planName ??
+    m.plan?.name ??
+    ""
+  ).toLowerCase()
+  if (name.includes("mensual") || name.includes("monthly")) return "monthly"
+  if (name.includes("anual") || name.includes("yearly") || name.includes("annual")) return "yearly"
+  return null
 }
 
 const PLANS = [
@@ -70,13 +94,28 @@ export default function PlanesPage() {
       .then(([meData, membershipData]) => {
         if (meData) setUser(meData)
         if (membershipData) {
-          const m = Array.isArray(membershipData) ? membershipData[0] : membershipData
+          const memberships = membershipData.userMemberships ?? membershipData
+          const m = Array.isArray(memberships) ? memberships[0] : memberships
           if (m) setMembership(m)
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingUser(false))
   }, [])
+
+  const hasMembership =
+    membership?.status === "active" ||
+    membership?.status === "ACTIVE"
+
+  const activePlanKey = getActivePlanKey(membership)
+
+  const membershipName =
+    membership?.planName ??
+    membership?.membershipPlan?.name ??
+    membership?.plan?.name ??
+    "Plan activo"
+
+  const membershipExpiry = membership?.expiresAt ?? membership?.endDate
 
   async function startCheckout(planKey: "monthly" | "yearly", emailToUse: string) {
     setError(null)
@@ -112,6 +151,7 @@ export default function PlanesPage() {
   }
 
   async function handleSelectPlan(planKey: "monthly" | "yearly") {
+    if (activePlanKey === planKey) return
     const token = getToken()
     if (!token) {
       router.push("/login?redirect=/planes")
@@ -167,15 +207,6 @@ export default function PlanesPage() {
       setSavingEmail(false)
     }
   }
-
-  const hasMembership =
-    membership?.status === "active" ||
-    membership?.status === "ACTIVE"
-
-  const membershipName =
-    membership?.planName ?? membership?.plan?.name ?? "Plan activo"
-
-  const membershipExpiry = membership?.expiresAt ?? membership?.endDate
 
   return (
     <main className="min-h-screen bg-[#F5F1E8]">
@@ -308,11 +339,10 @@ export default function PlanesPage() {
           {PLANS.map((plan) => (
             <div
               key={plan.key}
-              className={`text-black rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${
-                plan.highlighted
-                  ? "bg-black text-white border-white/10 shadow-2xl"
-                  : "bg-black text-white border-white/10 shadow-md"
-              }`}
+              className={`text-black rounded-3xl p-8 md:p-12 flex flex-col gap-6 border transition-all ${plan.highlighted
+                ? "bg-black text-white border-white/10 shadow-2xl"
+                : "bg-black text-white border-white/10 shadow-md"
+                }`}
               style={
                 plan.highlighted
                   ? { background: "linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1), transparent)", border: "1px solid rgba(255,255,255,0.1)" }
@@ -339,14 +369,24 @@ export default function PlanesPage() {
                 {plan.description}
               </p>
               <button
+                type="button"
                 onClick={() => handleSelectPlan(plan.key)}
-                disabled={purchasing}
-                className="w-full py-3 rounded-xl font-clash font-bold text-sm transition bg-white text-black hover:text-white hover:bg-black disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer hover:scale-110"
+                disabled={purchasing || activePlanKey === plan.key}
+                title={
+                  activePlanKey === plan.key
+                    ? "Ya tienes este plan activo"
+                    : undefined
+                }
+                className="w-full py-3 rounded-xl font-clash font-bold text-sm transition bg-white text-black hover:text-white hover:bg-black disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer hover:scale-110 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {purchasing && (
                   <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 )}
-                {hasMembership ? "Cambiar a este plan" : "Adquirir plan"}
+                {activePlanKey === plan.key
+                  ? "Plan actual"
+                  : hasMembership
+                    ? "Quiero este plan"
+                    : "Adquirir plan"}
               </button>
             </div>
           ))}
