@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { saveToken, getToken } from "@/lib/auth"
+import { saveToken, getToken, isLoggedIn } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
 type Step = "phone" | "otp" | "profile"
