@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { saveToken } from "@/lib/auth"
+import { saveToken, isLoggedIn } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
 type Step = "phone" | "otp"
@@ -19,6 +19,13 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState("")
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+    }
+  }, [router])
 
   // Focus first OTP input when step changes
   useEffect(() => {
@@ -215,7 +222,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading || phone.length !== 10}
-                  className="w-full py-3 rounded-full bg-black text-white font-hepta-slab font-bold text-sm hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-full bg-black text-white font-hepta-slab font-bold text-sm hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading && (
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -280,7 +287,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading || !otpFilled}
-                  className="w-full py-3 rounded-full bg-black text-white font-hepta-slab font-bold text-sm hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-full bg-black text-white font-hepta-slab font-bold text-sm hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading && (
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">

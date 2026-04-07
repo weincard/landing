@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { saveToken, getToken } from "@/lib/auth"
+import { saveToken, getToken, isLoggedIn } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
 type Step = "phone" | "otp" | "profile"
@@ -22,6 +22,13 @@ export default function RegistroPage() {
   const [successMsg, setSuccessMsg] = useState("")
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+    }
+  }, [router])
 
   useEffect(() => {
     if (step === "otp") {
