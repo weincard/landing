@@ -23,6 +23,13 @@ export default function RegistroPage() {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+    }
+  }, [router])
+
   useEffect(() => {
     if (step === "otp") {
       setTimeout(() => otpRefs.current[0]?.focus(), 100)
