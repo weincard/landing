@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import HeaderAuth from "@/components/header-auth"
+import { ViewAppButton, JoinNowButton, FooterSubscribeLink } from "@/components/home-client"
 
 export default function RestaurantLandingPage() {
   return (
@@ -217,9 +218,7 @@ export default function RestaurantLandingPage() {
             </div>
           </div>
 
-          <a href="https://apps.apple.com/co/app/weincard/id6754571134" target="_blank"><Button className="rounded-full bg-black text-white font-bold hover:bg-black/90 px-8 mt-6 font-hepta-slab text-lg cursor-pointer" >
-            Ver la App
-          </Button></a>
+          <ViewAppButton />
         </div>
       </section>
 
@@ -251,11 +250,7 @@ export default function RestaurantLandingPage() {
           <div className="space-y-6">
             <p className="text-2xl md:text-3xl font-bold font-clash">QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.</p>
             <p className="text-lg md:text-xl text-white font-hepta-slab">Cancela cuando quieras.</p>
-            <a href="/registro">
-              <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
-                Únete ahora
-              </Button>
-            </a>
+            <JoinNowButton />
           </div>
         </div>
       </section>
@@ -494,10 +489,7 @@ export default function RestaurantLandingPage() {
             <a href="/planes" className="hover:text-white/70 transition">
               PLANES
             </a>
-            <span className="hidden md:inline text-white">|</span>
-            <a href="/registro" className="hover:text-white/70 transition">
-              SUBSCRÍBETE
-            </a>
+            <FooterSubscribeLink />
           </div>
           <div className="mt-1 text-center">
             <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
