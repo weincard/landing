@@ -252,9 +252,9 @@ export default function RestaurantLandingPage() {
             <p className="text-2xl md:text-3xl font-bold font-clash">QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.</p>
             <p className="text-lg md:text-xl text-white font-hepta-slab">Cancela cuando quieras.</p>
             <a href="/registro">
-            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
-              Únete ahora
-            </Button>
+              <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
+                Únete ahora
+              </Button>
             </a>
           </div>
         </div>
@@ -419,36 +419,36 @@ export default function RestaurantLandingPage() {
 
           <Accordion type="single" collapsible className="space-y-0 border-b border-black/20">
             <AccordionItem value="item-1" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 1. ¿QUÉ ES WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Weincard es una membresía digital con beneficios, regalos y descuentos exclusivos en los mejores restaurantes de Medellín, perfecta para los que buscan multiplicar sus salidas. 
+                Weincard es una membresía digital con beneficios, regalos y descuentos exclusivos en los mejores restaurantes de Medellín, perfecta para los que buscan multiplicar sus salidas.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 2. ¿CUÁNTO CUESTA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
                 La suscripción mensual cuesta $18.900 COP y el plan anual podrás adquirirlo por $189.000 COP. <br />
-*Que podrías librar desde tu primera salida. 
+                *Que podrías librar desde tu primera salida.
 
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 3. ¿DÓNDE PUEDO USAR WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Tu membresía es válida en Medellín y el Área Metropolitana. 
+                Tu membresía es válida en Medellín y el Área Metropolitana.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-4" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 4. ¿CÓMO CANCELO MI MEMBRESÍA?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
@@ -457,21 +457,21 @@ export default function RestaurantLandingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-5" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 5. ¿QUÉ INCLUYE WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Tu membresía incluye los mejores beneficios en los mejores restaurantes de Medellín: 30% OFF en Sushi Market, 20% OFF en Olivia, Menú Weincard en Mistura y muchísimos más restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
+                Tu membresía incluye los mejores beneficios en los mejores restaurantes de Medellín: 30% OFF en Sushi Market, 20% OFF en Olivia, Menú Weincard en Mistura y muchísimos más restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-6" className="border-b border-black/20">
-              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab">
+              <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline py-6 font-clash font-medium font-hepta-slab cursor-pointer">
                 6. ¿QUÉ RESTAURANTES ESTÁN EN WEINCARD?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 font-hepta-slab">
-                Solo los mejores. 
-Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes. 
+                Solo los mejores.
+                Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en todos los restaurantes.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -498,14 +498,14 @@ Logos de todos los restaurantes. Descarga la app y mira todos los beneficios en 
             <a href="/registro" className="hover:text-white/70 transition">
               SUBSCRÍBETE
             </a>
-  </div>
-  <div className="mt-1 text-center">
-    <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
-      Desarrollado por agenciaidp.com
-    </a>
-  </div>
-  </div>
-  </footer>
+          </div>
+          <div className="mt-1 text-center">
+            <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="text-black text-[6px] leading-none">
+              Desarrollado por agenciaidp.com
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   )
 }
