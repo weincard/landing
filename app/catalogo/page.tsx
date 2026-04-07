@@ -139,7 +139,7 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
           {validDays.length === 0 ? "Todos los días" : daysToSpanish(validDays)}
         </p>
         {branch.category?.name && (
-          <span className="inline-block text-xs font-hepta-slab text-gray-400 border border-gray-200 rounded-full px-2 py-0.5 mt-1">
+          <span className="inline-block text-xs font-hepta-slab text-white bg-black rounded-full px-2 py-0.5 mt-1 font-bold">
             {branch.category.name}
           </span>
         )}
@@ -260,7 +260,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
+              className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
               aria-label="Cerrar"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
@@ -282,7 +282,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             )}
             <h2 className="font-black text-2xl font-clash leading-tight">{branch.name}</h2>
             {branch.category?.name && (
-              <span className="inline-block text-sm font-hepta-slab text-gray-500 border border-gray-200 rounded-full px-3 py-0.5">
+              <span className="inline-block text-sm font-hepta-slab text-white bg-black rounded-full px-3 py-0.5 font-bold">
                 {branch.category.name}
               </span>
             )}
@@ -349,7 +349,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
           {/* CTA button */}
           <button
             onClick={handleCta}
-            className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80"
+            className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80 cursor-pointer"
           >
             {!loggedIn ? "Iniciar sesión" : hasMembership ? "Abrir Weincard" : "Activa tu Weincard"}
           </button>
@@ -502,7 +502,7 @@ export default function CatalogoPage() {
                 <button
                   onClick={handleLoadMore}
                   disabled={loading}
-                  className="bg-black text-white font-bold font-clash px-10 py-3.5 rounded-full hover:bg-black/80 transition disabled:opacity-50"
+                  className="bg-black text-white font-bold font-clash px-10 py-3.5 rounded-full hover:bg-black/80 transition disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? "Cargando..." : "Ver más"}
                 </button>
