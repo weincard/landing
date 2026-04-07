@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import HeaderAuth from "@/components/header-auth"
-import { ViewAppButton, JoinNowButton, FooterSubscribeLink } from "@/components/home-client"
+import { ViewAppButton, JoinNowButton, FooterSubscribeLink, MobileMenu } from "@/components/home-client"
 
 export default function RestaurantLandingPage() {
   return (
@@ -14,7 +14,7 @@ export default function RestaurantLandingPage() {
             <div className="flex items-center gap-8">
               <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
             </div>
-            <div className="flex gap-8 items-center">
+            <div className="flex gap-3 items-center">
               <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab">
                 <a href="/catalogo" className="hover:opacity-70 transition">
                   RESTAURANTES
@@ -24,6 +24,7 @@ export default function RestaurantLandingPage() {
                   PLANES
                 </a>
               </nav>
+              <MobileMenu />
               <HeaderAuth />
             </div>
           </div>
