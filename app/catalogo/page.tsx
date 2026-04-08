@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import HeaderAuth from "@/components/header-auth"
+import { MobileMenu } from "@/components/home-client"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
@@ -444,7 +445,7 @@ export default function CatalogoPage() {
               <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
             </a>
           </div>
-          <div className="flex gap-8 items-center">
+          <div className="flex gap-3 items-center">
             <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab">
               <a href="/catalogo" className="opacity-70 transition">
                 RESTAURANTES
@@ -454,6 +455,7 @@ export default function CatalogoPage() {
                 PLANES
               </a>
             </nav>
+            <MobileMenu />
             <HeaderAuth />
           </div>
         </div>

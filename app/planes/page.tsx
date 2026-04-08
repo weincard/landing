@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 import HeaderAuth from "@/components/header-auth"
+import { MobileMenu } from "@/components/home-client"
 
 interface UserMe {
   id: number
@@ -216,12 +217,13 @@ export default function PlanesPage() {
           <a href="/">
             <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
           </a>
-          <div className="flex gap-8 items-center">
+          <div className="flex gap-3 items-center">
             <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab text-white">
               <a href="/catalogo" className="hover:opacity-70 transition">RESTAURANTES</a>
               <span>|</span>
               <a href="/planes" className="hover:opacity-70 transition">PLANES</a>
             </nav>
+            <MobileMenu />
             <HeaderAuth />
           </div>
         </div>
