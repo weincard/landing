@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -53,14 +54,20 @@ interface BranchesViewProps {
 }
 
 export function BranchesView({ token }: BranchesViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const { getAllBranches, deleteBranch } = useBranches();
   const { getAllMerchants } = useMerchants();
   const [branches, setBranches] = useState<IBranch[]>([]);
   const [merchants, setMerchants] = useState<IMerchant[]>([]);
   const [loadingMerchants, setLoadingMerchants] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [committedSearch, setCommittedSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("search") ?? ""
+  );
+  const committedSearch = searchParams.get("search") ?? "";
   const [selectedMerchantId, setSelectedMerchantId] = useState<string>("all");
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,7 +137,7 @@ export function BranchesView({ token }: BranchesViewProps) {
     token,
     currentPage,
     pageSize,
-    committedSearch,
+    committedSearch, // derived from URL searchParams
     selectedMerchantId,
   ]);
 
@@ -144,8 +151,14 @@ export function BranchesView({ token }: BranchesViewProps) {
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
-    setCommittedSearch(searchTerm);
-  }, [searchTerm]);
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchTerm) {
+      params.set("search", searchTerm);
+    } else {
+      params.delete("search");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [searchTerm, searchParams, router, pathname]);
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize);

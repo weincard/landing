@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disabled because Strict Mode double-invokes effects in dev, causing duplicate API requests.
+  // All useEffect data fetches in this codebase lack AbortController cleanup, making them
+  // incompatible with Strict Mode's mount→unmount→remount cycle.
+  reactStrictMode: false,
   // Fix hydration issues with Radix UI components
   experimental: {
     // Ensures consistent IDs between server and client for Radix components
