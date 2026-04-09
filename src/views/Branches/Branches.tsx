@@ -439,7 +439,7 @@ export function BranchesView({ token }: BranchesViewProps) {
                               className="h-8 w-8"
                             >
                               <Link
-                                href={`/dashboard/branches/${branch.branchId}/edit`}
+                                href={`/dashboard/branches/${branch.branchId}/edit${committedSearch ? `?returnSearch=${encodeURIComponent(committedSearch)}` : ""}`}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
