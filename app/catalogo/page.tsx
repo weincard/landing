@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import HeaderAuth from "@/components/header-auth"
+import { MobileMenu } from "@/components/home-client"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
@@ -139,7 +140,7 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
           {validDays.length === 0 ? "Todos los días" : daysToSpanish(validDays)}
         </p>
         {branch.category?.name && (
-          <span className="inline-block text-xs font-hepta-slab text-gray-400 border border-gray-200 rounded-full px-2 py-0.5 mt-1">
+          <span className="inline-block text-xs font-hepta-slab text-white bg-black rounded-full px-2 py-0.5 mt-1 font-bold">
             {branch.category.name}
           </span>
         )}
@@ -152,6 +153,7 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
 
 function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void }) {
   const [imgIndex, setImgIndex] = useState(0)
+  const [imgLoading, setImgLoading] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
   const [hasMembership, setHasMembership] = useState(false)
   const router = useRouter()
@@ -223,23 +225,42 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
         {images.length > 0 && (
           <div className="relative aspect-video bg-gray-100">
             <img
+              key={images[imgIndex]}
               src={images[imgIndex]}
               alt={`${branch.name} imagen ${imgIndex + 1}`}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoading ? "opacity-0" : "opacity-100"}`}
               style={{ viewTransitionName: `branch-img-${branch.branchId}` }}
+              onLoadStart={() => setImgLoading(true)}
+              onLoad={() => setImgLoading(false)}
+              onError={() => setImgLoading(false)}
             />
+            {/* Spinner overlay while image loads */}
+            {imgLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                <svg
+                  className="animate-spin w-8 h-8 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              </div>
+            )}
             {images.length > 1 && (
               <>
                 <button
-                  onClick={() => setImgIndex((i) => (i - 1 + images.length) % images.length)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
+                  onClick={() => { setImgIndex((i) => (i - 1 + images.length) % images.length); setImgLoading(true) }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
                   aria-label="Imagen anterior"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" /></svg>
                 </button>
                 <button
-                  onClick={() => setImgIndex((i) => (i + 1) % images.length)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
+                  onClick={() => { setImgIndex((i) => (i + 1) % images.length); setImgLoading(true) }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
                   aria-label="Imagen siguiente"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" /></svg>
@@ -249,7 +270,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
                   {images.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => setImgIndex(i)}
+                      onClick={() => { setImgIndex(i); setImgLoading(true) }}
                       className={`w-2 h-2 rounded-full transition ${i === imgIndex ? "bg-white" : "bg-white/50"}`}
                       aria-label={`Ir a imagen ${i + 1}`}
                     />
@@ -260,7 +281,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
+              className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
               aria-label="Cerrar"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
@@ -282,7 +303,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             )}
             <h2 className="font-black text-2xl font-clash leading-tight">{branch.name}</h2>
             {branch.category?.name && (
-              <span className="inline-block text-sm font-hepta-slab text-gray-500 border border-gray-200 rounded-full px-3 py-0.5">
+              <span className="inline-block text-sm font-hepta-slab text-white bg-black rounded-full px-3 py-0.5 font-bold">
                 {branch.category.name}
               </span>
             )}
@@ -349,7 +370,7 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
           {/* CTA button */}
           <button
             onClick={handleCta}
-            className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80"
+            className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80 cursor-pointer"
           >
             {!loggedIn ? "Iniciar sesión" : hasMembership ? "Abrir Weincard" : "Activa tu Weincard"}
           </button>
@@ -424,7 +445,7 @@ export default function CatalogoPage() {
               <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
             </a>
           </div>
-          <div className="flex gap-8 items-center">
+          <div className="flex gap-3 items-center">
             <nav className="hidden md:flex gap-4 text-xl font-extralight font-hepta-slab">
               <a href="/catalogo" className="opacity-70 transition">
                 RESTAURANTES
@@ -434,6 +455,7 @@ export default function CatalogoPage() {
                 PLANES
               </a>
             </nav>
+            <MobileMenu />
             <HeaderAuth />
           </div>
         </div>
@@ -502,7 +524,7 @@ export default function CatalogoPage() {
                 <button
                   onClick={handleLoadMore}
                   disabled={loading}
-                  className="bg-black text-white font-bold font-clash px-10 py-3.5 rounded-full hover:bg-black/80 transition disabled:opacity-50"
+                  className="bg-black text-white font-bold font-clash px-10 py-3.5 rounded-full hover:bg-black/80 transition disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? "Cargando..." : "Ver más"}
                 </button>

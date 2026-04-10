@@ -335,7 +335,7 @@ export default function VerificacionPage() {
               <Button
                 type="submit"
                 disabled={isLoading || !formData.code}
-                className="w-full bg-[#FF3B47] hover:bg-[#FF3B47]/90 text-white py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#FF3B47] hover:bg-[#FF3B47]/90 text-white py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
