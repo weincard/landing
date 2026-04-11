@@ -7,8 +7,10 @@ import { MobileMenu } from "@/components/home-client"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
-const API_URL = `${API_BASE}/branches/filter`
 const PAGE_SIZE = 10
+
+const TYPESENSE_HOST = process.env.NEXT_PUBLIC_TYPESENSE_HOST
+const TYPESENSE_API_KEY = process.env.NEXT_PUBLIC_TYPESENSE_PUBLIC_API_KEY
 
 const DAY_ES: Record<string, string> = {
   Monday: "Lunes",
@@ -80,11 +82,80 @@ interface Branch {
   favoritesCount: number
 }
 
-interface ApiResponse {
-  message: string
-  branches: Branch[]
-  count: number
-  nextCursor: string | null
+// ─── Typesense ───────────────────────────────────────────────────────────────
+
+interface TypesenseDocument {
+  id: string
+  name: string
+  description?: string
+  tags?: string[]
+  categoryId: number
+  categoryName: string
+  merchantId: number
+  merchantName: string
+  city: string
+  country: string
+  isActive: boolean
+  slug: string
+  address: string
+  phone: string
+  whatsapp?: string
+  email: string
+  website?: string
+  logoUrl: string
+  coverImageUrl?: string
+  images?: string[]
+  note?: string
+  canContact?: boolean
+  createdAt: number
+}
+
+interface TypesenseResponse {
+  found: number
+  hits: Array<{ document: TypesenseDocument }>
+}
+
+function documentToBranch(doc: TypesenseDocument): Branch {
+  return {
+    branchId: parseInt(doc.id, 10),
+    name: doc.name,
+    slug: doc.slug,
+    description: doc.description ?? "",
+    address: doc.address,
+    city: doc.city,
+    country: doc.country,
+    phone: doc.phone,
+    whatsapp: doc.whatsapp ?? "",
+    canContact: doc.canContact ?? false,
+    email: doc.email,
+    website: doc.website ?? "",
+    logoUrl: doc.logoUrl,
+    coverImageUrl: doc.coverImageUrl ?? null,
+    note: doc.note ?? "",
+    isActive: doc.isActive,
+    images: doc.images ?? [],
+    tags: doc.tags ?? null,
+    createdAt: new Date(doc.createdAt * 1000).toISOString(),
+    category: {
+      categoryId: doc.categoryId,
+      name: doc.categoryName,
+      description: "",
+      image: "",
+      slug: "",
+    },
+    merchant: {
+      merchantId: doc.merchantId,
+      name: doc.merchantName,
+      description: "",
+      logoUrl: "",
+      country: doc.country,
+      state: "",
+      founder: false,
+      createdAt: "",
+    },
+    offers: [],       // not stored in Typesense
+    favoritesCount: 0,
+  }
 }
 
 function daysToSpanish(days: string[]): string {
@@ -395,15 +466,24 @@ export default function CatalogoPage() {
   const fetchBranches = useCallback(async (name: string, skipVal: number, replace: boolean) => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}?limit=${PAGE_SIZE}&skip=${skipVal}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(name.trim() ? { name: name.trim() } : {}),
+      const page = Math.floor(skipVal / PAGE_SIZE) + 1
+      const params = new URLSearchParams({
+        q: name.trim() || "*",
+        query_by: "name,description,tags",
+        per_page: String(PAGE_SIZE),
+        page: String(page),
+        filter_by: "isActive:true",
+        sort_by: "createdAt:desc",
       })
+      const res = await fetch(
+        `https://${TYPESENSE_HOST}/collections/branches/documents/search?${params}`,
+        { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY! } },
+      )
       if (!res.ok) throw new Error("Error al cargar sucursales")
-      const data: ApiResponse = await res.json()
-      setBranches((prev) => replace ? data.branches : [...prev, ...data.branches])
-      setCount(data.count)
+      const data: TypesenseResponse = await res.json()
+      const fetched = data.hits.map((hit) => documentToBranch(hit.document))
+      setBranches((prev) => replace ? fetched : [...prev, ...fetched])
+      setCount(data.found)
     } catch {
       // silent fail
     } finally {
