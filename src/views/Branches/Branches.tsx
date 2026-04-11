@@ -45,6 +45,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useBranchesTypesenseSearch } from "@/modules/branches/domain/hooks/use-branches-typesense-search";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import type { IMerchant } from "@/data/interfaces/merchant.interface";
 import { toast } from "sonner";
@@ -58,12 +59,13 @@ export function BranchesView({ token }: BranchesViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { getAllBranches, deleteBranch } = useBranches();
+  const { deleteBranch } = useBranches();
+  const { searchBranches, loading } = useBranchesTypesenseSearch();
   const { getAllMerchants } = useMerchants();
   const [branches, setBranches] = useState<IBranch[]>([]);
   const [merchants, setMerchants] = useState<IMerchant[]>([]);
   const [loadingMerchants, setLoadingMerchants] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [selectedIsActive, setSelectedIsActive] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("search") ?? ""
   );
@@ -101,44 +103,35 @@ export function BranchesView({ token }: BranchesViewProps) {
   }, [getAllMerchants, token]);
 
   const fetchBranches = useCallback(async () => {
-    setLoading(true);
+    const merchantIdFilter =
+      selectedMerchantId === "all" ? undefined : Number(selectedMerchantId);
+    const isActiveFilter =
+      selectedIsActive === "all"
+        ? undefined
+        : selectedIsActive === "true";
 
-    try {
-      const skip = (currentPage - 1) * pageSize;
+    const response = await searchBranches({
+      query: committedSearch,
+      merchantId: merchantIdFilter,
+      isActive: isActiveFilter,
+      page: currentPage,
+      perPage: pageSize,
+    });
 
-      // If "all" is selected, pass undefined for merchantId to get all branches
-      // Otherwise, pass the specific merchantId
-      const merchantIdFilter =
-        selectedMerchantId === "all" ? undefined : Number(selectedMerchantId);
-
-      const response = await getAllBranches(
-        merchantIdFilter,
-        token,
-        {
-          skip,
-          limit: pageSize,
-        },
-        committedSearch ? { name: committedSearch } : undefined
-      );
-
-      if (response) {
-        setBranches(response.branches);
-        setTotalItems(response.count);
-      }
-    } catch (error) {
-      console.error("Error fetching branches:", error);
+    if (response) {
+      setBranches(response.branches);
+      setTotalItems(response.count);
+    } else {
       setBranches([]);
       setTotalItems(0);
-    } finally {
-      setLoading(false);
     }
   }, [
-    getAllBranches,
-    token,
+    searchBranches,
     currentPage,
     pageSize,
-    committedSearch, // derived from URL searchParams
+    committedSearch,
     selectedMerchantId,
+    selectedIsActive,
   ]);
 
   useEffect(() => {
@@ -291,6 +284,26 @@ export function BranchesView({ token }: BranchesViewProps) {
                   "Buscar"
                 )}
               </Button>
+
+              <div className="w-full md:w-44">
+                <Select
+                  value={selectedIsActive}
+                  onValueChange={(value) => {
+                    setSelectedIsActive(value);
+                    setCurrentPage(1);
+                  }}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="true">Activos</SelectItem>
+                    <SelectItem value="false">Inactivos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Tabla */}
