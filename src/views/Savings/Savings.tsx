@@ -45,9 +45,9 @@ export default function SavingsView({ token }: SavingsViewProps) {
 
   const fetchData = useCallback(async () => {
     const skip = (currentPage - 1) * pageSize;
-    const filters: { branchId?: number | null; userId?: number | null } = {};
-    if (branchFilter) filters.branchId = parseInt(branchFilter) || null;
-    if (userFilter) filters.userId = parseInt(userFilter) || null;
+    const filters: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string } = {};
+    if (branchFilter) filters.branchName = branchFilter;
+    if (userFilter) filters.userName = userFilter;
 
     const response = await getAllRedemptions(token, { limit: pageSize, skip }, filters);
     if (response) {

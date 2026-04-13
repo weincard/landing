@@ -32,7 +32,7 @@ export abstract class RedemptionsRepository {
   abstract getAll(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<AllRedemptionsResponse>;
   // -----------------------------------------------------
   /**
@@ -44,7 +44,7 @@ export abstract class RedemptionsRepository {
   abstract getGenerated(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<GeneratedRedemptionsResponse>;
   // -----------------------------------------------------
   /**
@@ -56,7 +56,7 @@ export abstract class RedemptionsRepository {
   abstract getUsed(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<UsedRedemptionsResponse>;
   // -----------------------------------------------------
   abstract getByMe(
@@ -88,7 +88,7 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
   async getAll(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<AllRedemptionsResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
@@ -127,7 +127,7 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
   async getGenerated(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<GeneratedRedemptionsResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 
@@ -166,7 +166,7 @@ export class RedemptionsRepositoryImpl implements RedemptionsRepository {
   async getUsed(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<UsedRedemptionsResponse> {
     const { limit = 10, skip = 0 } = paginationParams || {};
 

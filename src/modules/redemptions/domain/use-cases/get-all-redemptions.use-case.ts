@@ -13,7 +13,7 @@ export class GetAllRedemptionsUseCase {
   async execute(
     token?: string,
     paginationParams?: IPaginationParams,
-    filters?: { branchId?: number | null; userId?: number | null }
+    filters?: { branchId?: number | null; userId?: number | null; branchName?: string; userName?: string }
   ): Promise<AllRedemptionsResponse> {
     return await this.redemptionsRepository.getAll(
       token,
