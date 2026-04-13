@@ -57,10 +57,19 @@ interface BranchFormData {
   canContact: boolean;
 }
 
+function buildReturnUrl(returnSearch?: string | null, returnMerchant?: string | null): string {
+  const params = new URLSearchParams();
+  if (returnSearch) params.set("search", returnSearch);
+  if (returnMerchant) params.set("merchant", returnMerchant);
+  const qs = params.toString();
+  return `/dashboard/branches${qs ? `?${qs}` : ""}`;
+}
+
 export function useBranchForm(token: string, branchId?: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnSearch = searchParams.get("returnSearch");
+  const returnMerchant = searchParams.get("returnMerchant");
   
   // React Hook Form
   const form = useForm<BranchFormData>({
@@ -549,10 +558,7 @@ export function useBranchForm(token: string, branchId?: string) {
         response = await updateBranch(Number(branchId), branchData, token);
         if (response) {
           toast.success("Sucursal actualizada exitosamente");
-          const destination = returnSearch
-            ? `/dashboard/branches?search=${encodeURIComponent(returnSearch)}`
-            : "/dashboard/branches";
-          router.push(destination);
+          router.push(buildReturnUrl(returnSearch, returnMerchant));
         }
       } else {
         setCreationProgress({
@@ -660,10 +666,7 @@ export function useBranchForm(token: string, branchId?: string) {
   };
 
   const handleCancel = () => {
-    const destination = returnSearch
-      ? `/dashboard/branches?search=${encodeURIComponent(returnSearch)}`
-      : "/dashboard/branches";
-    router.push(destination);
+    router.push(buildReturnUrl(returnSearch, returnMerchant));
   };
 
   return {

@@ -21,6 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,6 +48,7 @@ import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
   Pencil,
   Plus,
   Trash2,
@@ -66,11 +80,14 @@ export function BranchesView({ token }: BranchesViewProps) {
   const [merchants, setMerchants] = useState<IMerchant[]>([]);
   const [loadingMerchants, setLoadingMerchants] = useState(true);
   const [selectedIsActive, setSelectedIsActive] = useState<string>("all");
+  const [merchantComboOpen, setMerchantComboOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("search") ?? ""
   );
   const committedSearch = searchParams.get("search") ?? "";
-  const [selectedMerchantId, setSelectedMerchantId] = useState<string>("all");
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string>(
+    () => searchParams.get("merchant") ?? "all"
+  );
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -144,14 +161,32 @@ export function BranchesView({ token }: BranchesViewProps) {
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
+    setSelectedMerchantId("all");
     const params = new URLSearchParams(searchParams.toString());
     if (searchTerm) {
       params.set("search", searchTerm);
     } else {
       params.delete("search");
     }
+    params.delete("merchant");
     router.replace(`${pathname}?${params.toString()}`);
   }, [searchTerm, searchParams, router, pathname]);
+
+  const handleMerchantSelect = useCallback(
+    (merchantId: string) => {
+      setSelectedMerchantId(merchantId);
+      setCurrentPage(1);
+      setMerchantComboOpen(false);
+      const params = new URLSearchParams(searchParams.toString());
+      if (merchantId === "all") {
+        params.delete("merchant");
+      } else {
+        params.set("merchant", merchantId);
+      }
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, router, pathname]
+  );
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize);
@@ -242,29 +277,55 @@ export function BranchesView({ token }: BranchesViewProps) {
             {/* Filtros */}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <div className="w-full md:w-64">
-                <Select
-                  value={selectedMerchantId}
-                  onValueChange={(value) => {
-                    setSelectedMerchantId(value);
-                    setCurrentPage(1);
-                  }}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un aliado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los Aliados</SelectItem>
-                    {merchants.map((merchant) => (
-                      <SelectItem
-                        key={merchant.merchantId}
-                        value={merchant.merchantId?.toString() || ""}
-                      >
-                        {merchant.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={merchantComboOpen} onOpenChange={setMerchantComboOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={merchantComboOpen}
+                      disabled={loading}
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="truncate">
+                        {selectedMerchantId === "all"
+                          ? "Todos los Aliados"
+                          : merchants.find(
+                              (m) => m.merchantId?.toString() === selectedMerchantId
+                            )?.name ?? "Selecciona un aliado"}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar aliado..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron aliados.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all"
+                            onSelect={() => handleMerchantSelect("all")}
+                          >
+                            Todos los Aliados
+                          </CommandItem>
+                          {merchants.map((merchant) => (
+                            <CommandItem
+                              key={merchant.merchantId}
+                              value={merchant.name ?? ""}
+                              onSelect={() =>
+                                handleMerchantSelect(
+                                  merchant.merchantId?.toString() ?? "all"
+                                )
+                              }
+                            >
+                              {merchant.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="flex-1 relative max-w-xs">
@@ -285,7 +346,7 @@ export function BranchesView({ token }: BranchesViewProps) {
                 )}
               </Button>
 
-              <div className="w-full md:w-44">
+              <div className="w-full md:w-52">
                 <Select
                   value={selectedIsActive}
                   onValueChange={(value) => {
@@ -295,10 +356,10 @@ export function BranchesView({ token }: BranchesViewProps) {
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Estado" />
+                    <SelectValue placeholder="Activo/Inactivo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="all">Activo/Inactivo</SelectItem>
                     <SelectItem value="true">Activos</SelectItem>
                     <SelectItem value="false">Inactivos</SelectItem>
                   </SelectContent>
@@ -452,7 +513,13 @@ export function BranchesView({ token }: BranchesViewProps) {
                               className="h-8 w-8"
                             >
                               <Link
-                                href={`/dashboard/branches/${branch.branchId}/edit${committedSearch ? `?returnSearch=${encodeURIComponent(committedSearch)}` : ""}`}
+                                href={(() => {
+                                  const p = new URLSearchParams();
+                                  if (committedSearch) p.set("returnSearch", committedSearch);
+                                  if (selectedMerchantId !== "all") p.set("returnMerchant", selectedMerchantId);
+                                  const qs = p.toString();
+                                  return `/dashboard/branches/${branch.branchId}/edit${qs ? `?${qs}` : ""}`;
+                                })()}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
