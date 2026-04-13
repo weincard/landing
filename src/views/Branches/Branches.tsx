@@ -175,6 +175,7 @@ export function BranchesView({ token }: BranchesViewProps) {
   const handleMerchantSelect = useCallback(
     (merchantId: string) => {
       setSelectedMerchantId(merchantId);
+      setSearchTerm("");
       setCurrentPage(1);
       setMerchantComboOpen(false);
       const params = new URLSearchParams(searchParams.toString());
@@ -183,6 +184,7 @@ export function BranchesView({ token }: BranchesViewProps) {
       } else {
         params.set("merchant", merchantId);
       }
+      params.delete("search");
       router.replace(`${pathname}?${params.toString()}`);
     },
     [searchParams, router, pathname]
