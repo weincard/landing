@@ -84,76 +84,101 @@ interface Branch {
 
 // ─── Typesense ───────────────────────────────────────────────────────────────
 
-interface TypesenseDocument {
+interface TypesenseOfferDocument {
   id: string
-  name: string
-  description?: string
-  tags?: string[]
-  categoryId: number
-  categoryName: string
-  merchantId: number
-  merchantName: string
-  city: string
-  country: string
+  title: string
+  description: string
+  conditions: string
+  value: string
+  offerType: string
   isActive: boolean
-  slug: string
-  address: string
-  phone: string
-  whatsapp?: string
-  email: string
-  website?: string
-  logoUrl: string
+  excludesBankHolidays: boolean
+  validDays?: string[]
+  membershipPlanId?: number
+  validFrom: number
+  validTo?: number
+  expiresAt?: number
+  branchId?: number
+  branchName?: string
+  city?: string
+  country?: string
+  categoryId?: number
+  categoryName?: string
+  merchantId?: number
+  merchantName?: string
+  logoUrl?: string
   coverImageUrl?: string
   images?: string[]
-  note?: string
-  canContact?: boolean
-  createdAt: number
 }
 
-interface TypesenseResponse {
+interface TypesenseGroupedResponse {
   found: number
-  hits: Array<{ document: TypesenseDocument }>
+  grouped_hits: Array<{
+    group_key: (string | number)[]
+    hits: Array<{ document: TypesenseOfferDocument }>
+  }>
 }
 
-function documentToBranch(doc: TypesenseDocument): Branch {
-  return {
-    branchId: parseInt(doc.id, 10),
-    name: doc.name,
-    slug: doc.slug,
-    description: doc.description ?? "",
-    address: doc.address,
-    city: doc.city,
-    country: doc.country,
-    phone: doc.phone,
-    whatsapp: doc.whatsapp ?? "",
-    canContact: doc.canContact ?? false,
-    email: doc.email,
-    website: doc.website ?? "",
-    logoUrl: doc.logoUrl,
-    coverImageUrl: doc.coverImageUrl ?? null,
-    note: doc.note ?? "",
+function groupedHitToBranch(
+  groupKey: (string | number)[],
+  hits: Array<{ document: TypesenseOfferDocument }>,
+): Branch {
+  const first = hits[0].document
+  const branchId = typeof groupKey[0] === "number" ? groupKey[0] : parseInt(String(groupKey[0]), 10)
+
+  const offers: Offer[] = hits.map(({ document: doc }) => ({
+    offerId: parseInt(doc.id, 10),
+    title: doc.title,
+    description: doc.description,
+    offerType: doc.offerType,
+    value: doc.value,
+    conditions: doc.conditions,
+    validFrom: new Date(doc.validFrom * 1000).toISOString(),
+    validTo: doc.validTo ? new Date(doc.validTo * 1000).toISOString() : null,
+    validDays: doc.validDays ?? [],
     isActive: doc.isActive,
-    images: doc.images ?? [],
-    tags: doc.tags ?? null,
-    createdAt: new Date(doc.createdAt * 1000).toISOString(),
+    expiresAt: doc.expiresAt ? new Date(doc.expiresAt * 1000).toISOString() : null,
+    excludesBankHolidays: doc.excludesBankHolidays,
+  }))
+
+  return {
+    branchId,
+    name: first.branchName ?? "",
+    slug: "",
+    description: "",
+    address: "",
+    city: first.city ?? "",
+    country: first.country ?? "",
+    phone: "",
+    whatsapp: "",
+    canContact: false,
+    email: "",
+    website: "",
+    logoUrl: first.logoUrl ?? "",
+    coverImageUrl: first.coverImageUrl ?? null,
+    note: "",
+    isActive: true,
+    images: first.images ?? [],
+    tags: null,
+    createdAt: "",
     category: {
-      categoryId: doc.categoryId,
-      name: doc.categoryName,
+      categoryId: first.categoryId ?? 0,
+      name: first.categoryName ?? "",
       description: "",
       image: "",
       slug: "",
     },
     merchant: {
-      merchantId: doc.merchantId,
-      name: doc.merchantName,
+      merchantId: first.merchantId ?? 0,
+      name: first.merchantName ?? "",
       description: "",
       logoUrl: "",
-      country: doc.country,
+      country: first.country ?? "",
       state: "",
       founder: false,
       createdAt: "",
     },
-    offers: [],       // not stored in Typesense
+    offers,
     favoritesCount: 0,
   }
 }
@@ -469,19 +494,22 @@ export default function CatalogoPage() {
       const page = Math.floor(skipVal / PAGE_SIZE) + 1
       const params = new URLSearchParams({
         q: name.trim() || "*",
-        query_by: "name,description,tags",
+        query_by: "branchName,title,description",
+        group_by: "branchId",
+        group_limit: "10",
         per_page: String(PAGE_SIZE),
         page: String(page),
-        filter_by: "isActive:true",
-        sort_by: "createdAt:desc",
+        filter_by: "isActive:true && branchId:>0",
       })
       const res = await fetch(
-        `https://${TYPESENSE_HOST}/collections/branches/documents/search?${params}`,
+        `https://${TYPESENSE_HOST}/collections/offers/documents/search?${params}`,
         { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY! } },
       )
       if (!res.ok) throw new Error("Error al cargar sucursales")
-      const data: TypesenseResponse = await res.json()
-      const fetched = data.hits.map((hit) => documentToBranch(hit.document))
+      const data: TypesenseGroupedResponse = await res.json()
+      const fetched = data.grouped_hits.map((group) =>
+        groupedHitToBranch(group.group_key, group.hits),
+      )
       setBranches((prev) => replace ? fetched : [...prev, ...fetched])
       setCount(data.found)
     } catch {
