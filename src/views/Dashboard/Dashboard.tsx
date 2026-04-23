@@ -23,9 +23,9 @@ import {
 } from "lucide-react";
 
 import Image from "next/image";
-import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
-import { useBranches } from "@/modules/branches/domain/hooks/use-branches";
+import { useBranchesTypesenseSearch } from "@/modules/branches/domain/hooks/use-branches-typesense-search";
+import { useUsersTypesenseSearch } from "@/modules/users/domain/hooks/use-users-typesense-search";
 import { useCoupons } from "@/modules/coupons/domain/hooks/use-coupons";
 import { useUserMetrics } from "@/modules/users/domain/hooks/use-user-metrics";
 import { useMembershipMetrics } from "@/modules/memberships/domain/hooks/use-membership-metrics";
@@ -96,20 +96,20 @@ interface DashboardViewProps {
 
 export default function DashboardView({ token }: DashboardViewProps) {
   const {
-    getAllUsers,
+    searchUsers,
     loading: isLoadingUsers,
     error: usersError,
-  } = useUsers();
+  } = useUsersTypesenseSearch();
   const {
     getAllMerchants,
     loading: isLoadingMerchants,
     error: merchantsError,
   } = useMerchants();
   const {
-    getAllBranches,
+    searchBranches,
     loading: isLoadingBranches,
     error: branchesError,
-  } = useBranches();
+  } = useBranchesTypesenseSearch();
   const {
     getAllCoupons,
     loading: isLoadingCoupons,
@@ -178,17 +178,13 @@ export default function DashboardView({ token }: DashboardViewProps) {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Solo obtener datos necesarios para el dashboard, no todos
-      const users = await getAllUsers(token, { skip: 0, limit: 10 });
+      const users = await searchUsers({ query: "*", page: 1, perPage: 5 });
       setUserData(users || undefined);
 
       const merchants = await getAllMerchants(token, { skip: 0, limit: 10 });
       setMerchantData(merchants || undefined);
 
-      const branches = await getAllBranches(undefined, token, {
-        skip: 0,
-        limit: 10,
-      });
+      const branches = await searchBranches({ query: "*", page: 1, perPage: 5 });
       setBranchData(branches || undefined);
 
       const coupons = await getAllCoupons(token, { skip: 0, limit: 10 });
@@ -415,7 +411,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {branchData?.branches.slice(0, 5).map((branch) => (
+                {branchData?.branches.map((branch) => (
                   <TableRow key={branch.branchId}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -524,7 +520,7 @@ export default function DashboardView({ token }: DashboardViewProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {userData?.users.slice(0, 5).map((user) => (
+                {userData?.users.map((user) => (
                   <TableRow key={user.idUsuario}>
                     <TableCell>
                       <div className="flex items-center gap-2">

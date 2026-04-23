@@ -138,6 +138,114 @@ NEXT_PUBLIC_CLOUDINARY_API_SECRET=<Cloudinary secret>
 
 ---
 
+## Typesense Search
+
+Typesense replaces direct DB search lambdas for all listing/search pages. Always prefer Typesense over calling the backend search endpoints.
+
+### Collections
+
+#### `users`
+| Field | Type | Role |
+|---|---|---|
+| `id` | string | searchable |
+| `name` | string (optional) | searchable |
+| `phone` | string | searchable |
+| `email` | string (optional) | searchable |
+| `document` | string (optional) | searchable |
+| `roleName` | string | facet/filter |
+| `isVerified` | bool | facet/filter |
+| `documentType` | string (optional) | facet/filter |
+| `country` | string (optional) | facet/filter |
+| `department` | string (optional) | facet/filter |
+| `city` | string (optional) | facet/filter |
+| `isDeleted` | bool | facet/filter (derived from `deletedAt`) |
+| `profileUrl` | string (optional) | display only (`index: false`) |
+| `address` | string (optional) | display only (`index: false`) |
+| `updatesSubscription` | bool | display only (`index: false`) |
+| `createdAt` | int64 | default sort field |
+
+Excluded: `password`, `verificationCode`, `verificationCodeExpiry`, `treliCustomerId`, `fcmTokens`, relations.
+
+---
+
+#### `branches`
+| Field | Type | Role |
+|---|---|---|
+| `id` | string | searchable |
+| `name` | string | searchable |
+| `description` | string (optional) | searchable |
+| `tags` | string[] (optional) | searchable |
+| `categoryId` | int32 | facet/filter |
+| `categoryName` | string | facet/filter |
+| `merchantId` | int32 | facet/filter |
+| `merchantName` | string | facet/filter |
+| `city` | string | facet/filter |
+| `country` | string | facet/filter |
+| `isActive` | bool | facet/filter |
+| `location` | geopoint | geo radius search `[lat, lng]` |
+| `slug` | string | display only |
+| `address` | string | display only |
+| `phone` | string | display only |
+| `whatsapp` | string (optional) | display only |
+| `email` | string | display only |
+| `website` | string (optional) | display only |
+| `logoUrl` | string | display only |
+| `coverImageUrl` | string (optional) | display only |
+| `images` | string[] (optional) | display only |
+| `note` | string (optional) | display only |
+| `canContact` | bool (optional) | display only |
+| `createdAt` | int64 | default sort field |
+
+Excluded: PostGIS location object, raw lat/lon, `branchUsers`, `reviews`, relations.
+
+---
+
+#### `offers`
+| Field | Type | Role |
+|---|---|---|
+| `id` | string | searchable |
+| `title` | string | searchable |
+| `description` | string | searchable |
+| `conditions` | string | searchable |
+| `value` | string | searchable |
+| `offerType` | string | facet/filter |
+| `isOfferActive` | bool | facet/filter |
+| `excludesBankHolidays` | bool | facet/filter |
+| `validDays` | string[] (optional) | facet/filter |
+| `membershipPlanId` | int32 (optional) | facet/filter |
+| `validFrom` | int64 | date range filter, default sort field |
+| `validTo` | int64 (optional) | date range filter |
+| `expiresAt` | int64 (optional) | date range filter |
+| `isActive` | bool (optional) | facet/filter (denormalized from branch) |
+| `branchId` | int32 (optional) | facet/filter (denormalized) |
+| `branchName` | string (optional) | facet/filter (denormalized) |
+| `city` | string (optional) | facet/filter (denormalized) |
+| `country` | string (optional) | facet/filter (denormalized) |
+| `location` | geopoint (optional) | geo search (denormalized) |
+| `categoryId` | int32 (optional) | facet/filter (denormalized) |
+| `categoryName` | string (optional) | facet/filter (denormalized) |
+| `merchantId` | int32 (optional) | facet/filter (denormalized) |
+| `merchantName` | string (optional) | facet/filter (denormalized) |
+| `logoUrl` | string (optional) | display only |
+| `coverImageUrl` | string (optional) | display only |
+| `images` | string[] (optional) | display only |
+
+Note: branch fields are denormalized into `offers` so the mobile app can query offers without a join.
+
+Excluded: `membershipPlan` relation object (only `membershipPlanId` stored), `branch` relation object.
+
+---
+
+### Usage guidelines
+
+- **Search pages must use Typesense** — do not call the backend search lambdas.
+- Date fields (`validFrom`, `validTo`, `expiresAt`, `createdAt`) are Unix epoch integers — convert before filtering.
+- `location` is a `geopoint` — pass as `[lat, lng]` for geo/radius queries.
+- Fields with `index: false` are returned in results but cannot be used in `filter_by` or `query_by`.
+- Facet fields can be used in `filter_by` and returned as `facet_counts` for UI filters.
+
+---
+
 ## Common Pitfalls
 
 - **Forgetting `container.ts` registration** — DI will fail at runtime with a cryptic error

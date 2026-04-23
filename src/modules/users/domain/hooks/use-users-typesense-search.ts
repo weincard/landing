@@ -59,12 +59,12 @@ export const useUsersTypesenseSearch = () => {
         };
 
         const result = await typesenseClient
-          .collections("users")
+          .collections(process.env.NEXT_PUBLIC_USERS!)
           .documents()
           .search(searchParameters);
 
         const users = (result.hits || []).map((hit) =>
-          typesenseDocToUser(hit.document as Record<string, any>)
+          typesenseDocToUser(hit.document as Record<string, any>),
         );
 
         return {
@@ -80,7 +80,7 @@ export const useUsersTypesenseSearch = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return { searchUsers, loading, error };

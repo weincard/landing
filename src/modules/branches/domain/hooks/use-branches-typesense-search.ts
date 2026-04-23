@@ -75,12 +75,12 @@ export const useBranchesTypesenseSearch = () => {
         }
 
         const result = await typesenseClient
-          .collections("branches")
+          .collections(process.env.NEXT_PUBLIC_BRANCHES!)
           .documents()
           .search(searchParameters);
 
         const branches = (result.hits || []).map((hit) =>
-          typesenseDocToBranch(hit.document as Record<string, any>)
+          typesenseDocToBranch(hit.document as Record<string, any>),
         );
 
         return {
@@ -96,7 +96,7 @@ export const useBranchesTypesenseSearch = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return { searchBranches, loading, error };
