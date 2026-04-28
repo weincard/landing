@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import HeaderAuth from "@/components/header-auth"
-import { ViewAppButton, JoinNowButton, FooterSubscribeLink, MobileMenu } from "@/components/home-client"
+import { ViewAppButton, JoinNowButton, FooterSubscribeLink, MobileMenu, PromoCodeButton } from "@/components/home-client"
 
 export default function RestaurantLandingPage() {
   return (
@@ -55,9 +54,7 @@ export default function RestaurantLandingPage() {
                 meses con una suscripción anual de <span className="font-bold">$189,000 COP!</span>
               </p>
               <div className="flex justify-center md:justify-start">
-                <Button className="rounded-full bg-black text-white hover:bg-black/90 px-2 py-0 text-sm font-light font-hepta-slab">
-                  Comienza tu prueba<span className="font-bold">gratis de 21 días</span>
-                </Button>
+                <PromoCodeButton />
               </div>
             </div>
           </div>
