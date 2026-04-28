@@ -7,8 +7,10 @@ import { MobileMenu } from "@/components/home-client"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 
-const API_URL = `${API_BASE}/branches/filter`
 const PAGE_SIZE = 10
+
+const TYPESENSE_HOST = process.env.NEXT_PUBLIC_TYPESENSE_HOST
+const TYPESENSE_API_KEY = process.env.NEXT_PUBLIC_TYPESENSE_PUBLIC_API_KEY
 
 const DAY_ES: Record<string, string> = {
   Monday: "Lunes",
@@ -80,11 +82,105 @@ interface Branch {
   favoritesCount: number
 }
 
-interface ApiResponse {
-  message: string
-  branches: Branch[]
-  count: number
-  nextCursor: string | null
+// ─── Typesense ───────────────────────────────────────────────────────────────
+
+interface TypesenseOfferDocument {
+  id: string
+  title: string
+  description: string
+  conditions: string
+  value: string
+  offerType: string
+  isActive: boolean
+  excludesBankHolidays: boolean
+  validDays?: string[]
+  membershipPlanId?: number
+  validFrom: number
+  validTo?: number
+  expiresAt?: number
+  branchId?: number
+  branchName?: string
+  city?: string
+  country?: string
+  categoryId?: number
+  categoryName?: string
+  merchantId?: number
+  merchantName?: string
+  logoUrl?: string
+  coverImageUrl?: string
+  images?: string[]
+}
+
+interface TypesenseGroupedResponse {
+  found: number
+  grouped_hits: Array<{
+    group_key: (string | number)[]
+    hits: Array<{ document: TypesenseOfferDocument }>
+  }>
+}
+
+function groupedHitToBranch(
+  groupKey: (string | number)[],
+  hits: Array<{ document: TypesenseOfferDocument }>,
+): Branch {
+  const first = hits[0].document
+  const branchId = typeof groupKey[0] === "number" ? groupKey[0] : parseInt(String(groupKey[0]), 10)
+
+  const offers: Offer[] = hits.map(({ document: doc }) => ({
+    offerId: parseInt(doc.id, 10),
+    title: doc.title,
+    description: doc.description,
+    offerType: doc.offerType,
+    value: doc.value,
+    conditions: doc.conditions,
+    validFrom: new Date(doc.validFrom * 1000).toISOString(),
+    validTo: doc.validTo ? new Date(doc.validTo * 1000).toISOString() : null,
+    validDays: doc.validDays ?? [],
+    isActive: doc.isActive,
+    expiresAt: doc.expiresAt ? new Date(doc.expiresAt * 1000).toISOString() : null,
+    excludesBankHolidays: doc.excludesBankHolidays,
+  }))
+
+  return {
+    branchId,
+    name: first.branchName ?? "",
+    slug: "",
+    description: "",
+    address: "",
+    city: first.city ?? "",
+    country: first.country ?? "",
+    phone: "",
+    whatsapp: "",
+    canContact: false,
+    email: "",
+    website: "",
+    logoUrl: first.logoUrl ?? "",
+    coverImageUrl: first.coverImageUrl ?? null,
+    note: "",
+    isActive: true,
+    images: first.images ?? [],
+    tags: null,
+    createdAt: "",
+    category: {
+      categoryId: first.categoryId ?? 0,
+      name: first.categoryName ?? "",
+      description: "",
+      image: "",
+      slug: "",
+    },
+    merchant: {
+      merchantId: first.merchantId ?? 0,
+      name: first.merchantName ?? "",
+      description: "",
+      logoUrl: "",
+      country: first.country ?? "",
+      state: "",
+      founder: false,
+      createdAt: "",
+    },
+    offers,
+    favoritesCount: 0,
+  }
 }
 
 function daysToSpanish(days: string[]): string {
@@ -395,15 +491,27 @@ export default function CatalogoPage() {
   const fetchBranches = useCallback(async (name: string, skipVal: number, replace: boolean) => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}?limit=${PAGE_SIZE}&skip=${skipVal}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(name.trim() ? { name: name.trim() } : {}),
+      const page = Math.floor(skipVal / PAGE_SIZE) + 1
+      const params = new URLSearchParams({
+        q: name.trim() || "*",
+        query_by: "branchName,title,description",
+        group_by: "branchId",
+        group_limit: "10",
+        per_page: String(PAGE_SIZE),
+        page: String(page),
+        filter_by: "isActive:true && branchId:>0",
       })
+      const res = await fetch(
+        `https://${TYPESENSE_HOST}/collections/offers/documents/search?${params}`,
+        { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY! } },
+      )
       if (!res.ok) throw new Error("Error al cargar sucursales")
-      const data: ApiResponse = await res.json()
-      setBranches((prev) => replace ? data.branches : [...prev, ...data.branches])
-      setCount(data.count)
+      const data: TypesenseGroupedResponse = await res.json()
+      const fetched = data.grouped_hits.map((group) =>
+        groupedHitToBranch(group.group_key, group.hits),
+      )
+      setBranches((prev) => replace ? fetched : [...prev, ...fetched])
+      setCount(data.found)
     } catch {
       // silent fail
     } finally {
