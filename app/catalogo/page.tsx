@@ -35,7 +35,7 @@ const DAY_ORDER = [
 const DAY_LETTER: Record<string, string> = {
   Monday: "L",
   Tuesday: "M",
-  Wednesday: "M",
+  Wednesday: "X",
   Thursday: "J",
   Friday: "V",
   Saturday: "S",
@@ -49,6 +49,7 @@ function DayBadges({ validDays }: { validDays: string[] }) {
       {DAY_ORDER.map((day) => (
         <span
           key={day}
+          title={DAY_ES[day]}
           className={`w-5 h-5 rounded text-[9px] font-bold font-clash flex items-center justify-center ${
             activeSet.has(day)
               ? "bg-black text-white"
