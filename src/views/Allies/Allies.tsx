@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/select";
 import type { IMerchant } from "@/data/interfaces/merchant.interface";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Plus, Loader2, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Loader2, Pencil, Search } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 
@@ -34,6 +35,7 @@ export function AlliesView({ token }: AlliesViewProps) {
   const { getAllMerchants } = useMerchants();
   const [merchants, setMerchants] = useState<IMerchant[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAllies, setSelectedAllies] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,13 +50,9 @@ export function AlliesView({ token }: AlliesViewProps) {
       const skip = (currentPage - 1) * pageSize;
       const response = await getAllMerchants(
         token,
-        {
-          skip,
-          limit: pageSize,
-        },
+        { skip, limit: pageSize },
         searchTerm ? { name: searchTerm } : undefined
       );
-
       if (response) {
         setMerchants(response.merchants);
         setTotalItems(response.count);
@@ -70,14 +68,14 @@ export function AlliesView({ token }: AlliesViewProps) {
     fetchMerchants();
   }, [fetchMerchants]);
 
+  const handleSearch = useCallback(() => {
+    setCurrentPage(1);
+    setSearchTerm(searchInput);
+  }, [searchInput]);
+
   const handlePageChange = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
   }, []);
-
-  const handleSearch = useCallback(() => {
-    setCurrentPage(1);
-    fetchMerchants();
-  }, [fetchMerchants]);
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize);
@@ -101,6 +99,27 @@ export function AlliesView({ token }: AlliesViewProps) {
 
       <Card className="mt-4">
         <CardContent className="p-6 space-y-4">
+          {/* Búsqueda */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Buscar aliado..."
+              value={searchInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
+                if (value === "") {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-xs"
+            />
+            <Button variant="outline" onClick={handleSearch}>
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+
           {/* Tabla */}
           <div className="rounded-md border">
             <Table>

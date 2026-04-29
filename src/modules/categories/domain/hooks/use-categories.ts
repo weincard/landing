@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import container from "@/lib/di/container";
 import { ICategoria } from "@/data/interfaces/interfaces.interface";
 import { GetAllCategoriesUseCase } from "../use-cases/get-all-categories.use-case";
@@ -15,7 +15,7 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getAllCategories = async (token: string): Promise<ICategoria[]> => {
+  const getAllCategories = useCallback(async (token: string): Promise<ICategoria[]> => {
     setLoading(true);
     setError(null);
     try {
@@ -28,9 +28,9 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getOneCategory = async (
+  const getOneCategory = useCallback(async (
     categoryId: number,
     token: string
   ): Promise<ICategoria> => {
@@ -46,9 +46,9 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createCategory = async (
+  const createCategory = useCallback(async (
     data: CreateCategoryData,
     file: File,
     token: string
@@ -65,9 +65,9 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateCategory = async (
+  const updateCategory = useCallback(async (
     categoryId: number,
     data: UpdateCategoryData,
     file: File | null,
@@ -85,9 +85,9 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deleteCategory = async (
+  const deleteCategory = useCallback(async (
     categoryId: number,
     token: string
   ): Promise<void> => {
@@ -102,7 +102,7 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     loading,
