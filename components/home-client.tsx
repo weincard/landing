@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getToken } from "@/lib/auth";
 import API_BASE from "@/lib/api";
+import { CheckoutAuthModal } from "@/components/checkout-auth-modal";
 
 function getAppStoreUrl(): string {
   if (typeof window === "undefined")
@@ -44,7 +45,7 @@ export function JoinNowButton() {
   if (loggedIn === null || loggedIn) return null;
 
   return (
-    <a href="/registro">
+    <a href="/planes">
       <Button className="rounded-full bg-white text-black hover:bg-white/90 px-8 font-bold font-hepta-slab text-lg mt-6 cursor-pointer">
         Únete ahora
       </Button>
@@ -136,6 +137,7 @@ export function PromoCodeButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     setLoggedIn(!!getToken());
@@ -150,21 +152,11 @@ export function PromoCodeButton() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  async function handleActivate() {
+  async function startCheckout(email: string) {
     setError(null);
     setLoading(true);
     const token = getToken();
     try {
-      const meRes = await fetch(`${API_BASE}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!meRes.ok) throw new Error("No se pudo obtener el usuario.");
-      const me = await meRes.json();
-      const email = me?.email;
-      if (!email) {
-        window.location.href = "/planes";
-        return;
-      }
       const res = await fetch(`${API_BASE}/memberships/session/create`, {
         method: "POST",
         headers: {
@@ -191,6 +183,37 @@ export function PromoCodeButton() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleActivate() {
+    setError(null);
+    setLoading(true);
+    const token = getToken();
+    try {
+      const meRes = await fetch(`${API_BASE}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!meRes.ok) throw new Error("No se pudo obtener el usuario.");
+      const me = await meRes.json();
+      const email = me?.email;
+      if (!email) {
+        window.location.href = "/planes";
+        return;
+      }
+      await startCheckout(email);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Error al procesar el pago.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleAuthSuccess(email: string) {
+    setShowAuthModal(false);
+    setLoggedIn(true);
+    startCheckout(email);
   }
 
   function copyCode() {
@@ -276,15 +299,23 @@ export function PromoCodeButton() {
                 {loading ? "Cargando..." : "Activar membresía"}
               </button>
             ) : (
-              <a
-                href="/registro"
-                className="block w-full py-3 rounded-xl bg-black text-white font-clash font-bold text-sm hover:bg-black/80 transition text-center"
+              <button
+                onClick={() => { setOpen(false); setShowAuthModal(true); }}
+                className="w-full py-3 rounded-xl bg-black text-white font-clash font-bold text-sm hover:bg-black/80 transition text-center cursor-pointer"
               >
-                Ir a registrarme
-              </a>
+                Registrarme y activar
+              </button>
             )}
           </div>
         </div>
+      )}
+
+      {showAuthModal && (
+        <CheckoutAuthModal
+          planKey="monthly"
+          onSuccess={handleAuthSuccess}
+          onClose={() => setShowAuthModal(false)}
+        />
       )}
     </>
   );
@@ -302,7 +333,7 @@ export function FooterSubscribeLink() {
   return (
     <>
       <span className="hidden md:inline text-white">|</span>
-      <a href="/registro" className="hover:text-white/70 transition">
+      <a href="/planes" className="hover:text-white/70 transition">
         SUBSCRÍBETE
       </a>
     </>

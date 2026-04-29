@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { getToken } from "@/lib/auth"
 import API_BASE from "@/lib/api"
 import HeaderAuth from "@/components/header-auth"
 import { MobileMenu } from "@/components/home-client"
+import { CheckoutAuthModal } from "@/components/checkout-auth-modal"
 
 interface UserMe {
   id: number
@@ -68,13 +68,13 @@ const PLANS = [
 ]
 
 export default function PlanesPage() {
-  const router = useRouter()
   const [user, setUser] = useState<UserMe | null>(null)
   const [membership, setMembership] = useState<Membership | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
   const [purchasing, setPurchasing] = useState(false)
   const [checkoutOpened, setCheckoutOpened] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authModal, setAuthModal] = useState<"monthly" | "yearly" | null>(null)
   const [pendingPlan, setPendingPlan] = useState<"monthly" | "yearly" | null>(null)
   const [emailInput, setEmailInput] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
@@ -155,7 +155,7 @@ export default function PlanesPage() {
     if (activePlanKey === planKey) return
     const token = getToken()
     if (!token) {
-      router.push("/login?redirect=/planes")
+      setAuthModal(planKey)
       return
     }
 
@@ -165,7 +165,6 @@ export default function PlanesPage() {
     if (meData) setUser(meData)
 
     if (!meData?.email) {
-      // Show inline email form before checkout
       setPendingPlan(planKey)
       setEmailInput("")
       setEmailError(null)
@@ -173,6 +172,29 @@ export default function PlanesPage() {
     }
 
     await startCheckout(planKey, meData.email)
+  }
+
+  async function handleAuthSuccess(email: string) {
+    const plan = authModal!
+    setAuthModal(null)
+
+    // Refresh user and membership state in the background
+    const token = getToken()
+    if (token) {
+      Promise.all([
+        fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch(`${API_BASE}/memberships/by-user`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+      ]).then(([meData, membershipData]) => {
+        if (meData) setUser(meData)
+        if (membershipData) {
+          const memberships = membershipData.userMemberships ?? membershipData
+          const m = Array.isArray(memberships) ? memberships[0] : memberships
+          if (m) setMembership(m)
+        }
+      }).catch(() => {})
+    }
+
+    await startCheckout(plan, email)
   }
 
   async function handleSaveEmailAndCheckout(e: React.FormEvent) {
@@ -398,6 +420,14 @@ export default function PlanesPage() {
           Cancela cuando quieras. Sin permanencia.
         </p>
       </div>
+
+      {authModal && (
+        <CheckoutAuthModal
+          planKey={authModal}
+          onSuccess={handleAuthSuccess}
+          onClose={() => setAuthModal(null)}
+        />
+      )}
     </main>
   )
 }
