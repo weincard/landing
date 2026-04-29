@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import HeaderAuth from "@/components/header-auth"
-import { MobileMenu } from "@/components/home-client"
-import { getToken } from "@/lib/auth"
-import API_BASE from "@/lib/api"
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import HeaderAuth from "@/components/header-auth";
+import { MobileMenu } from "@/components/home-client";
+import { getToken } from "@/lib/auth";
+import API_BASE from "@/lib/api";
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 10;
 
-const TYPESENSE_HOST = process.env.NEXT_PUBLIC_TYPESENSE_HOST
-const TYPESENSE_API_KEY = process.env.NEXT_PUBLIC_TYPESENSE_PUBLIC_API_KEY
+const TYPESENSE_HOST = process.env.NEXT_PUBLIC_TYPESENSE_HOST;
+const TYPESENSE_API_KEY = process.env.NEXT_PUBLIC_TYPESENSE_PUBLIC_API_KEY;
 
 const DAY_ES: Record<string, string> = {
   Monday: "Lunes",
@@ -20,111 +20,161 @@ const DAY_ES: Record<string, string> = {
   Friday: "Viernes",
   Saturday: "Sábado",
   Sunday: "Domingo",
+};
+
+const DAY_ORDER = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+const DAY_LETTER: Record<string, string> = {
+  Monday: "L",
+  Tuesday: "M",
+  Wednesday: "M",
+  Thursday: "J",
+  Friday: "V",
+  Saturday: "S",
+  Sunday: "D",
+};
+
+function DayBadges({ validDays }: { validDays: string[] }) {
+  const activeSet = new Set(validDays.length === 0 ? DAY_ORDER : validDays);
+  return (
+    <div className="flex gap-0.5">
+      {DAY_ORDER.map((day) => (
+        <span
+          key={day}
+          className={`w-5 h-5 rounded text-[9px] font-bold font-clash flex items-center justify-center ${
+            activeSet.has(day)
+              ? "bg-black text-white"
+              : "bg-gray-200 text-gray-500"
+          }`}
+        >
+          {DAY_LETTER[day]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function mergedValidDays(offers: Offer[]): string[] {
+  // If any offer has no day restriction it's available every day
+  if (offers.some((o) => o.validDays.length === 0)) return [];
+  const unique = Array.from(new Set(offers.flatMap((o) => o.validDays)));
+  return unique.sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
 }
 
 interface Offer {
-  offerId: number
-  title: string
-  description: string
-  offerType: string
-  value: string
-  conditions: string
-  validFrom: string
-  validTo: string | null
-  validDays: string[]
-  isActive: boolean
-  expiresAt: string | null
-  excludesBankHolidays: boolean
+  offerId: number;
+  title: string;
+  description: string;
+  offerType: string;
+  value: string;
+  conditions: string;
+  validFrom: string;
+  validTo: string | null;
+  validDays: string[];
+  isActive: boolean;
+  expiresAt: string | null;
+  excludesBankHolidays: boolean;
 }
 
 interface Category {
-  categoryId: number
-  name: string
-  description: string
-  image: string
-  slug: string
+  categoryId: number;
+  name: string;
+  description: string;
+  image: string;
+  slug: string;
 }
 
 interface Merchant {
-  merchantId: number
-  name: string
-  description: string
-  logoUrl: string
-  country: string
-  state: string
-  founder: boolean
-  createdAt: string
+  merchantId: number;
+  name: string;
+  description: string;
+  logoUrl: string;
+  country: string;
+  state: string;
+  founder: boolean;
+  createdAt: string;
 }
 
 interface Branch {
-  branchId: number
-  name: string
-  slug: string
-  description: string
-  address: string
-  city: string
-  country: string
-  phone: string
-  whatsapp: string
-  canContact: boolean
-  email: string
-  website: string
-  logoUrl: string
-  coverImageUrl: string | null
-  note: string
-  isActive: boolean
-  images: string[]
-  tags: string[] | null
-  createdAt: string
-  category: Category
-  merchant: Merchant
-  offers: Offer[]
-  favoritesCount: number
+  branchId: number;
+  name: string;
+  slug: string;
+  description: string;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  whatsapp: string;
+  canContact: boolean;
+  email: string;
+  website: string;
+  logoUrl: string;
+  coverImageUrl: string | null;
+  note: string;
+  isActive: boolean;
+  images: string[];
+  tags: string[] | null;
+  createdAt: string;
+  category: Category;
+  merchant: Merchant;
+  offers: Offer[];
+  favoritesCount: number;
 }
 
 // ─── Typesense ───────────────────────────────────────────────────────────────
 
 interface TypesenseOfferDocument {
-  id: string
-  title: string
-  description: string
-  conditions: string
-  value: string
-  offerType: string
-  isActive: boolean
-  excludesBankHolidays: boolean
-  validDays?: string[]
-  membershipPlanId?: number
-  validFrom: number
-  validTo?: number
-  expiresAt?: number
-  branchId?: number
-  branchName?: string
-  city?: string
-  country?: string
-  categoryId?: number
-  categoryName?: string
-  merchantId?: number
-  merchantName?: string
-  logoUrl?: string
-  coverImageUrl?: string
-  images?: string[]
+  id: string;
+  title: string;
+  description: string;
+  conditions: string;
+  value: string;
+  offerType: string;
+  isActive: boolean;
+  excludesBankHolidays: boolean;
+  validDays?: string[];
+  membershipPlanId?: number;
+  validFrom: number;
+  validTo?: number;
+  expiresAt?: number;
+  branchId?: number;
+  branchName?: string;
+  city?: string;
+  country?: string;
+  categoryId?: number;
+  categoryName?: string;
+  merchantId?: number;
+  merchantName?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  images?: string[];
 }
 
 interface TypesenseGroupedResponse {
-  found: number
+  found: number;
   grouped_hits: Array<{
-    group_key: (string | number)[]
-    hits: Array<{ document: TypesenseOfferDocument }>
-  }>
+    group_key: (string | number)[];
+    hits: Array<{ document: TypesenseOfferDocument }>;
+  }>;
 }
 
 function groupedHitToBranch(
   groupKey: (string | number)[],
   hits: Array<{ document: TypesenseOfferDocument }>,
 ): Branch {
-  const first = hits[0].document
-  const branchId = typeof groupKey[0] === "number" ? groupKey[0] : parseInt(String(groupKey[0]), 10)
+  const first = hits[0].document;
+  const branchId =
+    typeof groupKey[0] === "number"
+      ? groupKey[0]
+      : parseInt(String(groupKey[0]), 10);
 
   const offers: Offer[] = hits.map(({ document: doc }) => ({
     offerId: parseInt(doc.id, 10),
@@ -137,9 +187,11 @@ function groupedHitToBranch(
     validTo: doc.validTo ? new Date(doc.validTo * 1000).toISOString() : null,
     validDays: doc.validDays ?? [],
     isActive: doc.isActive,
-    expiresAt: doc.expiresAt ? new Date(doc.expiresAt * 1000).toISOString() : null,
+    expiresAt: doc.expiresAt
+      ? new Date(doc.expiresAt * 1000).toISOString()
+      : null,
     excludesBankHolidays: doc.excludesBankHolidays,
-  }))
+  }));
 
   return {
     branchId,
@@ -180,19 +232,26 @@ function groupedHitToBranch(
     },
     offers,
     favoritesCount: 0,
-  }
+  };
 }
 
 function daysToSpanish(days: string[]): string {
-  return days.map((d) => DAY_ES[d] ?? d).join(", ")
+  return days.map((d) => DAY_ES[d] ?? d).join(", ");
 }
 
 // ─── Branch Card ────────────────────────────────────────────────────────────
 
-function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; onOpen: (b: Branch) => void }) {
-  const firstImage = branch.images?.[0] ?? branch.coverImageUrl ?? branch.logoUrl
-  const firstOffer = branch.offers?.[0]
-  const validDays = firstOffer?.validDays ?? []
+function BranchCard({
+  branch,
+  onOpen,
+}: {
+  branch: Branch;
+  onClick?: () => void;
+  onOpen: (b: Branch) => void;
+}) {
+  const firstImage =
+    branch.images?.[0] ?? branch.coverImageUrl ?? branch.logoUrl;
+  const validDays = mergedValidDays(branch.offers);
 
   return (
     <article
@@ -210,7 +269,11 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             {branch.logoUrl && (
-              <img src={branch.logoUrl} alt={branch.name} className="w-20 h-20 object-contain opacity-40" />
+              <img
+                src={branch.logoUrl}
+                alt={branch.name}
+                className="w-20 h-20 object-contain opacity-40"
+              />
             )}
           </div>
         )}
@@ -230,11 +293,15 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
       </div>
 
       <div className="p-4 space-y-1">
-        <h3 className="font-bold text-sm font-clash leading-tight line-clamp-2">{branch.name}</h3>
-        <p className="text-xs text-gray-500 font-hepta-slab">
-          <span className="font-semibold text-gray-700">Disponible</span>{" "}
-          {validDays.length === 0 ? "Todos los días" : daysToSpanish(validDays)}
-        </p>
+        <h3 className="font-bold text-sm font-clash leading-tight line-clamp-2">
+          {branch.name}
+        </h3>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-gray-700 font-hepta-slab">
+            Disponible
+          </span>
+          <DayBadges validDays={validDays} />
+        </div>
         {branch.category?.name && (
           <span className="inline-block text-xs font-hepta-slab text-white bg-black rounded-full px-2 py-0.5 mt-1 font-bold">
             {branch.category.name}
@@ -242,23 +309,29 @@ function BranchCard({ branch, onOpen }: { branch: Branch; onClick?: () => void; 
         )}
       </div>
     </article>
-  )
+  );
 }
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
 
-function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void }) {
-  const [imgIndex, setImgIndex] = useState(0)
-  const [imgLoading, setImgLoading] = useState(true)
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [hasMembership, setHasMembership] = useState(false)
-  const router = useRouter()
-  const searchParams = useSearchParams()
+function BranchModal({
+  branch,
+  onClose,
+}: {
+  branch: Branch;
+  onClose: () => void;
+}) {
+  const [imgIndex, setImgIndex] = useState(0);
+  const [imgLoading, setImgLoading] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [hasMembership, setHasMembership] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const token = getToken()
-    setLoggedIn(!!token)
-    document.body.style.overflow = "hidden"
+    const token = getToken();
+    setLoggedIn(!!token);
+    document.body.style.overflow = "hidden";
 
     if (token) {
       fetch(`${API_BASE}/memberships/by-user`, {
@@ -267,42 +340,51 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) {
-            const memberships = data.userMemberships ?? data
-            const m = Array.isArray(memberships) ? memberships[0] : memberships
+            const memberships = data.userMemberships ?? data;
+            const m = Array.isArray(memberships) ? memberships[0] : memberships;
             if (m && (m.status === "active" || m.status === "ACTIVE")) {
-              setHasMembership(true)
+              setHasMembership(true);
             }
           }
         })
-        .catch(() => { })
+        .catch(() => {});
     }
 
-    return () => { document.body.style.overflow = "" }
-  }, [])
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
-  const images = branch.images?.length ? branch.images : branch.coverImageUrl ? [branch.coverImageUrl] : []
+  const images = branch.images?.length
+    ? branch.images
+    : branch.coverImageUrl
+      ? [branch.coverImageUrl]
+      : [];
 
   function getAppStoreUrl(): string {
-    if (typeof window === "undefined") return "https://play.google.com/store/apps/details?id=com.weincard.app.idp"
-    const ua = navigator.userAgent || navigator.vendor || ""
-    const isApple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua)
+    if (typeof window === "undefined")
+      return "https://play.google.com/store/apps/details?id=com.weincard.app.idp";
+    const ua = navigator.userAgent || navigator.vendor || "";
+    const isApple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua);
     return isApple
       ? "https://apps.apple.com/co/app/weincard/id6754571134"
-      : "https://play.google.com/store/apps/details?id=com.weincard.app.idp"
+      : "https://play.google.com/store/apps/details?id=com.weincard.app.idp";
   }
 
   function handleCta() {
     if (!loggedIn) {
-      const params = new URLSearchParams(searchParams.toString())
-      router.push(`/login?redirect=/catalogo${params.toString() ? `?${params}` : ""}`)
-      return
+      const params = new URLSearchParams(searchParams.toString());
+      router.push(
+        `/login?redirect=/catalogo${params.toString() ? `?${params}` : ""}`,
+      );
+      return;
     }
     if (hasMembership) {
-      window.open(getAppStoreUrl(), "_blank", "noopener,noreferrer")
-      return
+      window.open(getAppStoreUrl(), "_blank", "noopener,noreferrer");
+      return;
     }
     // logged in but no membership - redirect to plans
-    router.push("/planes")
+    router.push("/planes");
   }
 
   return (
@@ -340,33 +422,75 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
                 </svg>
               </div>
             )}
             {images.length > 1 && (
               <>
                 <button
-                  onClick={() => { setImgIndex((i) => (i - 1 + images.length) % images.length); setImgLoading(true) }}
+                  onClick={() => {
+                    setImgIndex((i) => (i - 1 + images.length) % images.length);
+                    setImgLoading(true);
+                  }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
                   aria-label="Imagen anterior"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" /></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </button>
                 <button
-                  onClick={() => { setImgIndex((i) => (i + 1) % images.length); setImgLoading(true) }}
+                  onClick={() => {
+                    setImgIndex((i) => (i + 1) % images.length);
+                    setImgLoading(true);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
                   aria-label="Imagen siguiente"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" /></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </button>
                 {/* Dots */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                   {images.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => { setImgIndex(i); setImgLoading(true) }}
+                      onClick={() => {
+                        setImgIndex(i);
+                        setImgLoading(true);
+                      }}
                       className={`w-2 h-2 rounded-full transition ${i === imgIndex ? "bg-white" : "bg-white/50"}`}
                       aria-label={`Ir a imagen ${i + 1}`}
                     />
@@ -380,7 +504,18 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
               className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition cursor-pointer"
               aria-label="Cerrar"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </button>
           </div>
         )}
@@ -391,13 +526,18 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             {branch.offers.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {branch.offers.map((offer) => (
-                  <span key={offer.offerId} className="bg-black text-white text-xs font-bold font-clash px-3 py-1 rounded-full">
+                  <span
+                    key={offer.offerId}
+                    className="bg-black text-white text-xs font-bold font-clash px-3 py-1 rounded-full"
+                  >
                     {offer.title}
                   </span>
                 ))}
               </div>
             )}
-            <h2 className="font-black text-2xl font-clash leading-tight">{branch.name}</h2>
+            <h2 className="font-black text-2xl font-clash leading-tight">
+              {branch.name}
+            </h2>
             {branch.category?.name && (
               <span className="inline-block text-sm font-hepta-slab text-white bg-black rounded-full px-3 py-0.5 font-bold">
                 {branch.category.name}
@@ -412,33 +552,70 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
               <div className="space-y-5">
                 {branch.offers.map((offer) => (
                   <div key={offer.offerId} className="space-y-2">
-                    <p className="text-base font-hepta-slab text-gray-700">{offer.description}</p>
+                    <p className="text-base font-hepta-slab text-gray-700">
+                      {offer.description}
+                    </p>
                     {/* Title with tag icon */}
                     <div className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0 text-black">
-                        <path fillRule="evenodd" d="M5.25 2.25a3 3 0 0 0-3 3v4.318a3 3 0 0 0 .879 2.121l9.58 9.581c.92.92 2.39 1.186 3.548.428a18.849 18.849 0 0 0 5.441-5.44c.758-1.16.492-2.629-.428-3.548l-9.58-9.581a3 3 0 0 0-2.121-.879H5.25ZM6.375 7.5a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" clipRule="evenodd" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-4 h-4 flex-shrink-0 text-black"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.25 2.25a3 3 0 0 0-3 3v4.318a3 3 0 0 0 .879 2.121l9.58 9.581c.92.92 2.39 1.186 3.548.428a18.849 18.849 0 0 0 5.441-5.44c.758-1.16.492-2.629-.428-3.548l-9.58-9.581a3 3 0 0 0-2.121-.879H5.25ZM6.375 7.5a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z"
+                          clipRule="evenodd"
+                        />
                       </svg>
-                      <span className="text-sm font-bold font-clash">{offer.title}</span>
+                      <span className="text-sm font-bold font-clash">
+                        {offer.title}
+                      </span>
                     </div>
                     {/* Days */}
                     <div className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0 text-black">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-4 h-4 flex-shrink-0 text-black"
+                      >
                         <path d="M12.75 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM7.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM8.25 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM9.75 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM10.5 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM16.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM15 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM16.5 17.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" />
-                        <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z"
+                          clipRule="evenodd"
+                        />
                       </svg>
-                      <span className="text-sm font-hepta-slab text-gray-600">
-                        <span className="font-semibold text-gray-800">Disponible</span>{" "}
-                        {offer.validDays.length > 0 ? daysToSpanish(offer.validDays) : "Todos los días"}
+                      <span className="text-sm font-semibold text-gray-800 font-hepta-slab">
+                        Disponible
                       </span>
+                      <DayBadges validDays={offer.validDays} />
                     </div>
                     {/* Conditions */}
                     {offer.conditions && (
                       <div className="flex items-start gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0 mt-0.5 text-black">
-                          <path fillRule="evenodd" d="M7.502 6h7.128A3.375 3.375 0 0 1 18 9.375v9.375a3 3 0 0 0 3-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 0 0-.673-.05A3 3 0 0 0 15 1.5h-1.5a3 3 0 0 0-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6ZM13.5 3A1.5 1.5 0 0 0 12 4.5h4.5A1.5 1.5 0 0 0 15 3h-1.5Z" clipRule="evenodd" />
-                          <path fillRule="evenodd" d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V9.375Zm9.586 4.594a.75.75 0 0 0-1.172-.938l-2.476 3.096-.908-.907a.75.75 0 0 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.116-.062l3-3.75Z" clipRule="evenodd" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-4 h-4 flex-shrink-0 mt-0.5 text-black"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.502 6h7.128A3.375 3.375 0 0 1 18 9.375v9.375a3 3 0 0 0 3-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 0 0-.673-.05A3 3 0 0 0 15 1.5h-1.5a3 3 0 0 0-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6ZM13.5 3A1.5 1.5 0 0 0 12 4.5h4.5A1.5 1.5 0 0 0 15 3h-1.5Z"
+                            clipRule="evenodd"
+                          />
+                          <path
+                            fillRule="evenodd"
+                            d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V9.375Zm9.586 4.594a.75.75 0 0 0-1.172-.938l-2.476 3.096-.908-.907a.75.75 0 0 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.116-.062l3-3.75Z"
+                            clipRule="evenodd"
+                          />
                         </svg>
-                        <span className="text-sm font-hepta-slab text-gray-600">{offer.conditions}</span>
+                        <span className="text-sm font-hepta-slab text-gray-600">
+                          {offer.conditions}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -450,16 +627,26 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
           {/* Detalles del lugar */}
           {branch.description && (
             <div className="space-y-2">
-              <h3 className="font-black text-lg font-clash">Detalles del lugar</h3>
-              <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.description}</p>
+              <h3 className="font-black text-lg font-clash">
+                Detalles del lugar
+              </h3>
+              <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">
+                {branch.description}
+              </p>
             </div>
           )}
           {/* Ubicación */}
           {branch.address && (
             <div className="space-y-2">
               <h3 className="font-black text-lg font-clash">Ubicación</h3>
-              <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.address}</p>
-              {branch.city && <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">{branch.city}</p>}
+              <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">
+                {branch.address}
+              </p>
+              {branch.city && (
+                <p className="text-sm font-hepta-slab text-gray-600 leading-relaxed">
+                  {branch.city}
+                </p>
+              )}
             </div>
           )}
 
@@ -468,80 +655,87 @@ function BranchModal({ branch, onClose }: { branch: Branch; onClose: () => void 
             onClick={handleCta}
             className="w-full py-4 rounded-2xl font-bold font-clash text-base transition bg-black text-white hover:bg-black/80 cursor-pointer"
           >
-            {!loggedIn ? "Iniciar sesión" : hasMembership ? "Abrir Weincard" : "Activa tu Weincard"}
+            {!loggedIn
+              ? "Iniciar sesión"
+              : hasMembership
+                ? "Abrir Weincard"
+                : "Activa tu Weincard"}
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CatalogoPage() {
-  const [query, setQuery] = useState("")
-  const [inputValue, setInputValue] = useState("")
-  const [branches, setBranches] = useState<Branch[]>([])
-  const [count, setCount] = useState(0)
-  const [skip, setSkip] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [query, setQuery] = useState("");
+  const [inputValue, setInputValue] = useState("");
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [count, setCount] = useState(0);
+  const [skip, setSkip] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchBranches = useCallback(async (name: string, skipVal: number, replace: boolean) => {
-    setLoading(true)
-    try {
-      const page = Math.floor(skipVal / PAGE_SIZE) + 1
-      const params = new URLSearchParams({
-        q: name.trim() || "*",
-        query_by: "branchName,title,description",
-        group_by: "branchId",
-        group_limit: "10",
-        per_page: String(PAGE_SIZE),
-        page: String(page),
-        filter_by: "isActive:true && branchId:>0",
-      })
-      const res = await fetch(
-        `https://${TYPESENSE_HOST}/collections/offers/documents/search?${params}`,
-        { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY! } },
-      )
-      if (!res.ok) throw new Error("Error al cargar sucursales")
-      const data: TypesenseGroupedResponse = await res.json()
-      const fetched = data.grouped_hits.map((group) =>
-        groupedHitToBranch(group.group_key, group.hits),
-      )
-      setBranches((prev) => replace ? fetched : [...prev, ...fetched])
-      setCount(data.found)
-    } catch {
-      // silent fail
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const fetchBranches = useCallback(
+    async (name: string, skipVal: number, replace: boolean) => {
+      setLoading(true);
+      try {
+        const page = Math.floor(skipVal / PAGE_SIZE) + 1;
+        const params = new URLSearchParams({
+          q: name.trim() || "*",
+          query_by: "branchName,title,description",
+          group_by: "branchId",
+          group_limit: "10",
+          per_page: String(PAGE_SIZE),
+          page: String(page),
+          filter_by: "isActive:true && branchId:>0",
+        });
+        const res = await fetch(
+          `https://${TYPESENSE_HOST}/collections/offers/documents/search?${params}`,
+          { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY! } },
+        );
+        if (!res.ok) throw new Error("Error al cargar sucursales");
+        const data: TypesenseGroupedResponse = await res.json();
+        const fetched = data.grouped_hits.map((group) =>
+          groupedHitToBranch(group.group_key, group.hits),
+        );
+        setBranches((prev) => (replace ? fetched : [...prev, ...fetched]));
+        setCount(data.found);
+      } catch {
+        // silent fail
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Initial load
   useEffect(() => {
-    fetchBranches("", 0, true)
-  }, [fetchBranches])
+    fetchBranches("", 0, true);
+  }, [fetchBranches]);
 
   // Debounced search
   function handleInput(val: string) {
-    setInputValue(val)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setInputValue(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setQuery(val)
-      setSkip(0)
-      fetchBranches(val, 0, true)
-    }, 400)
+      setQuery(val);
+      setSkip(0);
+      fetchBranches(val, 0, true);
+    }, 400);
   }
 
   function handleLoadMore() {
-    const newSkip = skip + PAGE_SIZE
-    setSkip(newSkip)
-    fetchBranches(query, newSkip, false)
+    const newSkip = skip + PAGE_SIZE;
+    setSkip(newSkip);
+    fetchBranches(query, newSkip, false);
   }
 
-  const hasMore = branches.length < count
+  const hasMore = branches.length < count;
 
   return (
     <main className="min-h-screen bg-[#F5F1E8]">
@@ -550,7 +744,11 @@ export default function CatalogoPage() {
         <div className="container mx-auto px-4 py-5 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <a href="/">
-              <img src="/logo-weincard.png" alt="Weincard" className="h-4 md:h-6" />
+              <img
+                src="/logo-weincard.png"
+                alt="Weincard"
+                className="h-4 md:h-6"
+              />
             </a>
           </div>
           <div className="flex gap-3 items-center">
@@ -581,7 +779,8 @@ export default function CatalogoPage() {
               strokeWidth={2}
               className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
             >
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
             <input
               type="text"
@@ -593,7 +792,13 @@ export default function CatalogoPage() {
           </div>
 
           <p className="text-white/60 text-sm font-hepta-slab mt-3 pl-1">
-            {loading ? "Buscando..." : <><span className="font-bold text-white">{count}</span> resultados</>}
+            {loading ? (
+              "Buscando..."
+            ) : (
+              <>
+                <span className="font-bold text-white">{count}</span> resultados
+              </>
+            )}
           </p>
         </div>
       </section>
@@ -606,7 +811,10 @@ export default function CatalogoPage() {
         {loading && branches.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+              <div
+                key={i}
+                className="bg-white rounded-2xl overflow-hidden animate-pulse"
+              >
                 <div className="aspect-[4/3] bg-gray-200" />
                 <div className="p-4 space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -623,7 +831,11 @@ export default function CatalogoPage() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {branches.map((branch) => (
-                <BranchCard key={branch.branchId} branch={branch} onOpen={setSelectedBranch} />
+                <BranchCard
+                  key={branch.branchId}
+                  branch={branch}
+                  onOpen={setSelectedBranch}
+                />
               ))}
             </div>
 
@@ -644,8 +856,11 @@ export default function CatalogoPage() {
 
       {/* Modal */}
       {selectedBranch && (
-        <BranchModal branch={selectedBranch} onClose={() => setSelectedBranch(null)} />
+        <BranchModal
+          branch={selectedBranch}
+          onClose={() => setSelectedBranch(null)}
+        />
       )}
     </main>
-  )
+  );
 }
