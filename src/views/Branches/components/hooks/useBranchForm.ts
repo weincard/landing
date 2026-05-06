@@ -6,7 +6,7 @@ import { useMerchants } from "@/modules/merchants/domain/hooks/use-merchants";
 import { useCategories } from "@/modules/categories/domain/hooks/use-categories";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { IBranch } from "@/data/interfaces/merchant.interface";
 import type { ICategoria } from "@/data/interfaces/interfaces.interface";
 import type { IUser } from "@/data/interfaces/user.interface";
@@ -59,8 +59,19 @@ interface BranchFormData {
   contactMessage: string;
 }
 
+function buildReturnUrl(returnSearch?: string | null, returnMerchant?: string | null): string {
+  const params = new URLSearchParams();
+  if (returnSearch) params.set("search", returnSearch);
+  if (returnMerchant) params.set("merchant", returnMerchant);
+  const qs = params.toString();
+  return `/dashboard/branches${qs ? `?${qs}` : ""}`;
+}
+
 export function useBranchForm(token: string, branchId?: string) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnSearch = searchParams.get("returnSearch");
+  const returnMerchant = searchParams.get("returnMerchant");
   
   // React Hook Form
   const form = useForm<BranchFormData>({
@@ -555,7 +566,7 @@ export function useBranchForm(token: string, branchId?: string) {
         response = await updateBranch(Number(branchId), branchData, token);
         if (response) {
           toast.success("Sucursal actualizada exitosamente");
-          router.push("/dashboard/branches");
+          router.push(buildReturnUrl(returnSearch, returnMerchant));
         }
       } else {
         setCreationProgress({
@@ -663,7 +674,7 @@ export function useBranchForm(token: string, branchId?: string) {
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/branches");
+    router.push(buildReturnUrl(returnSearch, returnMerchant));
   };
 
   return {

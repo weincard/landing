@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IUser, UserRole } from "@/data/interfaces/user.interface";
+import type { IUser } from "@/data/interfaces/user.interface";
+import { UserRole } from "@/data/interfaces/user.interface";
 import {
   ChevronLeft,
   ChevronRight,
@@ -34,6 +35,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { useUsers } from "@/modules/users/domain/hooks/use-users";
+import { useUsersTypesenseSearch } from "@/modules/users/domain/hooks/use-users-typesense-search";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +52,8 @@ interface UsersViewProps {
 }
 
 export default function UsersView({ token }: UsersViewProps) {
-  const { getAllUsers, deleteUser, loading, error } = useUsers();
+  const { deleteUser } = useUsers();
+  const { searchUsers, loading, error } = useUsersTypesenseSearch();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
@@ -62,22 +65,17 @@ export default function UsersView({ token }: UsersViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
-    if (!token) return;
-
-    const skip = (currentPage - 1) * pageSize;
-    const paginationParams = { limit: pageSize, skip };
-
-    const response = await getAllUsers(
-      token,
-      paginationParams,
-      selectedRole === "all" ? undefined : selectedRole,
-      searchTerm
-    );
+    const response = await searchUsers({
+      query: searchTerm,
+      role: selectedRole === "all" ? undefined : (selectedRole as UserRole),
+      page: currentPage,
+      perPage: pageSize,
+    });
     if (response) {
       setUsers(response.users || []);
       setTotalCount(response.count || 0);
     }
-  }, [currentPage, pageSize, token, selectedRole, searchTerm, getAllUsers]);
+  }, [currentPage, pageSize, selectedRole, searchTerm, searchUsers]);
 
   useEffect(() => {
     fetchUsers();
