@@ -10,7 +10,7 @@ const DELIVERY_MESSAGE = "¡Hola! Soy un miembro WEINCARD😎y quiero pedir un d
 interface WhatsAppCardProps {
   canContact: boolean;
   whatsapp: string;
-  messageType: "contact" | "delivery";
+  messageType: "contact" | "delivery" | null;
   contactMessage: string;
   onCanContactChange: (value: boolean) => void;
   onWhatsappChange: (value: string) => void;
@@ -28,6 +28,8 @@ export function WhatsAppCard({
   onMessageTypeChange,
   onContactMessageChange,
 }: WhatsAppCardProps) {
+  const resolvedType = messageType ?? "contact";
+
   const handleTypeChange = (value: "contact" | "delivery") => {
     onMessageTypeChange(value);
     onContactMessageChange(value === "delivery" ? DELIVERY_MESSAGE : CONTACT_MESSAGE);
@@ -76,7 +78,7 @@ export function WhatsAppCard({
                   type="button"
                   onClick={() => handleTypeChange("contact")}
                   className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-                    messageType === "contact"
+                    resolvedType === "contact"
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:bg-muted"
                   }`}
@@ -87,7 +89,7 @@ export function WhatsAppCard({
                   type="button"
                   onClick={() => handleTypeChange("delivery")}
                   className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-                    messageType === "delivery"
+                    resolvedType === "delivery"
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:bg-muted"
                   }`}

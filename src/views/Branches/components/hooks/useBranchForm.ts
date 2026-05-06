@@ -67,6 +67,11 @@ function buildReturnUrl(returnSearch?: string | null, returnMerchant?: string | 
   return `/dashboard/branches${qs ? `?${qs}` : ""}`;
 }
 
+function deriveMessageType(contactMessage?: string | null): "contact" | "delivery" {
+  if (!contactMessage) return "contact";
+  return contactMessage.toLowerCase().includes("domicilio") ? "delivery" : "contact";
+}
+
 export function useBranchForm(token: string, branchId?: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -276,7 +281,7 @@ export function useBranchForm(token: string, branchId?: string) {
             note: branch.note || "",
             isActive: branch.isActive ?? true,
             canContact: branch.canContact ?? true,
-            messageType: branch.messageType ?? "contact",
+            messageType: branch.messageType ?? deriveMessageType(branch.contactMessage),
             contactMessage: branch.contactMessage ?? "Hola! Soy un miembro WEINCARD 😎 y quiero hacer una solicitud.",
           });
 
@@ -544,7 +549,7 @@ export function useBranchForm(token: string, branchId?: string) {
         note: formData.note,
         isActive: formData.isActive,
         canContact: formData.canContact,
-        messageType: formData.messageType,
+        messageType: formData.messageType ?? deriveMessageType(formData.contactMessage),
         contactMessage: formData.contactMessage,
         logoUrl: logoUrl || undefined,
         images: imageUrls.length > 0 ? imageUrls : undefined,
