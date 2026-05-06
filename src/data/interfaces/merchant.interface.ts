@@ -38,6 +38,8 @@ export interface IBranch {
   phone: string;
   whatsapp?: string;
   canContact?: boolean;
+  messageType?: "contact" | "delivery";
+  contactMessage?: string;
   email: string;
   website?: string;
   note?: string;

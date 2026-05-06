@@ -55,6 +55,8 @@ interface BranchFormData {
   note: string;
   isActive: boolean;
   canContact: boolean;
+  messageType: "contact" | "delivery";
+  contactMessage: string;
 }
 
 export function useBranchForm(token: string, branchId?: string) {
@@ -80,6 +82,8 @@ export function useBranchForm(token: string, branchId?: string) {
       note: "",
       isActive: true,
       canContact: true,
+      messageType: "contact",
+      contactMessage: "Hola! Soy un miembro WEINCARD 😎 y quiero hacer una solicitud.",
     },
   });
 
@@ -261,6 +265,8 @@ export function useBranchForm(token: string, branchId?: string) {
             note: branch.note || "",
             isActive: branch.isActive ?? true,
             canContact: branch.canContact ?? true,
+            messageType: branch.messageType ?? "contact",
+            contactMessage: branch.contactMessage ?? "Hola! Soy un miembro WEINCARD 😎 y quiero hacer una solicitud.",
           });
 
           // Debug: log the branch data to verify whatsapp is coming from API
@@ -527,6 +533,8 @@ export function useBranchForm(token: string, branchId?: string) {
         note: formData.note,
         isActive: formData.isActive,
         canContact: formData.canContact,
+        messageType: formData.messageType,
+        contactMessage: formData.contactMessage,
         logoUrl: logoUrl || undefined,
         images: imageUrls.length > 0 ? imageUrls : undefined,
       };

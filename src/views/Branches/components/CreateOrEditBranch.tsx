@@ -88,6 +88,8 @@ export function CreateOrEditBranch({
   // Watch specific fields for better performance and reactivity
   const whatsapp = watch("whatsapp");
   const canContact = watch("canContact");
+  const messageType = watch("messageType");
+  const contactMessage = watch("contactMessage");
   const formValues = watch();
 
   return (
@@ -207,8 +209,12 @@ export function CreateOrEditBranch({
           <WhatsAppCard
             canContact={canContact}
             whatsapp={whatsapp}
+            messageType={messageType}
+            contactMessage={contactMessage}
             onCanContactChange={(value) => setValue("canContact", value)}
             onWhatsappChange={(value) => setValue("whatsapp", value)}
+            onMessageTypeChange={(value) => setValue("messageType", value)}
+            onContactMessageChange={(value) => setValue("contactMessage", value)}
           />
         </div>
       </div>
