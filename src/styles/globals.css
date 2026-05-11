@@ -1,0 +1,86 @@
+@import "@mantine/core/styles.css";
+
+@font-face {
+  font-family: "Clash Grotesk";
+  src: url("/fonts/ClashGrotesk-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Clash Grotesk";
+  src: url("/fonts/ClashGrotesk-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-cream: #f7f5f3;
+  --color-burgundy: #300203;
+  --color-accent: #fd293d;
+  --color-accent-ui: #FF3B47;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Hepta Slab", serif;
+  background-color: #000;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes scroll-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes scroll-left {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-scroll-right {
+  animation: scroll-right 30s linear infinite;
+  width: max-content;
+  display: flex;
+  align-items: center;
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
+  width: max-content;
+  display: flex;
+  align-items: center;
+}
+
+/* OTP input boxes */
+.otp-input {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.otp-input:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #FF3B47;
+}
+
+/* Carousel section overflow */
+.carousel-wrapper {
+  overflow: hidden;
+  position: relative;
+}
