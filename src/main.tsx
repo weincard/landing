@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "sonner";
@@ -23,13 +24,15 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HelmetProvider>
       <MantineProvider theme={theme}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <App />
-            <Toaster position="top-center" richColors />
-            <Analytics />
-          </AuthProvider>
-        </QueryClientProvider>
+        <ModalsProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <App />
+              <Toaster position="top-center" richColors />
+              <Analytics />
+            </AuthProvider>
+          </QueryClientProvider>
+        </ModalsProvider>
       </MantineProvider>
     </HelmetProvider>
   </StrictMode>

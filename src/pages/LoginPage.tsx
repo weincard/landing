@@ -9,7 +9,7 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoggedIn) navigate("/", { replace: true });
+    if (isLoggedIn) navigate("/app/card", { replace: true });
   }, [isLoggedIn, navigate]);
 
   return (
@@ -66,7 +66,7 @@ export function LoginPage() {
         <AuthModal
           mode="login"
           inline
-          onComplete={() => navigate("/catalogo")}
+          onComplete={() => navigate("/app/card")}
         />
       </main>
     </div>

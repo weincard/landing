@@ -6,80 +6,78 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { AuthUser, Membership, PlanKey } from "@/types";
+import type { AuthUser, MembershipInfo, CouponRedemptionInfo, PlanKey } from "@/types";
 import { getMe } from "@/api/auth";
-import { getMembershipsByUser } from "@/api/memberships";
+import { getUserStatus } from "@/api/users";
 
 const TOKEN_KEY = "wc_access_token";
 
-function getActivePlanKey(m: Membership | null): PlanKey | null {
-  if (!m) return null;
-  const active = m.status === "active" || m.status === "ACTIVE";
-  if (!active) return null;
-  const raw = m.membershipPlan?.duration ?? m.duration;
-  if (raw) {
-    const u = String(raw).toUpperCase();
-    if (u === "MONTHLY" || u === "MONTH") return "monthly";
-    if (u === "YEARLY" || u === "YEAR") return "yearly";
-  }
-  const name = (
-    m.membershipPlan?.name ??
-    m.planName ??
-    m.plan?.name ??
-    ""
-  ).toLowerCase();
-  if (name.includes("mensual") || name.includes("monthly")) return "monthly";
-  if (name.includes("anual") || name.includes("yearly") || name.includes("annual"))
-    return "yearly";
+function derivePlanKey(duration: string | null | undefined): PlanKey | null {
+  if (!duration) return null;
+  if (duration === "monthly") return "monthly";
+  if (duration === "yearly") return "yearly";
   return null;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
-  membership: Membership | null;
+  membership: MembershipInfo | null;
+  couponRedemption: CouponRedemptionInfo | null;
   isLoading: boolean;
   isLoggedIn: boolean;
   hasMembership: boolean;
   activePlanKey: PlanKey | null;
   membershipName: string | null;
-  membershipExpiry: string | null;
+  membershipActiveUntil: string | null;
   login: (token: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  refreshMembership: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [membership, setMembership] = useState<Membership | null>(null);
+  const [membership, setMembership] = useState<MembershipInfo | null>(null);
+  const [couponRedemption, setCouponRedemption] = useState<CouponRedemptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshMembership = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const res = await getUserStatus();
+      setMembership(res.data.membership ?? null);
+      setCouponRedemption(res.data.couponRedemption ?? null);
+    } catch {
+      // silent — user session is still valid
+    }
+  }, []);
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setUser(null);
       setMembership(null);
+      setCouponRedemption(null);
       setIsLoading(false);
       return;
     }
 
     try {
-      const [meRes, membershipRes] = await Promise.all([
+      const [meRes, statusRes] = await Promise.all([
         getMe(),
-        getMembershipsByUser(),
+        getUserStatus(),
       ]);
-
       setUser(meRes.data);
-
-      const raw = membershipRes.data;
-      const memberships = raw?.userMemberships ?? raw;
-      const m = Array.isArray(memberships) ? memberships[0] : memberships;
-      setMembership(m ?? null);
+      setMembership(statusRes.data.membership ?? null);
+      setCouponRedemption(statusRes.data.couponRedemption ?? null);
     } catch {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);
       setMembership(null);
+      setCouponRedemption(null);
     } finally {
       setIsLoading(false);
     }
@@ -101,35 +99,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     setMembership(null);
+    setCouponRedemption(null);
   }, []);
 
   const isLoggedIn = !!user;
-  const hasMembership =
-    membership?.status === "active" || membership?.status === "ACTIVE";
-  const activePlanKey = getActivePlanKey(membership);
-
-  const membershipName =
-    membership?.planName ??
-    membership?.membershipPlan?.name ??
-    membership?.plan?.name ??
-    null;
-
-  const membershipExpiry = membership?.expiresAt ?? membership?.endDate ?? null;
+  const hasMembership = ["active", "pending_cancel", "trialing", "unpaid"].includes(
+    membership?.status ?? ""
+  );
+  const activePlanKey = hasMembership
+    ? derivePlanKey(membership?.membershipPlanDuration ?? null)
+    : null;
+  const membershipName = membership?.membershipPlanName ?? null;
+  const membershipActiveUntil =
+    couponRedemption?.membershipExpiresAt ?? membership?.expiredAt ?? null;
 
   return (
     <AuthContext.Provider
       value={{
         user,
         membership,
+        couponRedemption,
         isLoading,
         isLoggedIn,
         hasMembership,
         activePlanKey,
         membershipName,
-        membershipExpiry,
+        membershipActiveUntil,
         login,
         logout,
         refreshUser,
+        refreshMembership,
       }}
     >
       {children}

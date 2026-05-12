@@ -11,3 +11,13 @@ export const palette = {
 export type PaletteKey = keyof typeof palette;
 
 export const paletteList = Object.values(palette);
+
+/** Official brand accent colors from BrandBookColors in the Flutter app. */
+export const BrandBookColors = {
+  red:    "#FD293D",
+  orange: "#F89E0A",
+  pink:   "#FF5488",
+  blue:   "#1CD9EB",
+  purple: "#9F82FF",
+  black:  "#1B1A1A",
+} as const;

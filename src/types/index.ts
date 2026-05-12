@@ -10,16 +10,57 @@ export interface AuthUser {
   createdAt?: string;
 }
 
-export interface Membership {
-  id: number;
-  status: string;
-  planName?: string;
-  plan?: { name?: string };
-  membershipPlan?: { name?: string; duration?: string };
-  duration?: string;
-  expiresAt?: string;
-  endDate?: string;
+// ─── Membership (new shape from GET /users/status) ───────────────────────────
+
+export interface MembershipInfo {
+  membershipId: number;
+  status: "active" | "canceled" | "pending_cancel" | "trialing" | "ended" | "pastDue" | "unpaid" | "paused" | "incomplete" | string;
+  startedAt: string;
+  renewedAt: string | null;
+  expiredAt: string | null;
+  membershipPlanId: number;
+  membershipPlanName: string;
+  membershipPlanDuration: "monthly" | "quarterly" | "yearly";
+  couponId: number | null;
+  paymentMethod: string | null;
 }
+
+export interface CouponRedemptionInfo {
+  redemptionId: number;
+  redeemedAt: string;
+  membershipExpiresAt: string;
+  status: string;
+  couponId: number;
+  trialUsageCount: number;
+  renewalCount: number;
+  trialType: string;
+  usesLeft: number;
+}
+
+export interface UserStatusResponse {
+  userInfo: {
+    userId: number;
+    name: string;
+    email: string;
+    document: string | null;
+    createdAt: string;
+  };
+  membership: MembershipInfo | null;
+  couponRedemption: CouponRedemptionInfo | null;
+}
+
+// ─── Plans ───────────────────────────────────────────────────────────────────
+
+export interface MembershipPlan {
+  membershipPlanId: number;
+  name: string;
+  duration: "monthly" | "quarterly" | "yearly";
+  price: number;
+  description?: string;
+  isActive?: boolean;
+}
+
+// ─── Offers / Branches ───────────────────────────────────────────────────────
 
 export interface Offer {
   offerId: number;
@@ -81,6 +122,48 @@ export interface Branch {
   favoritesCount: number;
 }
 
+// ─── Favorites ───────────────────────────────────────────────────────────────
+
+export interface Favorite {
+  favoriteId: number;
+  branch: Branch;
+  createdAt: string;
+}
+
+// ─── Redemptions ─────────────────────────────────────────────────────────────
+
+export interface Redemption {
+  redemptionId: number;
+  offerId?: number;
+  branchId?: number;
+  branchName?: string;
+  offerTitle?: string;
+  discountAmount?: number;
+  totalPaid?: number;
+  createdAt: string;
+  code?: string;
+  branch?: Branch;
+  offer?: Offer;
+}
+
+export interface GeneratedCode {
+  code: string;
+  offerId: number;
+  expiresAt?: string;
+}
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+export interface Review {
+  reviewId: number;
+  rating: number;
+  comment: string;
+  user: { name: string; lastname?: string };
+  createdAt: string;
+}
+
+// ─── Typesense (unchanged) ───────────────────────────────────────────────────
+
 export interface TypesenseOfferDocument {
   id: string;
   title: string;
@@ -125,4 +208,18 @@ export interface RedemptionResult {
   user?: { phone?: string };
   phone?: string;
   message?: string;
+}
+
+// ─── Legacy shape (kept for backward compat in existing pages) ───────────────
+
+/** @deprecated Use MembershipInfo instead */
+export interface Membership {
+  id: number;
+  status: string;
+  planName?: string;
+  plan?: { name?: string };
+  membershipPlan?: { name?: string; duration?: string };
+  duration?: string;
+  expiresAt?: string;
+  endDate?: string;
 }

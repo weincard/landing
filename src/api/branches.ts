@@ -1,5 +1,7 @@
+import { apiClient } from "./client";
 import type {
   Branch,
+  Category,
   TypesenseGroupedResponse,
   TypesenseOfferDocument,
   Offer,
@@ -106,3 +108,31 @@ export async function searchBranches(
     found: data.found,
   };
 }
+
+// ─── REST API endpoints (authenticated) ──────────────────────────────────────
+
+export interface BranchFilterParams {
+  name?: string;
+  categoryIds?: number[];
+  offerTypes?: string[];
+  validDays?: string[];
+  limit?: number;
+  skip?: number;
+  cursorDistance?: number;
+  cursorBranchId?: number;
+}
+
+export interface BranchFilterResponse {
+  branches: Branch[];
+  count: number;
+  nextCursor: { cursorDistance: number; cursorBranchId: number } | null;
+}
+
+export const filterBranches = (params: BranchFilterParams) =>
+  apiClient.post<BranchFilterResponse>("/branches/filter", params);
+
+export const getBranchById = (branchId: number) =>
+  apiClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
+
+export const getCategories = () =>
+  apiClient.get<{ categories: Category[] }>("/categories/all");

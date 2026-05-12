@@ -2,17 +2,17 @@ import axios from "axios";
 
 const TOKEN_KEY = "wc_access_token";
 
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+export const honoClient = axios.create({
+  baseURL: import.meta.env.VITE_HONO_API_BASE_URL ?? "https://i44j0udx07.execute-api.us-east-2.amazonaws.com",
 });
 
-apiClient.interceptors.request.use((config) => {
+honoClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-apiClient.interceptors.response.use(
+honoClient.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 import type { Branch } from "@/types";
-import { getAppStoreUrl } from "@/lib/platform";
 
 interface BranchModalProps {
   branch: Branch;
@@ -34,17 +33,18 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
       return;
     }
     if (hasMembership) {
-      window.open(getAppStoreUrl(), "_blank", "noopener,noreferrer");
+      onClose();
+      navigate(`/app/explore/${branch.branchId}`);
       return;
     }
     onClose();
-    navigate("/planes");
+    navigate("/app/membership");
   }
 
   const ctaLabel = !isLoggedIn
     ? "Inicia sesión para ver beneficios"
     : hasMembership
-    ? "Ver beneficios en la app"
+    ? "Ver beneficios y canjear"
     : "Obtén membresía";
 
   return (

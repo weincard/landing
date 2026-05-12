@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenu() {
-  const { user, membership, isLoading, isLoggedIn, logout } = useAuth();
+  const { user, hasMembership, membershipName, isLoading, isLoggedIn, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -55,13 +55,6 @@ export function UserMenu() {
       </Link>
     );
   }
-
-  const hasMembership =
-    membership?.status === "active" || membership?.status === "ACTIVE";
-  const membershipName =
-    membership?.planName ??
-    membership?.membershipPlan?.name ??
-    membership?.plan?.name;
 
   const initials = `${user?.name?.[0] ?? ""}${user?.lastname?.[0] ?? ""}`.toUpperCase();
   const fullName = [user?.name, user?.lastname].filter(Boolean).join(" ");
@@ -127,12 +120,7 @@ export function UserMenu() {
             zIndex: 100,
           }}
         >
-          <div
-            style={{
-              padding: "16px",
-              borderBottom: "1px solid #f0f0f0",
-            }}
-          >
+          <div style={{ padding: "16px", borderBottom: "1px solid #f0f0f0" }}>
             <p
               style={{
                 fontSize: "10px",
@@ -195,7 +183,27 @@ export function UserMenu() {
               </Link>
             )}
           </div>
+
           <div style={{ padding: "8px" }}>
+            <Link
+              to="/app/card"
+              onClick={() => setOpen(false)}
+              style={menuItemStyle}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+            >
+              Mi tarjeta
+            </Link>
+            <Link
+              to="/app/explore"
+              onClick={() => setOpen(false)}
+              style={menuItemStyle}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+            >
+              Explorar
+            </Link>
+            <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
             <button
               onClick={handleLogout}
               style={{
@@ -210,13 +218,10 @@ export function UserMenu() {
                 border: "none",
                 background: "none",
                 cursor: "pointer",
+                display: "block",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#fef2f2")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "none")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
               Cerrar sesión
             </button>
@@ -226,3 +231,17 @@ export function UserMenu() {
     </div>
   );
 }
+
+const menuItemStyle: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  padding: "10px 12px",
+  borderRadius: "10px",
+  fontSize: "14px",
+  fontFamily: '"Hepta Slab", serif',
+  fontWeight: 600,
+  color: "#111",
+  textDecoration: "none",
+  background: "none",
+};

@@ -30,7 +30,7 @@ const PLANS = [
 ];
 
 export function PlanesPage() {
-  const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipExpiry, refreshUser } =
+  const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser } =
     useAuth();
 
   const [authModal, setAuthModal] = useState<PlanKey | null>(null);
@@ -186,10 +186,10 @@ export function PlanesPage() {
                 >
                   Tienes una membresía activa: {membershipName}
                 </p>
-                {membershipExpiry && (
+                {membershipActiveUntil && (
                   <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", fontFamily: '"Hepta Slab", serif' }}>
                     Vigente hasta{" "}
-                    {new Date(membershipExpiry).toLocaleDateString("es-CO", {
+                    {new Date(membershipActiveUntil).toLocaleDateString("es-CO", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",

@@ -35,6 +35,12 @@ export const theme = createTheme({
         radius: "md",
       },
     },
+    Textarea: {
+      defaultProps: {
+        size: "md",
+        radius: "md",
+      },
+    },
     PasswordInput: {
       defaultProps: {
         size: "md",
@@ -69,6 +75,40 @@ export const theme = createTheme({
           fontFamily: '"Hepta Slab", serif',
           color: "#374151",
           paddingBottom: "1rem",
+        },
+      },
+    },
+    AppShell: {
+      styles: {
+        navbar: {
+          background: "#1B1A1A",
+          borderRight: "none",
+        },
+        header: {
+          background: "#1B1A1A",
+          borderBottom: "none",
+        },
+      },
+    },
+    NavLink: {
+      styles: {
+        root: {
+          color: "rgba(255,255,255,0.6)",
+          borderRadius: "8px",
+          "&[dataActive]": {
+            color: "#fff",
+            background: "rgba(255,255,255,0.1)",
+          },
+          "&:hover": {
+            color: "#fff",
+            background: "rgba(255,255,255,0.07)",
+          },
+        },
+        label: {
+          fontFamily: '"Clash Grotesk", sans-serif',
+          fontWeight: 700,
+          fontSize: "13px",
+          letterSpacing: "0.04em",
         },
       },
     },
