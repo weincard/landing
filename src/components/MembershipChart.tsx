@@ -81,8 +81,8 @@ export const MembershipChart: React.FC<MembershipChartProps> = ({
                 tickFormatter={formatCurrency}
               />
               <Tooltip
-                formatter={(value: number) => [
-                  `$${value.toLocaleString()}`,
+                formatter={(value) => [
+                  `$${Number(value ?? 0).toLocaleString()}`,
                   "Ventas",
                 ]}
                 contentStyle={{

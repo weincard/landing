@@ -122,10 +122,7 @@ export function AddressCard({
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode(
         { location: { lat, lng } },
-        (
-          results: google.maps.GeocoderResult[] | null,
-          status: google.maps.GeocoderStatus
-        ) => {
+        (results, status) => {
           if (status === "OK" && results && results[0]) {
             const place = results[0];
             if (place.address_components) {
