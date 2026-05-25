@@ -42,7 +42,7 @@
     "inversify": "^6.0.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
-    "next": "^15.2.1",
+    "next": "^15.5.18",
     "next-nprogress-bar": "^2.3.14",
     "next-themes": "^0.3.0",
     "react": "^18",
@@ -60,9 +60,14 @@
     "tailwindcss-animate": "^1.0.7",
     "typesense": "^3.0.5",
     "vaul": "^1.1.2",
-    "xlsx": "^0.18.5",
     "zod": "^3.23.8",
     "zustand": "^5.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.10",
+      "minimatch": ">=9.0.7"
+    }
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",
@@ -71,7 +76,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.4",
+    "eslint-config-next": "15.5.18",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
