@@ -9,6 +9,7 @@ import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
 import { PoliticaPrivacidadPage } from "@/pages/legal/PoliticaPrivacidadPage";
 import { PoliticaCookiesPage } from "@/pages/legal/PoliticaCookiesPage";
 import { TerminosPage } from "@/pages/legal/TerminosPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
   { path: "/catalogo", element: <CatalogoPage /> },
   { path: "/verificacion", element: <VerificacionPage /> },
   { path: "/delete-account", element: <DeleteAccountPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
   { path: "/politica-de-cookies", element: <PoliticaCookiesPage /> },
   { path: "/terminos-y-condiciones", element: <TerminosPage /> },
