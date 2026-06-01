@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import { honoClient } from "./honoClient";
 import type { AuthUser } from "@/types";
 
 export const requestOtp = (phone: string) =>
@@ -13,7 +14,7 @@ export const verifyOtp = (phone: string, code: string) =>
 export const getMe = () => apiClient.get<AuthUser>("/auth/me");
 
 export const forgotPassword = (email: string) =>
-  apiClient.post<{ sent: boolean }>("/auth/email/forgot-password", { email });
+  honoClient.post<{ sent: boolean }>("/auth/email/forgot-password", { email });
 
 export const resetPassword = (token: string, password: string) =>
-  apiClient.post<{ success: boolean }>("/auth/email/reset-password", { token, password });
+  honoClient.post<{ success: boolean }>("/auth/email/reset-password", { token, password });
