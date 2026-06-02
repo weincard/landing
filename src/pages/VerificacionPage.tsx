@@ -27,7 +27,8 @@ export function VerificacionPage() {
       const paid = totalPaid.trim() ? parseFloat(totalPaid.replace(/\./g, "").replace(",", ".")) : undefined;
       const res = await verifyCode(code.trim(), paid);
       setStatus("success");
-      setResult(res.data as RedemptionResult);
+      const data = res.data as { redemptionCode?: RedemptionResult } & RedemptionResult;
+      setResult(data.redemptionCode ?? data);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number; data?: RedemptionResult } })?.response?.status;
       const data = (err as { response?: { data?: RedemptionResult } })?.response?.data;
