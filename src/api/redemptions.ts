@@ -1,8 +1,9 @@
 import { apiClient } from "./client";
+import { honoClient } from "./honoClient";
 import type { GeneratedCode, Redemption } from "@/types";
 
 export const verifyCode = (code: string, totalPaid?: number) =>
-  apiClient.post("/redemptions/codes/verify", {
+  honoClient.post("/redemptions/codes/verify", {
     code,
     ...(totalPaid !== undefined ? { totalPaid } : {}),
   });
