@@ -41,7 +41,7 @@ export function StatusCard({ type, title, body, detail }: StatusCardProps) {
               Teléfono: <strong>{detail.user?.phone ?? detail.phone}</strong>
             </p>
           )}
-          {detail.totalPaid !== undefined && (
+          {detail.totalPaid != null && (
             <p style={{ fontSize: "12px", color: c.body, fontFamily: '"Hepta Slab", serif' }}>
               Total pagado: <strong>${detail.totalPaid.toLocaleString("es-CO")} COP</strong>
             </p>
