@@ -2,10 +2,10 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuthUser, MembershipInfo, CouponRedemptionInfo, PlanKey } from "@/types";
 import { getMe } from "@/api/auth";
 import { getUserStatus } from "@/api/users";
@@ -37,70 +37,72 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+interface Session {
+  user: AuthUser;
+  membership: MembershipInfo | null;
+  couponRedemption: CouponRedemptionInfo | null;
+}
+
+const SESSION_KEY = ["auth", "session"] as const;
+
+async function fetchSession(): Promise<Session> {
+  const [meRes, statusRes] = await Promise.all([getMe(), getUserStatus()]);
+  return {
+    user: meRes.data,
+    membership: statusRes.data.membership ?? null,
+    couponRedemption: statusRes.data.couponRedemption ?? null,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [membership, setMembership] = useState<MembershipInfo | null>(null);
-  const [couponRedemption, setCouponRedemption] = useState<CouponRedemptionInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  // The token isn't reactive on its own, so mirror it in state; login/logout
+  // update it, which flips the session query on/off.
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+
+  const sessionQuery = useQuery({
+    queryKey: [...SESSION_KEY, token],
+    queryFn: fetchSession,
+    enabled: !!token,
+    retry: false,
+    // An invalid/expired token is handled globally by the honoClient 401
+    // interceptor (clears storage + redirects), so no manual cleanup here.
+  });
+
+  const user = sessionQuery.data?.user ?? null;
+  const membership = sessionQuery.data?.membership ?? null;
+  const couponRedemption = sessionQuery.data?.couponRedemption ?? null;
+  // `isLoading` is false when the query is disabled (no token), so this is only
+  // true while an actual session fetch is in flight.
+  const isLoading = sessionQuery.isLoading;
 
   const refreshMembership = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return;
-    try {
-      const res = await getUserStatus();
-      setMembership(res.data.membership ?? null);
-      setCouponRedemption(res.data.couponRedemption ?? null);
-    } catch {
-      // silent — user session is still valid
-    }
-  }, []);
+    await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+  }, [queryClient]);
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setUser(null);
-      setMembership(null);
-      setCouponRedemption(null);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const [meRes, statusRes] = await Promise.all([
-        getMe(),
-        getUserStatus(),
-      ]);
-      setUser(meRes.data);
-      setMembership(statusRes.data.membership ?? null);
-      setCouponRedemption(statusRes.data.couponRedemption ?? null);
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      setUser(null);
-      setMembership(null);
-      setCouponRedemption(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
+    await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+  }, [queryClient]);
 
   const login = useCallback(
-    async (token: string) => {
-      localStorage.setItem(TOKEN_KEY, token);
-      await refreshUser();
+    async (newToken: string) => {
+      localStorage.setItem(TOKEN_KEY, newToken);
+      setToken(newToken);
+      // Prime the cache so callers can `await login(...)` and have the session
+      // ready before navigating.
+      await queryClient.fetchQuery({
+        queryKey: [...SESSION_KEY, newToken],
+        queryFn: fetchSession,
+      });
     },
-    [refreshUser]
+    [queryClient]
   );
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
-    setUser(null);
-    setMembership(null);
-    setCouponRedemption(null);
-  }, []);
+    setToken(null);
+    queryClient.removeQueries({ queryKey: SESSION_KEY });
+  }, [queryClient]);
 
   const isLoggedIn = !!user;
   const hasMembership = ["active", "pending_cancel", "trialing", "unpaid"].includes(

@@ -1,62 +1,44 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
+import { Paper, Box } from "@mantine/core";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { BranchCard } from "@/components/catalog/BranchCard";
 import { BranchModal } from "@/components/catalog/BranchModal";
-import { searchBranches } from "@/api/branches";
+import { FilterPanel, type ExploreFilters } from "@/components/explore/FilterPanel";
+import { useCatalogBranches } from "@/hooks/useBranches";
+import { useCategories } from "@/hooks/useCategories";
 import type { Branch } from "@/types";
 import { Search } from "lucide-react";
 
+const INITIAL_FILTERS: ExploreFilters = {
+  search: "",
+  categoryIds: [],
+  validDays: [],
+  offerTypes: [],
+};
+
 export function CatalogoPage() {
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [query, setQuery] = useState("");
-  const [skip, setSkip] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<ExploreFilters>(INITIAL_FILTERS);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchBranches = useCallback(
-    async (q: string, page: number, replace: boolean) => {
-      if (replace) setIsLoading(true);
-      else setIsLoadingMore(true);
-      setError(null);
+  const { data: categories = [] } = useCategories();
+  // Debounce so typing / toggling chips doesn't fire a request per keystroke.
+  const [debouncedFilters] = useDebouncedValue(filters, 350);
 
-      try {
-        const { branches: newBranches, found } = await searchBranches(q, page);
-        setBranches((prev) => (replace ? newBranches : [...prev, ...newBranches]));
-        setTotal(found);
-        setSkip(page);
-      } catch {
-        setError("No se pudo cargar el catálogo. Intenta de nuevo.");
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    []
-  );
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    refetch,
+  } = useCatalogBranches(debouncedFilters);
 
-  useEffect(() => {
-    fetchBranches("", 1, true);
-  }, [fetchBranches]);
-
-  function handleSearch(val: string) {
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchBranches(val, 1, true);
-    }, 400);
-  }
-
-  function handleLoadMore() {
-    fetchBranches(query, skip + 1, false);
-  }
-
-  const hasMore = branches.length < total;
+  const branches: Branch[] = data?.pages.flatMap((p) => p.branches) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
 
   return (
     <main style={{ minHeight: "100vh", background: "#f7f5f3" }}>
@@ -73,7 +55,7 @@ export function CatalogoPage() {
           style={{
             position: "relative",
             maxWidth: "480px",
-            margin: "0 auto 32px",
+            margin: "0 auto 20px",
           }}
         >
           <Search
@@ -88,8 +70,8 @@ export function CatalogoPage() {
           />
           <input
             type="search"
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={filters.search}
+            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
             placeholder="Buscar restaurante..."
             style={{
               width: "100%",
@@ -109,8 +91,20 @@ export function CatalogoPage() {
           />
         </div>
 
+        {/* Filters */}
+        <Box maw={480} mx="auto" mb="lg">
+          <Paper radius="xl" p="lg" withBorder>
+            <FilterPanel
+              filters={filters}
+              onChange={setFilters}
+              categories={categories}
+              showSearch={false}
+            />
+          </Paper>
+        </Box>
+
         {/* Results count */}
-        {!isLoading && !error && (
+        {!isLoading && !isError && (
           <p
             style={{
               textAlign: "center",
@@ -127,7 +121,7 @@ export function CatalogoPage() {
         )}
 
         {/* Error */}
-        {error && (
+        {isError && (
           <div
             style={{
               textAlign: "center",
@@ -141,10 +135,10 @@ export function CatalogoPage() {
             }}
           >
             <p style={{ fontFamily: '"Hepta Slab", serif', color: "#dc2626", fontSize: "14px", marginBottom: "12px" }}>
-              {error}
+              No se pudo cargar el catálogo. Intenta de nuevo.
             </p>
             <button
-              onClick={() => fetchBranches(query, 1, true)}
+              onClick={() => refetch()}
               style={{
                 background: "#000",
                 color: "#fff",
@@ -180,7 +174,7 @@ export function CatalogoPage() {
         )}
 
         {/* Branch grid */}
-        {!isLoading && !error && branches.length > 0 && (
+        {!isLoading && !isError && branches.length > 0 && (
           <div className="branch-grid">
             {branches.map((branch) => (
               <BranchCard
@@ -193,11 +187,11 @@ export function CatalogoPage() {
         )}
 
         {/* Load more */}
-        {!isLoading && hasMore && (
+        {!isLoading && hasNextPage && (
           <div style={{ textAlign: "center", marginTop: "32px" }}>
             <button
-              onClick={handleLoadMore}
-              disabled={isLoadingMore}
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
               style={{
                 background: "#000",
                 color: "#fff",
@@ -207,20 +201,20 @@ export function CatalogoPage() {
                 fontFamily: '"Clash Grotesk", sans-serif',
                 fontWeight: 700,
                 fontSize: "14px",
-                cursor: isLoadingMore ? "not-allowed" : "pointer",
-                opacity: isLoadingMore ? 0.6 : 1,
+                cursor: isFetchingNextPage ? "not-allowed" : "pointer",
+                opacity: isFetchingNextPage ? 0.6 : 1,
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
               }}
             >
-              {isLoadingMore && (
+              {isFetchingNextPage && (
                 <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="4" />
                   <path fill="#fff" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               )}
-              {isLoadingMore ? "Cargando..." : "Ver más"}
+              {isFetchingNextPage ? "Cargando..." : "Ver más"}
             </button>
           </div>
         )}

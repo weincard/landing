@@ -246,7 +246,7 @@ export function BranchDetailPage() {
                           size="xs"
                           color="dark"
                           component={Link}
-                          to={`/app/redeem/${offer.offerId}`}
+                          to={`/app/redeem/${branchId}`}
                         >
                           Generar código
                         </Button>

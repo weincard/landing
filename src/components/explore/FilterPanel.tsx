@@ -21,6 +21,8 @@ interface Props {
   filters: ExploreFilters;
   onChange: (f: ExploreFilters) => void;
   categories: Category[];
+  /** Hide the built-in search field (e.g. when the page provides its own). */
+  showSearch?: boolean;
 }
 
 const EMPTY_FILTERS: ExploreFilters = {
@@ -39,7 +41,7 @@ function isDirty(f: ExploreFilters) {
   );
 }
 
-export function FilterPanel({ filters, onChange, categories }: Props) {
+export function FilterPanel({ filters, onChange, categories, showSearch = true }: Props) {
   const categoryOptions = categories.map((c) => ({
     value: String(c.categoryId),
     label: c.name,
@@ -47,12 +49,14 @@ export function FilterPanel({ filters, onChange, categories }: Props) {
 
   return (
     <Stack gap="lg">
-      <TextInput
-        placeholder="Buscar restaurante..."
-        leftSection={<Search size={14} />}
-        value={filters.search}
-        onChange={(e) => onChange({ ...filters, search: e.currentTarget.value })}
-      />
+      {showSearch && (
+        <TextInput
+          placeholder="Buscar restaurante..."
+          leftSection={<Search size={14} />}
+          value={filters.search}
+          onChange={(e) => onChange({ ...filters, search: e.currentTarget.value })}
+        />
+      )}
 
       {categories.length > 0 && (
         <Stack gap={6}>

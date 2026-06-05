@@ -19,9 +19,12 @@ import { modals } from "@mantine/modals";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useMembershipPlans, useCancelMembership } from "@/hooks/useMembership";
-import { createCheckoutSession } from "@/api/memberships";
-import { apiClient } from "@/api/client";
+import {
+  useMembershipPlans,
+  useCancelMembership,
+  useCreateCheckout,
+  useRedeemCoupon,
+} from "@/hooks/useMembership";
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
 import { PageMeta } from "@/components/layout/PageMeta";
 import type { PlanKey } from "@/types";
@@ -46,11 +49,11 @@ export function MembershipManagementPage() {
   const { user, membership, membershipActiveUntil, hasMembership, refreshMembership } = useAuth();
   const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans();
   const cancelMutation = useCancelMembership();
+  const checkoutMutation = useCreateCheckout();
+  const redeemMutation = useRedeemCoupon();
 
   const [checkoutInitiated, setCheckoutInitiated] = useState(false);
-  const [purchasing, setPurchasing] = useState(false);
   const [couponCode, setCouponCode] = useState("");
-  const [redeemingCoupon, setRedeemingCoupon] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [emailNeeded, setEmailNeeded] = useState<PlanKey | null>(null);
 
@@ -78,11 +81,10 @@ export function MembershipManagementPage() {
   }, [membership?.status, checkoutInitiated]);
 
   async function startCheckout(planKey: PlanKey, email: string) {
-    setPurchasing(true);
     try {
-      const res = await createCheckoutSession(email, planKey);
-      if (res.data?.url) {
-        window.open(res.data.url, "_blank", "noopener,noreferrer");
+      const data = await checkoutMutation.mutateAsync({ email, plan: planKey });
+      if (data?.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
         setCheckoutInitiated(true);
         setEmailNeeded(null);
       } else {
@@ -91,8 +93,6 @@ export function MembershipManagementPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? "No se pudo iniciar el pago.");
-    } finally {
-      setPurchasing(false);
     }
   }
 
@@ -106,18 +106,14 @@ export function MembershipManagementPage() {
 
   async function handleRedeemCoupon() {
     if (!couponCode.trim()) return;
-    setRedeemingCoupon(true);
     try {
-      await apiClient.post("/coupons/redeem", { code: couponCode.trim().toUpperCase() });
-      await refreshMembership();
+      await redeemMutation.mutateAsync(couponCode);
       toast.success("¡Código activado! Tu prueba gratuita está lista.");
       setCouponCode("");
       navigate("/app/card");
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? "Código inválido o ya utilizado.");
-    } finally {
-      setRedeemingCoupon(false);
     }
   }
 
@@ -302,7 +298,7 @@ export function MembershipManagementPage() {
                       </Text>
                       <Button
                         onClick={() => handleSelectPlan(planKey)}
-                        loading={purchasing}
+                        loading={checkoutMutation.isPending}
                         color={plan.duration === "yearly" ? "white" : "dark"}
                         variant={plan.duration === "yearly" ? "white" : "filled"}
                         fullWidth
@@ -335,7 +331,7 @@ export function MembershipManagementPage() {
                   <Button
                     onClick={() => startCheckout(emailNeeded, pendingEmail)}
                     disabled={!pendingEmail.trim()}
-                    loading={purchasing}
+                    loading={checkoutMutation.isPending}
                     color="dark"
                   >
                     Continuar
@@ -365,7 +361,7 @@ export function MembershipManagementPage() {
                 <Button
                   onClick={handleRedeemCoupon}
                   disabled={!couponCode.trim()}
-                  loading={redeemingCoupon}
+                  loading={redeemMutation.isPending}
                   color="dark"
                   leftSection={<CheckCircle size={14} />}
                 >

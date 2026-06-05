@@ -1,4 +1,3 @@
-import { apiClient } from "./client";
 import { honoClient } from "./honoClient";
 import type { GeneratedCode, Redemption } from "@/types";
 
@@ -8,8 +7,8 @@ export const verifyCode = (code: string, totalPaid?: number) =>
     ...(totalPaid !== undefined ? { totalPaid } : {}),
   });
 
-export const generateCode = (offerId: number) =>
-  apiClient.post<GeneratedCode>("/redemptions/codes/generate", { offerId });
+export const generateCode = (branchId: number) =>
+  honoClient.post<GeneratedCode>("/redemptions/codes/generate", { branchId });
 
 export const getMyRedemptions = () =>
-  apiClient.get<{ redemptions: Redemption[] }>("/redemptions/by-me");
+  honoClient.get<{ redemptions: Redemption[] }>("/redemptions/by-me");

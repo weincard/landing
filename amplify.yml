@@ -3,10 +3,11 @@ frontend:
   phases:
     preBuild:
       commands:
-        - yarn install --frozen-lockfile
+        - npm install -g pnpm@10.33.0
+        - pnpm install --frozen-lockfile
     build:
       commands:
-        - yarn build
+        - pnpm build
   artifacts:
     baseDirectory: dist
     files:
@@ -14,4 +15,4 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-      - .yarn/cache/**/*
+      - ~/.local/share/pnpm/store/**/*

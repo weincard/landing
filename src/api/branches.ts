@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { honoClient } from "./honoClient";
 import type {
   Branch,
   Category,
@@ -109,7 +109,7 @@ export async function searchBranches(
   };
 }
 
-// ─── REST API endpoints (authenticated) ──────────────────────────────────────
+// ─── REST API endpoints ───────────────────────────────────────────────────────
 
 export interface BranchFilterParams {
   name?: string;
@@ -129,10 +129,10 @@ export interface BranchFilterResponse {
 }
 
 export const filterBranches = (params: BranchFilterParams) =>
-  apiClient.post<BranchFilterResponse>("/branches/filter", params);
+  honoClient.post<BranchFilterResponse>("/branches/filter", params);
 
 export const getBranchById = (branchId: number) =>
-  apiClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
+  honoClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
 
 export const getCategories = () =>
-  apiClient.get<{ categories: Category[] }>("/categories/all");
+  honoClient.get<{ categories: Category[] }>("/categories/all");

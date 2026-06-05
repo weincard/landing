@@ -12,8 +12,8 @@ export function useMyRedemptions() {
 export function useGenerateCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (offerId: number) =>
-      generateCode(offerId).then((r) => r.data),
+    mutationFn: (branchId: number) =>
+      generateCode(branchId).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["redemptions"] }),
   });
 }

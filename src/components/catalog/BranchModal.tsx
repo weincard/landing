@@ -42,7 +42,7 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
   }
 
   const ctaLabel = !isLoggedIn
-    ? "Inicia sesión para ver beneficios"
+    ? "Inicia sesión para canjear"
     : hasMembership
     ? "Ver beneficios y canjear"
     : "Obtén membresía";
@@ -227,55 +227,40 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
                 >
                   Beneficios
                 </h3>
-                {hasMembership ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    {branch.offers.map((offer) => (
-                      <div
-                        key={offer.offerId}
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {branch.offers.map((offer) => (
+                    <div
+                      key={offer.offerId}
+                      style={{
+                        background: "#f7f5f3",
+                        borderRadius: "12px",
+                        padding: "14px 16px",
+                      }}
+                    >
+                      <p
                         style={{
-                          background: "#f7f5f3",
-                          borderRadius: "12px",
-                          padding: "14px 16px",
+                          fontFamily: '"Clash Grotesk", sans-serif',
+                          fontWeight: 700,
+                          fontSize: "14px",
+                          color: "#000",
+                          marginBottom: "4px",
                         }}
                       >
-                        <p
-                          style={{
-                            fontFamily: '"Clash Grotesk", sans-serif',
-                            fontWeight: 700,
-                            fontSize: "14px",
-                            color: "#000",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          {offer.title}
+                        {offer.title}
+                      </p>
+                      {offer.description && (
+                        <p style={{ fontSize: "13px", color: "#6b7280", fontFamily: '"Hepta Slab", serif', lineHeight: 1.5 }}>
+                          {offer.description}
                         </p>
-                        {offer.description && (
-                          <p style={{ fontSize: "13px", color: "#6b7280", fontFamily: '"Hepta Slab", serif', lineHeight: 1.5 }}>
-                            {offer.description}
-                          </p>
-                        )}
-                        {offer.conditions && (
-                          <p style={{ fontSize: "11px", color: "#9ca3af", fontFamily: '"Hepta Slab", serif', marginTop: "4px" }}>
-                            {offer.conditions}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      background: "#f7f5f3",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <p style={{ fontFamily: '"Hepta Slab", serif', color: "#6b7280", fontSize: "14px", lineHeight: 1.6 }}>
-                      Obtén una membresía Weincard para ver todos los beneficios exclusivos en este restaurante.
-                    </p>
-                  </div>
-                )}
+                      )}
+                      {offer.conditions && (
+                        <p style={{ fontSize: "11px", color: "#9ca3af", fontFamily: '"Hepta Slab", serif', marginTop: "4px" }}>
+                          {offer.conditions}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

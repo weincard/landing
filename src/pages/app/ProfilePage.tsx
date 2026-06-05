@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Stack,
@@ -15,23 +15,20 @@ import {
 import { useForm } from "@mantine/form";
 import { modals } from "@mantine/modals";
 import { toast } from "sonner";
-import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { updateUser } from "@/api/users";
+import { useUpdateUser } from "@/hooks/useUsers";
 import { PageMeta } from "@/components/layout/PageMeta";
 
-const profileSchema = z.object({
-  name: z.string().min(1, "Nombre requerido"),
-  lastname: z.string().optional(),
-  email: z.union([z.string().email("Correo inválido"), z.literal("")]).optional(),
-});
-
-type ProfileForm = z.infer<typeof profileSchema>;
+type ProfileForm = {
+  name: string;
+  lastname?: string;
+  email?: string;
+};
 
 export function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
+  const updateMutation = useUpdateUser();
 
   const form = useForm<ProfileForm>({
     initialValues: {
@@ -61,20 +58,19 @@ export function ProfilePage() {
 
   async function handleSubmit(values: ProfileForm) {
     if (!user) return;
-    setSaving(true);
     try {
-      await updateUser(user.id, {
-        name: values.name.trim(),
-        lastname: values.lastname?.trim(),
-        email: values.email?.trim() || undefined,
+      await updateMutation.mutateAsync({
+        id: user.id,
+        data: {
+          name: values.name.trim(),
+          lastname: values.lastname?.trim(),
+          email: values.email?.trim() || undefined,
+        },
       });
-      await refreshUser();
       toast.success("Datos actualizados.");
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? "No se pudo actualizar.");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -135,7 +131,7 @@ export function ProfilePage() {
                   styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
                 />
                 <Group justify="flex-end" mt="sm">
-                  <Button type="submit" color="dark" loading={saving}>
+                  <Button type="submit" color="dark" loading={updateMutation.isPending}>
                     Guardar cambios
                   </Button>
                 </Group>

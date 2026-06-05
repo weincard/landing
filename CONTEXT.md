@@ -38,8 +38,7 @@ For system context, API endpoints, and backend migration status, see:
 ```
 src/
 ├── api/
-│   ├── client.ts        # apiClient (VITE_API_BASE_URL) — primary client, most endpoints
-│   ├── honoClient.ts    # honoClient (VITE_HONO_API_BASE_URL) — for newer hono-only endpoints
+│   ├── honoClient.ts    # honoClient (VITE_HONO_API_BASE_URL) — single API client, all endpoints
 │   ├── auth.ts          # OTP login, getMe
 │   ├── branches.ts      # Branch filter, branch detail, categories
 │   ├── favorites.ts
@@ -109,6 +108,7 @@ src/
 | `/verificacion` | OTP verification | No |
 | `/login` | Login | No |
 | `/delete-account` | Account deletion | No |
+| `/reset-password` | Password reset (from email link) | No |
 | `/politica-de-privacidad` | Privacy policy | No |
 | `/politica-de-cookies` | Cookie policy | No |
 | `/terminos-y-condiciones` | Terms | No |
@@ -120,22 +120,21 @@ src/
 | `/app/favorites` | Favorites | Yes |
 | `/app/profile` | Profile & settings | Yes |
 | `/app/membership` | Membership management | Yes |
-| `/app/redeem/:offerId` | Offer redemption flow | Yes |
+| `/app/redeem/:branchId` | Redemption code generation for a branch | Yes |
 
 Protected routes are wrapped in `<RequireAuth>` which checks `localStorage` for `wc_access_token`.
 
 ---
 
-## API Clients
+## API Client
 
-The app has two Axios instances, both auto-inject the JWT from `localStorage` (`wc_access_token`):
+The app uses a single Axios instance (`src/api/honoClient.ts`) pointed at the hono-lambdas gateway. It auto-injects the JWT from `localStorage` (`wc_access_token`) and redirects to `/login` on 401.
 
 | Client | Env var | Used for |
 |---|---|---|
-| `apiClient` (`src/api/client.ts`) | `VITE_API_BASE_URL` | Most endpoints — auth, branches, categories, memberships, redemptions, favorites, reviews |
-| `honoClient` (`src/api/honoClient.ts`) | `VITE_HONO_API_BASE_URL` | Newer hono-only endpoints (e.g. `GET /users/status`) |
+| `honoClient` (`src/api/honoClient.ts`) | `VITE_HONO_API_BASE_URL` | All endpoints |
 
-Both clients redirect to `/login` on 401.
+`VITE_API_BASE_URL` and the legacy `apiClient` (`src/api/client.ts`) have been removed. All API calls now go through the hono-lambdas gateway (`https://i44j0udx07.execute-api.us-east-2.amazonaws.com`).
 
 ---
 
@@ -176,6 +175,7 @@ Uses `GET /users/status` (hono-lambdas) which returns `{ userInfo, membership, c
 
 | Variable | Purpose |
 |---|---|
-| `VITE_API_BASE_URL` | Primary backend URL (hono-lambdas or legacy, configurable) |
-| `VITE_HONO_API_BASE_URL` | hono-lambdas URL for newer endpoints (default: `https://i44j0udx07.execute-api.us-east-2.amazonaws.com`) |
+| `VITE_HONO_API_BASE_URL` | hono-lambdas gateway URL (default: `https://i44j0udx07.execute-api.us-east-2.amazonaws.com`) |
 | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps (branch location / explore map) |
+| `VITE_TYPESENSE_HOST` | Typesense host (used for direct search in `branches.ts`) |
+| `VITE_TYPESENSE_API_KEY` | Typesense search-only API key |

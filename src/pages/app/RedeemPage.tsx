@@ -30,8 +30,8 @@ function formatTime(s: number) {
 }
 
 export function RedeemPage() {
-  const { offerId: offerIdParam } = useParams<{ offerId: string }>();
-  const offerId = Number(offerIdParam ?? "0");
+  const { branchId: branchIdParam } = useParams<{ branchId: string }>();
+  const branchId = Number(branchIdParam ?? "0");
   const navigate = useNavigate();
   const generateCode = useGenerateCode();
 
@@ -42,8 +42,8 @@ export function RedeemPage() {
 
   // Generate code on mount (once)
   useEffect(() => {
-    if (offerId <= 0) return;
-    generateCode.mutate(offerId, {
+    if (branchId <= 0) return;
+    generateCode.mutate(branchId, {
       onSuccess: (code) => {
         setGeneratedCode(code);
         // Start countdown after code is received
@@ -64,7 +64,7 @@ export function RedeemPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offerId]);
+  }, [branchId]);
 
   const progressPercent = (secondsLeft / COUNTDOWN_SECONDS) * 100;
   const isUrgent = secondsLeft <= 60 && !expired;
@@ -117,7 +117,7 @@ export function RedeemPage() {
               color="red"
               variant="outline"
               onClick={() =>
-                generateCode.mutate(offerId, {
+                generateCode.mutate(branchId, {
                   onSuccess: (code) => setGeneratedCode(code),
                 })
               }

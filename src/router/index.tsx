@@ -51,7 +51,7 @@ export const router = createBrowserRouter([
           { path: "/app/favorites", element: <FavoritesPage /> },
           { path: "/app/profile", element: <ProfilePage /> },
           { path: "/app/membership", element: <MembershipManagementPage /> },
-          { path: "/app/redeem/:offerId", element: <RedeemPage /> },
+          { path: "/app/redeem/:branchId", element: <RedeemPage /> },
         ],
       },
     ],
