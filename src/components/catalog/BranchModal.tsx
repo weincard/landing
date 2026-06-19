@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { AuthModal } from "@/components/auth/AuthModal";
 import type { Branch } from "@/types";
 
 interface BranchModalProps {
@@ -14,7 +13,6 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
   const navigate = useNavigate();
   const [imgIndex, setImgIndex] = useState(0);
   const [imgLoading, setImgLoading] = useState(true);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -29,7 +27,8 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
 
   function handleCta() {
     if (!isLoggedIn) {
-      setShowAuthModal(true);
+      onClose();
+      navigate(`/registro?next=/app/explore/${branch.branchId}`);
       return;
     }
     if (hasMembership) {
@@ -288,15 +287,6 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
           </div>
         </div>
       </div>
-
-      {showAuthModal && (
-        <AuthModal
-          mode="login"
-          opened
-          onClose={() => setShowAuthModal(false)}
-          onComplete={() => { setShowAuthModal(false); onClose(); }}
-        />
-      )}
 
       <style>{`
         @keyframes spin {

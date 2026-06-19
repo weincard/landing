@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { AuthModal } from "@/components/auth/AuthModal";
 import { Loader } from "@mantine/core";
 import { useAuth } from "@/context/AuthContext";
 import { createCheckoutSession } from "@/api/memberships";
@@ -32,8 +32,8 @@ const PLANS = [
 export function PlanesPage() {
   const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser } =
     useAuth();
+  const navigate = useNavigate();
 
-  const [authModal, setAuthModal] = useState<PlanKey | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const [checkoutOpened, setCheckoutOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +68,18 @@ export function PlanesPage() {
   async function handleSelectPlan(planKey: PlanKey) {
     if (activePlanKey === planKey) return;
 
+    // Unauthenticated users go through the unified auth funnel, which lands on
+    // its own Treli checkout prompt with the chosen plan preselected.
     if (!isLoggedIn) {
-      setAuthModal(planKey);
+      navigate(`/registro?plan=${planKey}&next=/app/card`);
       return;
     }
 
     // Re-fetch user to get latest email
-    let latestEmail = user?.email;
+    let latestEmail = user?.email ?? undefined;
     try {
-      const meRes = await getMe();
-      latestEmail = meRes.data.email;
+      const me = await getMe();
+      latestEmail = me.email ?? undefined;
     } catch {
       // Use cached email if refetch fails
     }
@@ -92,21 +94,14 @@ export function PlanesPage() {
     await startCheckout(planKey, latestEmail);
   }
 
-  async function handleAuthComplete(email: string) {
-    const plan = authModal!;
-    setAuthModal(null);
-    await refreshUser();
-    await startCheckout(plan, email);
-  }
-
   async function handleSaveEmailAndCheckout(e: React.FormEvent) {
     e.preventDefault();
     if (!emailInput.trim() || !pendingPlan) return;
     setEmailError(null);
     setSavingEmail(true);
     try {
-      const meRes = await getMe();
-      const userId = meRes.data.id;
+      const me = await getMe();
+      const userId = me.id;
       await updateUser(userId, { email: emailInput.trim() });
       await refreshUser();
       await startCheckout(pendingPlan, emailInput.trim());
@@ -516,16 +511,6 @@ export function PlanesPage() {
       </div>
 
       <Footer />
-
-      {authModal && (
-        <AuthModal
-          mode="checkout"
-          opened
-          onClose={() => setAuthModal(null)}
-          onComplete={handleAuthComplete}
-          planLabel={authModal === "monthly" ? "Plan Mensual" : "Plan Anual"}
-        />
-      )}
 
       <style>{`
         .plans-grid {

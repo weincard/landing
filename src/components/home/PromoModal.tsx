@@ -1,16 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Modal, Loader } from "@mantine/core";
 import { Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createCheckoutSession } from "@/api/memberships";
-import { AuthModal } from "@/components/auth/AuthModal";
 
 const PROMO_CODE = "BIENVENIDOWEB";
 
 export function PromoModal() {
   const { isLoggedIn, user } = useAuth();
+  const navigate = useNavigate();
   const [promoOpen, setPromoOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +41,7 @@ export function PromoModal() {
   async function handleLoggedInActivate() {
     if (!user?.email) {
       setPromoOpen(false);
-      setAuthOpen(true);
+      navigate("/registro?plan=monthly&next=/app/card");
       return;
     }
     await handleActivate(user.email);
@@ -198,7 +198,7 @@ export function PromoModal() {
             </button>
           ) : (
             <button
-              onClick={() => { setPromoOpen(false); setAuthOpen(true); }}
+              onClick={() => { setPromoOpen(false); navigate("/registro?plan=monthly&next=/app/card"); }}
               style={{
                 width: "100%",
                 padding: "13px",
@@ -217,15 +217,6 @@ export function PromoModal() {
           )}
         </div>
       </Modal>
-
-      {/* Auth modal for checkout flow */}
-      <AuthModal
-        mode="checkout"
-        opened={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onComplete={handleActivate}
-        planLabel="30 días gratis"
-      />
     </>
   );
 }

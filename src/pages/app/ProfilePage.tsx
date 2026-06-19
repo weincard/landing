@@ -32,8 +32,8 @@ export function ProfilePage() {
 
   const form = useForm<ProfileForm>({
     initialValues: {
-      name: user?.name ?? "",
-      lastname: user?.lastname ?? "",
+      name: user?.firstName ?? "",
+      lastname: user?.lastName ?? "",
       email: user?.email ?? "",
     },
     validate: {
@@ -48,8 +48,8 @@ export function ProfilePage() {
   useEffect(() => {
     if (user) {
       form.setValues({
-        name: user.name ?? "",
-        lastname: user.lastname ?? "",
+        name: user.firstName ?? "",
+        lastname: user.lastName ?? "",
         email: user.email ?? "",
       });
     }
@@ -61,10 +61,10 @@ export function ProfilePage() {
     try {
       await updateMutation.mutateAsync({
         id: user.id,
+        // Email is intentionally omitted — it's a fixed account identifier.
         data: {
           name: values.name.trim(),
           lastname: values.lastname?.trim(),
-          email: values.email?.trim() || undefined,
         },
       });
       toast.success("Datos actualizados.");
@@ -118,10 +118,11 @@ export function ProfilePage() {
                 />
                 <TextInput
                   label="Correo electrónico"
-                  placeholder="tu@correo.com"
                   type="email"
-                  description="Necesario para gestionar pagos y membresías."
-                  {...form.getInputProps("email")}
+                  value={user?.email ?? ""}
+                  readOnly
+                  description="Tu correo es un identificador de la cuenta y no puede cambiarse."
+                  styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
                 />
                 <TextInput
                   label="Teléfono"

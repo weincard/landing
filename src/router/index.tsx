@@ -1,6 +1,6 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { HomePage } from "@/pages/HomePage";
-import { LoginPage } from "@/pages/LoginPage";
+import { ErrorPage } from "@/pages/ErrorPage";
 import { RegistroPage } from "@/pages/RegistroPage";
 import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
@@ -23,10 +23,19 @@ import { FavoritesPage } from "@/pages/app/FavoritesPage";
 import { ProfilePage } from "@/pages/app/ProfilePage";
 
 export const router = createBrowserRouter([
+  // Pathless root route: its errorElement catches any render/loader error from
+  // any descendant route, so users get the friendly ErrorPage instead of React
+  // Router's raw error screen.
+  {
+    element: <Outlet />,
+    errorElement: <ErrorPage />,
+    children: [
   // Public routes
   { path: "/", element: <HomePage /> },
-  { path: "/login", element: <LoginPage /> },
+  // Unified auth entry point at /registro (marketing-locked path). Legacy /login
+  // redirects here so existing links keep working.
   { path: "/registro", element: <RegistroPage /> },
+  { path: "/login", element: <Navigate to="/registro" replace /> },
   { path: "/planes", element: <PlanesPage /> },
   { path: "/catalogo", element: <CatalogoPage /> },
   { path: "/verificacion", element: <VerificacionPage /> },
@@ -58,4 +67,6 @@ export const router = createBrowserRouter([
   },
 
   { path: "*", element: <NotFoundPage /> },
+    ],
+  },
 ]);

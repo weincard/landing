@@ -27,11 +27,14 @@ import {
 } from "@/hooks/useMembership";
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
 import { PageMeta } from "@/components/layout/PageMeta";
+import { useShowCouponInput } from "@/hooks/useAppConfig";
 import type { PlanKey } from "@/types";
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
-  monthly: "Accede a descuentos y beneficios exclusivos mes a mes. Cancela cuando quieras.",
-  yearly: "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
+  monthly:
+    "Accede a descuentos y beneficios exclusivos mes a mes. Cancela cuando quieras.",
+  yearly:
+    "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
   quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
 };
 
@@ -46,7 +49,15 @@ function formatDate(dateStr: string | null) {
 
 export function MembershipManagementPage() {
   const navigate = useNavigate();
-  const { user, membership, membershipActiveUntil, hasMembership, refreshMembership } = useAuth();
+  const {
+    user,
+    membership,
+    membershipActiveUntil,
+    hasMembership,
+    refreshMembership,
+  } = useAuth();
+  const showCouponInput = useShowCouponInput();
+  console.log("debug, area1, showCouponInput: ", showCouponInput);
   const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans();
   const cancelMutation = useCancelMembership();
   const checkoutMutation = useCreateCheckout();
@@ -91,7 +102,8 @@ export function MembershipManagementPage() {
         throw new Error("No se recibió URL de pago.");
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
       toast.error(msg ?? "No se pudo iniciar el pago.");
     }
   }
@@ -112,7 +124,8 @@ export function MembershipManagementPage() {
       setCouponCode("");
       navigate("/app/card");
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
       toast.error(msg ?? "Código inválido o ya utilizado.");
     }
   }
@@ -123,8 +136,8 @@ export function MembershipManagementPage() {
       title: "¿Cancelar membresía?",
       children: (
         <Text size="sm">
-          Tu acceso continúa hasta el {formatDate(membershipActiveUntil)}. No se realizarán más
-          cobros.
+          Tu acceso continúa hasta el {formatDate(membershipActiveUntil)}. No se
+          realizarán más cobros.
         </Text>
       ),
       labels: { confirm: "Sí, cancelar", cancel: "Mantener membresía" },
@@ -132,7 +145,9 @@ export function MembershipManagementPage() {
       onConfirm: async () => {
         try {
           await cancelMutation.mutateAsync(membership.membershipId);
-          toast.info(`Membresía cancelada. Tienes acceso hasta el ${formatDate(membershipActiveUntil)}.`);
+          toast.info(
+            `Membresía cancelada. Tienes acceso hasta el ${formatDate(membershipActiveUntil)}.`,
+          );
         } catch {
           toast.error("No se pudo cancelar. Intenta de nuevo.");
         }
@@ -142,7 +157,11 @@ export function MembershipManagementPage() {
 
   return (
     <>
-      <PageMeta title="Membresía" description="Gestiona tu membresía Weincard." path="/app/membership" />
+      <PageMeta
+        title="Membresía"
+        description="Gestiona tu membresía Weincard."
+        path="/app/membership"
+      />
       <Stack gap="xl" maw={700} mx="auto" py="lg">
         <Title order={2} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
           Membresía
@@ -153,7 +172,11 @@ export function MembershipManagementPage() {
           <Paper radius="xl" p="xl" withBorder>
             <Group justify="space-between" align="flex-start" mb="md">
               <Stack gap={4}>
-                <Text fw={700} size="lg" style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
+                <Text
+                  fw={700}
+                  size="lg"
+                  style={{ fontFamily: '"Clash Grotesk", sans-serif' }}
+                >
                   {membership.membershipPlanName}
                 </Text>
                 <MembershipStatusBadge status={membership.status} />
@@ -179,13 +202,7 @@ export function MembershipManagementPage() {
                 variant="light"
               >
                 Estamos confirmando tu pago. Puede tardar unos segundos.
-                <Progress
-                  mt="sm"
-                  size="xs"
-                  value={100}
-                  animated
-                  color="blue"
-                />
+                <Progress mt="sm" size="xs" value={100} animated color="blue" />
               </Alert>
             )}
 
@@ -203,7 +220,11 @@ export function MembershipManagementPage() {
               </Button>
             )}
             {membership.status === "pending_cancel" && (
-              <Alert icon={<AlertCircle size={16} />} color="yellow" variant="light">
+              <Alert
+                icon={<AlertCircle size={16} />}
+                color="yellow"
+                variant="light"
+              >
                 Tu membresía está en cancelación. Conservas el acceso hasta el{" "}
                 {formatDate(membershipActiveUntil)}.
               </Alert>
@@ -230,7 +251,13 @@ export function MembershipManagementPage() {
             {loadingPlans ? (
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 {Array.from({ length: 2 }).map((_, i) => (
-                  <Paper key={i} radius="xl" p="xl" withBorder style={{ height: 200 }} />
+                  <Paper
+                    key={i}
+                    radius="xl"
+                    p="xl"
+                    withBorder
+                    style={{ height: 200 }}
+                  />
                 ))}
               </SimpleGrid>
             ) : (
@@ -252,11 +279,19 @@ export function MembershipManagementPage() {
                             ? "linear-gradient(135deg, #1B1A1A 0%, #2d2c2c 100%)"
                             : undefined,
                         color: plan.duration === "yearly" ? "#fff" : undefined,
-                        borderColor: plan.duration === "yearly" ? "transparent" : undefined,
+                        borderColor:
+                          plan.duration === "yearly"
+                            ? "transparent"
+                            : undefined,
                       }}
                     >
                       {plan.duration === "yearly" && (
-                        <Badge color="red" variant="filled" size="sm" radius="xl">
+                        <Badge
+                          color="red"
+                          variant="filled"
+                          size="sm"
+                          radius="xl"
+                        >
                           RECOMENDADO
                         </Badge>
                       )}
@@ -281,8 +316,8 @@ export function MembershipManagementPage() {
                           {plan.duration === "monthly"
                             ? "por mes"
                             : plan.duration === "yearly"
-                            ? "por año"
-                            : "por periodo"}
+                              ? "por año"
+                              : "por periodo"}
                         </Text>
                       </Stack>
                       <Text
@@ -300,7 +335,9 @@ export function MembershipManagementPage() {
                         onClick={() => handleSelectPlan(planKey)}
                         loading={checkoutMutation.isPending}
                         color={plan.duration === "yearly" ? "white" : "dark"}
-                        variant={plan.duration === "yearly" ? "white" : "filled"}
+                        variant={
+                          plan.duration === "yearly" ? "white" : "filled"
+                        }
                         fullWidth
                       >
                         Suscribirme
@@ -313,7 +350,12 @@ export function MembershipManagementPage() {
 
             {/* Email capture */}
             {emailNeeded && (
-              <Paper radius="xl" p="xl" withBorder style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
+              <Paper
+                radius="xl"
+                p="xl"
+                withBorder
+                style={{ background: "#fffbeb", borderColor: "#fde68a" }}
+              >
                 <Text fw={700} size="sm" mb="xs">
                   Necesitamos tu correo electrónico
                 </Text>
@@ -336,39 +378,48 @@ export function MembershipManagementPage() {
                   >
                     Continuar
                   </Button>
-                  <Button variant="subtle" color="gray" onClick={() => setEmailNeeded(null)}>
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    onClick={() => setEmailNeeded(null)}
+                  >
                     Cancelar
                   </Button>
                 </Group>
               </Paper>
             )}
 
-            <Divider label="¿Tienes un código?" labelPosition="center" />
-
-            {/* Coupon redemption */}
-            <Paper radius="xl" p="lg" withBorder>
-              <Text fw={700} size="sm" mb="xs">
-                Activar código de prueba
-              </Text>
-              <Group gap="sm">
-                <TextInput
-                  flex={1}
-                  placeholder="CÓDIGO"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.currentTarget.value.toUpperCase())}
-                  style={{ textTransform: "uppercase" }}
-                />
-                <Button
-                  onClick={handleRedeemCoupon}
-                  disabled={!couponCode.trim()}
-                  loading={redeemMutation.isPending}
-                  color="dark"
-                  leftSection={<CheckCircle size={14} />}
-                >
-                  Activar
-                </Button>
-              </Group>
-            </Paper>
+            {/* Coupon redemption — gated by the showCouponInput app_config flag */}
+            {showCouponInput && (
+              <>
+                <Divider label="¿Tienes un código?" labelPosition="center" />
+                <Paper radius="xl" p="lg" withBorder>
+                  <Text fw={700} size="sm" mb="xs">
+                    Activar código de prueba
+                  </Text>
+                  <Group gap="sm">
+                    <TextInput
+                      flex={1}
+                      placeholder="CÓDIGO"
+                      value={couponCode}
+                      onChange={(e) =>
+                        setCouponCode(e.currentTarget.value.toUpperCase())
+                      }
+                      style={{ textTransform: "uppercase" }}
+                    />
+                    <Button
+                      onClick={handleRedeemCoupon}
+                      disabled={!couponCode.trim()}
+                      loading={redeemMutation.isPending}
+                      color="dark"
+                      leftSection={<CheckCircle size={14} />}
+                    >
+                      Activar
+                    </Button>
+                  </Group>
+                </Paper>
+              </>
+            )}
           </>
         )}
       </Stack>

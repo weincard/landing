@@ -1,11 +1,18 @@
+// Normalized client-side user. The hono backend returns `/auth/me` as
+// `{ user: { userId, name, email, role: { name }, ... } }` (name stored
+// tilde-joined as `first~last`). `mapAuthUser` in api/auth.ts flattens that into
+// this shape — `id` is kept as an alias of `userId` for existing call sites.
 export interface AuthUser {
   id: number;
-  name: string;
-  lastname?: string;
-  email?: string;
-  phone: string;
-  role?: string;
-  roleId?: number;
+  userId: number;
+  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  document: string | null;
+  profileUrl?: string | null;
+  role: string | null;
   isVerified?: boolean;
   createdAt?: string;
 }
@@ -82,6 +89,14 @@ export interface Category {
   name: string;
   description: string;
   image: string;
+  slug: string;
+}
+
+// Merchant category (Restaurantes, Gimnasios, Domicilios…) — distinct from the
+// food `Category`. Used as a filter on the explore page.
+export interface MerchantCategory {
+  merchantCategoryId: number;
+  name: string;
   slug: string;
 }
 
@@ -178,6 +193,7 @@ export interface TypesenseOfferDocument {
   validFrom: number;
   validTo?: number;
   expiresAt?: number;
+  sortOrder?: number;
   branchId?: number;
   branchName?: string;
   city?: string;

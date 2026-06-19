@@ -56,8 +56,8 @@ export function UserMenu() {
     );
   }
 
-  const initials = `${user?.name?.[0] ?? ""}${user?.lastname?.[0] ?? ""}`.toUpperCase();
-  const fullName = [user?.name, user?.lastname].filter(Boolean).join(" ");
+  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+  const fullName = user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
   function handleLogout() {
     logout();

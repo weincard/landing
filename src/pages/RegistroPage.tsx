@@ -1,17 +1,13 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { Link } from "react-router-dom";
+import { RegistroFlow } from "@/components/auth/RegistroFlow";
 import { PageMeta } from "@/components/layout/PageMeta";
 
+// The single, unified entry point for authentication + registration, served at
+// /registro (the path marketing locked in with their provider). Every other
+// surface (catalog, planes, promo modal, /login) redirects here with `?next=`
+// and optional `?plan=`. The "already-onboarded → skip" redirect lives in
+// RegistroFlow (it needs the funnel step to avoid firing mid-flow).
 export function RegistroPage() {
-  const { isLoggedIn } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isLoggedIn) navigate("/", { replace: true });
-  }, [isLoggedIn, navigate]);
-
   return (
     <div
       style={{
@@ -21,7 +17,7 @@ export function RegistroPage() {
         flexDirection: "column",
       }}
     >
-      <PageMeta title="Crear cuenta" description="Regístrate en Weincard y empieza a disfrutar beneficios exclusivos en restaurantes de Medellín." path="/registro" />
+      <PageMeta title="Crear cuenta" description="Ingresa o crea tu cuenta Weincard." path="/registro" />
       <header style={{ background: "#000", color: "#fff" }}>
         <div
           style={{
@@ -36,21 +32,6 @@ export function RegistroPage() {
           <Link to="/">
             <img src="/logo-weincard.png" alt="Weincard" style={{ height: "20px", width: "auto" }} />
           </Link>
-          <Link
-            to="/login"
-            style={{
-              color: "#fff",
-              textDecoration: "none",
-              fontSize: "13px",
-              fontFamily: '"Hepta Slab", serif',
-              opacity: 1,
-              transition: "opacity 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          >
-            ¿Ya tienes cuenta? <strong style={{ textDecoration: "underline" }}>Inicia sesión</strong>
-          </Link>
         </div>
       </header>
 
@@ -63,11 +44,18 @@ export function RegistroPage() {
           padding: "48px 16px",
         }}
       >
-        <AuthModal
-          mode="register"
-          inline
-          onComplete={() => navigate("/catalogo")}
-        />
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+            padding: "32px",
+            width: "100%",
+            maxWidth: "440px",
+          }}
+        >
+          <RegistroFlow />
+        </div>
       </main>
     </div>
   );

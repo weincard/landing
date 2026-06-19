@@ -1,9 +1,10 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Center, Loader } from "@mantine/core";
 import { useAuth } from "@/context/AuthContext";
 
 export function RequireAuth() {
   const { isLoading, isLoggedIn } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -14,7 +15,8 @@ export function RequireAuth() {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/registro?next=${next}`} replace />;
   }
 
   return <Outlet />;

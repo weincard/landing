@@ -36,8 +36,8 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { user, hasMembership, membershipName, logout } = useAuth();
 
-  const initials = `${user?.name?.[0] ?? ""}${user?.lastname?.[0] ?? ""}`.toUpperCase() || "WC";
-  const fullName = [user?.name, user?.lastname].filter(Boolean).join(" ") || "Usuario";
+  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "WC";
+  const fullName = user?.name ?? "Usuario";
 
   function handleLogout() {
     logout();
@@ -152,7 +152,10 @@ export function AppLayout() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main bg="gray.0">
+      {/* globals.css sets `body { color:#fff }` for the dark marketing pages;
+          the light app shell must reassert dark text or Mantine Text/Title
+          inherit white and become invisible on the light background. */}
+      <AppShell.Main bg="gray.0" style={{ color: "#1B1A1A" }}>
         <Outlet />
       </AppShell.Main>
     </AppShell>

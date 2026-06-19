@@ -25,22 +25,8 @@ import { useFavorites, useAddFavorite, useRemoveFavorite } from "@/hooks/useFavo
 import { useReviews, useCreateReview } from "@/hooks/useReviews";
 import { DayBadges } from "@/components/catalog/DayBadges";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { BrandBookColors } from "@/lib/palette";
+import { OFFER_TYPE_LABELS, OFFER_TYPE_COLORS, formatOfferValue } from "@/lib/offerTypes";
 import { useAuth } from "@/context/AuthContext";
-
-const OFFER_TYPE_LABELS: Record<string, string> = {
-  PERCENTAGE:   "% Descuento",
-  FIXED_AMOUNT: "Monto fijo",
-  PROMOTION:    "Promoción",
-  MENU:         "Menú",
-};
-
-const OFFER_TYPE_COLORS: Record<string, string> = {
-  PERCENTAGE:   BrandBookColors.blue,
-  FIXED_AMOUNT: BrandBookColors.orange,
-  PROMOTION:    BrandBookColors.pink,
-  MENU:         BrandBookColors.purple,
-};
 
 export function BranchDetailPage() {
   const { branchId: branchIdParam } = useParams<{ branchId: string }>();
@@ -119,6 +105,9 @@ export function BranchDetailPage() {
     : branch.coverImageUrl
     ? [branch.coverImageUrl]
     : [];
+
+  // Defensive: the branch-detail payload may omit `offers` entirely.
+  const offers = branch.offers ?? [];
 
   return (
     <>
@@ -201,7 +190,7 @@ export function BranchDetailPage() {
             <Divider />
 
             {/* Offers */}
-            {branch.offers.length > 0 && (
+            {offers.length > 0 && (
               <Stack gap="md">
                 <Text
                   fw={700}
@@ -212,48 +201,92 @@ export function BranchDetailPage() {
                 >
                   Beneficios
                 </Text>
-                {branch.offers.map((offer) => (
-                  <Paper key={offer.offerId} radius="xl" p="lg" withBorder>
-                    <Group justify="space-between" align="flex-start" mb="xs">
-                      <Text fw={700} size="sm" style={{ flex: 1 }}>
-                        {offer.title}
-                      </Text>
-                      <Badge
-                        size="xs"
-                        radius="xl"
-                        style={{
-                          background: OFFER_TYPE_COLORS[offer.offerType] ?? "#000",
-                          color: "#fff",
-                        }}
-                      >
-                        {OFFER_TYPE_LABELS[offer.offerType] ?? offer.offerType}
-                      </Badge>
-                    </Group>
-                    {offer.description && (
-                      <Text size="xs" c="dimmed" mb="xs">
-                        {offer.description}
-                      </Text>
-                    )}
-                    {offer.conditions && (
-                      <Text size="xs" c="dimmed" mb="sm" style={{ opacity: 0.7 }}>
-                        {offer.conditions}
-                      </Text>
-                    )}
-                    <Group justify="space-between" align="center">
-                      <DayBadges validDays={offer.validDays} />
-                      {hasMembership && (
-                        <Button
-                          size="xs"
-                          color="dark"
-                          component={Link}
-                          to={`/app/redeem/${branchId}`}
+                {offers.map((offer) => {
+                  const typeColor = OFFER_TYPE_COLORS[offer.offerType] ?? "#1B1A1A";
+                  return (
+                    <Paper
+                      key={offer.offerId}
+                      radius="lg"
+                      withBorder
+                      style={{ overflow: "hidden" }}
+                    >
+                      <Group gap={0} align="stretch" wrap="nowrap">
+                        {/* Left: headline value (e.g. "20%", "$15.000", "2x1") */}
+                        <Box
+                          style={{
+                            width: 108,
+                            flexShrink: 0,
+                            background: `${typeColor}14`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 12,
+                          }}
                         >
-                          Generar código
-                        </Button>
+                          <Text
+                            fw={800}
+                            ta="center"
+                            style={{
+                              color: typeColor,
+                              fontSize: 18,
+                              lineHeight: 1.1,
+                              fontFamily: '"Clash Grotesk", sans-serif',
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {formatOfferValue(offer)}
+                          </Text>
+                        </Box>
+
+                        {/* Right: title, description, valid days */}
+                        <Box style={{ flex: 1, padding: 16, minWidth: 0 }}>
+                          <Group justify="space-between" align="flex-start" gap="xs" mb={4}>
+                            <Text fw={700} size="sm" style={{ flex: 1 }}>
+                              {offer.title}
+                            </Text>
+                            <Badge size="xs" radius="xl" variant="light" color="gray">
+                              {OFFER_TYPE_LABELS[offer.offerType] ?? offer.offerType}
+                            </Badge>
+                          </Group>
+                          {offer.description && (
+                            <Text size="xs" c="dimmed" mb={8}>
+                              {offer.description}
+                            </Text>
+                          )}
+                          <DayBadges validDays={offer.validDays} />
+                        </Box>
+                      </Group>
+
+                      {/* Conditions footer */}
+                      {offer.conditions && (
+                        <Box
+                          style={{
+                            borderTop: "1px solid var(--mantine-color-gray-2)",
+                            padding: "10px 16px",
+                          }}
+                        >
+                          <Text size="xs" c="dimmed">
+                            {offer.conditions}
+                          </Text>
+                        </Box>
                       )}
-                    </Group>
-                  </Paper>
-                ))}
+
+                      {hasMembership && (
+                        <Box style={{ padding: "0 16px 16px" }}>
+                          <Button
+                            size="xs"
+                            color="dark"
+                            fullWidth
+                            component={Link}
+                            to={`/app/redeem/${branchId}`}
+                          >
+                            Generar código
+                          </Button>
+                        </Box>
+                      )}
+                    </Paper>
+                  );
+                })}
               </Stack>
             )}
 

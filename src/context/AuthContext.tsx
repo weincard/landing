@@ -25,6 +25,8 @@ interface AuthContextValue {
   couponRedemption: CouponRedemptionInfo | null;
   isLoading: boolean;
   isLoggedIn: boolean;
+  /** True once name, email and document are all set — i.e. registration done. */
+  profileComplete: boolean;
   hasMembership: boolean;
   activePlanKey: PlanKey | null;
   membershipName: string | null;
@@ -46,9 +48,9 @@ interface Session {
 const SESSION_KEY = ["auth", "session"] as const;
 
 async function fetchSession(): Promise<Session> {
-  const [meRes, statusRes] = await Promise.all([getMe(), getUserStatus()]);
+  const [user, statusRes] = await Promise.all([getMe(), getUserStatus()]);
   return {
-    user: meRes.data,
+    user,
     membership: statusRes.data.membership ?? null,
     couponRedemption: statusRes.data.couponRedemption ?? null,
   };
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const isLoggedIn = !!user;
+  const profileComplete = !!(user?.name && user?.email && user?.document);
   const hasMembership = ["active", "pending_cancel", "trialing", "unpaid"].includes(
     membership?.status ?? ""
   );
@@ -123,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         couponRedemption,
         isLoading,
         isLoggedIn,
+        profileComplete,
         hasMembership,
         activePlanKey,
         membershipName,

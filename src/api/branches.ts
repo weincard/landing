@@ -1,138 +1,126 @@
 import { honoClient } from "./honoClient";
-import type {
-  Branch,
-  Category,
-  TypesenseGroupedResponse,
-  TypesenseOfferDocument,
-  Offer,
-} from "@/types";
+import type { Branch } from "@/types";
 
-const TYPESENSE_HOST = import.meta.env.VITE_TYPESENSE_HOST;
-const TYPESENSE_API_KEY = import.meta.env.VITE_TYPESENSE_API_KEY;
+export const getBranchById = (branchId: number) =>
+  honoClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
 
-function groupedHitToBranch(
-  groupKey: (string | number)[],
-  hits: Array<{ document: TypesenseOfferDocument }>
-): Branch {
-  const first = hits[0].document;
-  const branchId =
-    typeof groupKey[0] === "number"
-      ? groupKey[0]
-      : parseInt(String(groupKey[0]), 10);
+// ─── Branch tiles (the SAME browse endpoint the Flutter app uses) ─────────────
+// GET /branches/tiles is public, Typesense-backed, and supports server-side
+// merchant-category + valid-days + text filtering and geo. This is the canonical
+// browse/search source for both /app/explore and /catalogo.
 
-  const offers: Offer[] = hits.map(({ document: doc }) => ({
-    offerId: parseInt(doc.id, 10),
-    title: doc.title,
-    description: doc.description,
-    offerType: doc.offerType,
-    value: doc.value,
-    conditions: doc.conditions,
-    validFrom: new Date(doc.validFrom * 1000).toISOString(),
-    validTo: doc.validTo ? new Date(doc.validTo * 1000).toISOString() : null,
-    validDays: doc.validDays ?? [],
-    isActive: doc.isActive,
-    expiresAt: doc.expiresAt
-      ? new Date(doc.expiresAt * 1000).toISOString()
-      : null,
-    excludesBankHolidays: doc.excludesBankHolidays,
-  }));
+export interface BranchTileOffer {
+  offerId: number;
+  title: string;
+  description: string;
+  offerType: string;
+  validDays: string[];
+  membershipPlanId: number | null;
+  membershipPlanLevel: number | null;
+}
 
+export interface BranchTile {
+  branchId: number | null;
+  name: string | null;
+  logoUrl: string | null;
+  coverImageUrl: string | null;
+  images: string[];
+  city: string | null;
+  location: [number, number] | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  merchantCategoryId: number | null;
+  merchantCategoryName: string | null;
+  lightOfferSummary: BranchTileOffer[];
+}
+
+export interface BranchTilesResponse {
+  kind: string;
+  isSearch: boolean;
+  near_me: BranchTile[];
+  below: BranchTile[];
+  hasMore: boolean;
+}
+
+export interface BranchTilesParams {
+  q?: string;
+  merchantCategoryId?: number;
+  validDays?: string[];
+  page?: number;
+  limit?: number;
+  lat?: number;
+  lng?: number;
+}
+
+export const getBranchTiles = (params: BranchTilesParams) => {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.merchantCategoryId) qs.set("merchantCategoryId", String(params.merchantCategoryId));
+  if (params.validDays?.length) qs.set("validDays", params.validDays.join(","));
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.lat != null && params.lng != null) {
+    qs.set("lat", String(params.lat));
+    qs.set("lng", String(params.lng));
+  }
+  return honoClient.get<BranchTilesResponse>(`/branches/tiles?${qs.toString()}`);
+};
+
+// Map a light tile into the Branch shape the BranchCard / BranchModal expect.
+// Tiles are intentionally light (no address/phone) — same as the previous
+// Typesense-derived catalog branches.
+export function tileToBranch(tile: BranchTile): Branch {
   return {
-    branchId,
-    name: first.branchName ?? "",
+    branchId: tile.branchId ?? 0,
+    name: tile.name ?? "",
     slug: "",
     description: "",
     address: "",
-    city: first.city ?? "",
-    country: first.country ?? "",
+    city: tile.city ?? "",
+    country: "",
     phone: "",
     whatsapp: "",
     canContact: false,
     email: "",
     website: "",
-    logoUrl: first.logoUrl ?? "",
-    coverImageUrl: first.coverImageUrl ?? null,
+    logoUrl: tile.logoUrl ?? "",
+    coverImageUrl: tile.coverImageUrl,
     note: "",
     isActive: true,
-    images: first.images ?? [],
+    images: tile.images ?? [],
     tags: null,
     createdAt: "",
     category: {
-      categoryId: first.categoryId ?? 0,
-      name: first.categoryName ?? "",
+      categoryId: tile.categoryId ?? 0,
+      name: tile.categoryName ?? "",
       description: "",
       image: "",
       slug: "",
     },
     merchant: {
-      merchantId: first.merchantId ?? 0,
-      name: first.merchantName ?? "",
+      merchantId: 0,
+      name: "",
       description: "",
       logoUrl: "",
-      country: first.country ?? "",
+      country: "",
       state: "",
       founder: false,
       createdAt: "",
     },
-    offers,
+    offers: tile.lightOfferSummary.map((o) => ({
+      offerId: o.offerId,
+      title: o.title,
+      description: o.description,
+      offerType: o.offerType,
+      value: "",
+      conditions: "",
+      validFrom: "",
+      validTo: null,
+      validDays: o.validDays,
+      isActive: true,
+      expiresAt: null,
+      excludesBankHolidays: false,
+    })),
     favoritesCount: 0,
   };
 }
-
-export async function searchBranches(
-  query: string,
-  page: number
-): Promise<{ branches: Branch[]; found: number }> {
-  const params = new URLSearchParams({
-    q: query.trim() || "*",
-    query_by: "branchName,title,description",
-    group_by: "branchId",
-    group_limit: "10",
-    per_page: "10",
-    page: String(page),
-    filter_by: "isActive:true && branchId:>0",
-  });
-
-  const res = await fetch(
-    `https://${TYPESENSE_HOST}/collections/offers/documents/search?${params}`,
-    { headers: { "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY } }
-  );
-
-  if (!res.ok) throw new Error("Error al cargar los restaurantes.");
-
-  const data: TypesenseGroupedResponse = await res.json();
-  return {
-    branches: data.grouped_hits.map((g) =>
-      groupedHitToBranch(g.group_key, g.hits)
-    ),
-    found: data.found,
-  };
-}
-
-// ─── REST API endpoints ───────────────────────────────────────────────────────
-
-export interface BranchFilterParams {
-  name?: string;
-  categoryIds?: number[];
-  offerTypes?: string[];
-  validDays?: string[];
-  limit?: number;
-  skip?: number;
-  cursorDistance?: number;
-  cursorBranchId?: number;
-}
-
-export interface BranchFilterResponse {
-  branches: Branch[];
-  count: number;
-  nextCursor: { cursorDistance: number; cursorBranchId: number } | null;
-}
-
-export const filterBranches = (params: BranchFilterParams) =>
-  honoClient.post<BranchFilterResponse>("/branches/filter", params);
-
-export const getBranchById = (branchId: number) =>
-  honoClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
-
-export const getCategories = () =>
-  honoClient.get<{ categories: Category[] }>("/categories/all");

@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function MembershipCard({ user, membership, activeUntil }: Props) {
-  const fullName = [user.name, user.lastname].filter(Boolean).join(" ");
+  const fullName = user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" ");
   const memberId = String(membership.membershipId).padStart(4, "0");
 
   const formattedDate = activeUntil
