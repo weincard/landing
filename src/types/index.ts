@@ -221,7 +221,10 @@ export interface RedemptionResult {
   redemptionCode?: string;
   code?: string;
   totalPaid?: number;
-  user?: { phone?: string };
+  // The verify endpoint returns the RedemptionCode record with its `user` and
+  // `branch` relations loaded. `user.name` is stored tilde-joined (`first~last`).
+  user?: { phone?: string; name?: string };
+  branch?: { name?: string };
   phone?: string;
   message?: string;
 }

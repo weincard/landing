@@ -13,6 +13,12 @@ const colors = {
   error:   { bg: "#fef2f2", border: "#fecaca", title: "#991b1b", body: "#dc2626" },
 };
 
+const detailStyle = (color: string): React.CSSProperties => ({
+  fontSize: "12px",
+  color,
+  fontFamily: '"Hepta Slab", serif',
+});
+
 export function StatusCard({ type, title, body, detail }: StatusCardProps) {
   const c = colors[type];
   return (
@@ -32,17 +38,27 @@ export function StatusCard({ type, title, body, detail }: StatusCardProps) {
       {detail && type === "success" && (
         <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
           {(detail.redemptionCode ?? detail.code) && (
-            <p style={{ fontSize: "12px", color: c.body, fontFamily: '"Hepta Slab", serif' }}>
+            <p style={detailStyle(c.body)}>
               Código: <strong>{detail.redemptionCode ?? detail.code}</strong>
             </p>
           )}
+          {detail.user?.name && (
+            <p style={detailStyle(c.body)}>
+              Cliente: <strong>{detail.user.name.replace(/~/g, " ")}</strong>
+            </p>
+          )}
           {(detail.user?.phone ?? detail.phone) && (
-            <p style={{ fontSize: "12px", color: c.body, fontFamily: '"Hepta Slab", serif' }}>
+            <p style={detailStyle(c.body)}>
               Teléfono: <strong>{detail.user?.phone ?? detail.phone}</strong>
             </p>
           )}
+          {detail.branch?.name && (
+            <p style={detailStyle(c.body)}>
+              Sucursal: <strong>{detail.branch.name}</strong>
+            </p>
+          )}
           {detail.totalPaid != null && (
-            <p style={{ fontSize: "12px", color: c.body, fontFamily: '"Hepta Slab", serif' }}>
+            <p style={detailStyle(c.body)}>
               Total pagado: <strong>${detail.totalPaid.toLocaleString("es-CO")} COP</strong>
             </p>
           )}
