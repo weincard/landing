@@ -24,14 +24,21 @@ export function VerificacionPage() {
     setResult(null);
 
     try {
-      const paid = totalPaid.trim() ? parseFloat(totalPaid.replace(/\./g, "").replace(",", ".")) : undefined;
+      const paid = totalPaid.trim()
+        ? parseFloat(totalPaid.replace(/\./g, "").replace(",", "."))
+        : undefined;
       const res = await verifyCode(code.trim(), paid);
       setStatus("success");
-      const data = res.data as { redemptionCode?: RedemptionResult } & RedemptionResult;
+      const data = res.data as {
+        redemptionCode?: RedemptionResult;
+      } & RedemptionResult;
       setResult(data.redemptionCode ?? data);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number; data?: RedemptionResult } })?.response?.status;
-      const data = (err as { response?: { data?: RedemptionResult } })?.response?.data;
+      const status = (
+        err as { response?: { status?: number; data?: RedemptionResult } }
+      )?.response?.status;
+      const data = (err as { response?: { data?: RedemptionResult } })?.response
+        ?.data;
       if (status === 400) {
         setStatus("used");
       } else if (status === 404) {
@@ -47,7 +54,11 @@ export function VerificacionPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#f7f5f3" }}>
-      <PageMeta title="Verificar código" description="Verifica un código de canje Weincard." path="/verificacion" />
+      <PageMeta
+        title="Verificar código"
+        description="Verifica un código de canje Weincard."
+        path="/verificacion"
+      />
       <Header />
 
       <div
@@ -70,7 +81,14 @@ export function VerificacionPage() {
           >
             VERIFICAR CÓDIGO
           </h1>
-          <p style={{ fontFamily: '"Hepta Slab", serif', color: "#6b7280", fontSize: "15px", lineHeight: 1.6 }}>
+          <p
+            style={{
+              fontFamily: '"Hepta Slab", serif',
+              color: "#6b7280",
+              fontSize: "15px",
+              lineHeight: 1.6,
+            }}
+          >
             Ingresa el código de canje para verificar si es válido.
           </p>
         </div>
@@ -83,6 +101,37 @@ export function VerificacionPage() {
             boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
           }}
         >
+          {/* Status messages */}
+          {status === "success" && (
+            <StatusCard
+              type="success"
+              title="¡Código válido!"
+              body="El código fue verificado exitosamente."
+              detail={result}
+            />
+          )}
+          {status === "used" && (
+            <StatusCard
+              type="warning"
+              title="Código ya utilizado"
+              body="Este código ya fue canjeado anteriormente."
+            />
+          )}
+          {status === "not_found" && (
+            <StatusCard
+              type="error"
+              title="Código no encontrado"
+              body="No se encontró ningún código con ese valor."
+            />
+          )}
+          {status === "error" && (
+            <StatusCard
+              type="error"
+              title="Error"
+              body={result?.message ?? "Ocurrió un error. Intenta de nuevo."}
+            />
+          )}
+
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>
@@ -95,7 +144,9 @@ export function VerificacionPage() {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Ej: ABC123"
                 style={inputStyle}
-                onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #FF3B47")}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 0 2px #FF3B47")
+                }
                 onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
               />
             </div>
@@ -109,7 +160,9 @@ export function VerificacionPage() {
                 onChange={(e) => setTotalPaid(e.target.value)}
                 placeholder="Ej: 50000"
                 style={inputStyle}
-                onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #FF3B47")}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 0 2px #FF3B47")
+                }
                 onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
               />
             </div>
@@ -135,33 +188,27 @@ export function VerificacionPage() {
               }}
             >
               {isLoading && (
-                <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="4" />
+                <svg
+                  className="spin"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="4"
+                  />
                   <path fill="#fff" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               )}
               {isLoading ? "Verificando..." : "Verificar código"}
             </button>
           </form>
-
-          {/* Status messages */}
-          {status === "success" && (
-            <StatusCard
-              type="success"
-              title="¡Código válido!"
-              body="El código fue verificado exitosamente."
-              detail={result}
-            />
-          )}
-          {status === "used" && (
-            <StatusCard type="warning" title="Código ya utilizado" body="Este código ya fue canjeado anteriormente." />
-          )}
-          {status === "not_found" && (
-            <StatusCard type="error" title="Código no encontrado" body="No se encontró ningún código con ese valor." />
-          )}
-          {status === "error" && (
-            <StatusCard type="error" title="Error" body={result?.message ?? "Ocurrió un error. Intenta de nuevo."} />
-          )}
         </div>
       </div>
 
@@ -194,4 +241,3 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
   transition: "box-shadow 0.15s",
 };
-
