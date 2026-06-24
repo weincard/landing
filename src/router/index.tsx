@@ -4,6 +4,7 @@ import { ErrorPage } from "@/pages/ErrorPage";
 import { RegistroPage } from "@/pages/RegistroPage";
 import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
+import { LaPlazaPage } from "@/pages/LaPlazaPage";
 import { VerificacionPage } from "@/pages/VerificacionPage";
 import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
 import { PoliticaPrivacidadPage } from "@/pages/legal/PoliticaPrivacidadPage";
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <Navigate to="/registro" replace /> },
   { path: "/planes", element: <PlanesPage /> },
   { path: "/catalogo", element: <CatalogoPage /> },
+  { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
   { path: "/verificacion", element: <VerificacionPage /> },
   { path: "/delete-account", element: <DeleteAccountPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },

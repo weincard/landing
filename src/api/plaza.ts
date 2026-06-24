@@ -1,0 +1,69 @@
+import { honoClient } from "./honoClient";
+
+// La Plaza de Wein — types mirror the hono `plaza` service entities. We only
+// consume the PUBLIC, read-only endpoint here; everything is display-only.
+
+/** A benefit shown for the feria (edition-wide) or overridden per merchant. */
+export interface PlazaOffer {
+  title: string;
+  description?: string;
+  value?: string;
+  conditions?: string;
+  offerType?: string;
+}
+
+/** A category filter chip. `key` matches PlazaMerchant.category. */
+export interface PlazaEditionCategory {
+  key: string;
+  label: string;
+}
+
+export interface PlazaEditionConfig {
+  searchSuggestions?: string[];
+  categories?: PlazaEditionCategory[];
+  accentColor?: string;
+  intro?: string;
+}
+
+export interface PlazaEdition {
+  plazaEditionId: number;
+  name: string;
+  slug: string | null;
+  isActive: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueLatitude: number | null;
+  venueLongitude: number | null;
+  heroImageUrl: string | null;
+  coverImageUrl: string | null;
+  config: PlazaEditionConfig;
+  /** Shared benefit for every merchant in this feria. Display-only. */
+  offers: PlazaOffer[];
+  createdAt: string;
+}
+
+export interface PlazaMerchant {
+  plazaMerchantId: number;
+  name: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  images: string[];
+  category: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  /** Non-empty replaces the edition's shared benefit for this merchant. */
+  offers: PlazaOffer[];
+  createdAt: string;
+}
+
+export interface PlazaActive {
+  edition: PlazaEdition | null;
+  merchants: PlazaMerchant[];
+}
+
+// GET /plaza/public/active is PUBLIC (no JWT). Returns the live edition + its
+// active merchants, or { edition: null, merchants: [] } when no feria is live.
+export const getPlazaActive = () =>
+  honoClient.get<PlazaActive>("/plaza/public/active");
