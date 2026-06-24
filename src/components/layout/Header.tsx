@@ -61,7 +61,7 @@ export function Header({ sticky = false }: HeaderProps) {
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              RESTAURANTES
+              BENEFICIOS
             </Link>
             <span style={{ color: "#fff", opacity: 0.5 }}>|</span>
             <Link
