@@ -3,7 +3,9 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { PlazaMerchantModal } from "@/components/plaza/PlazaMerchantModal";
+import { PlazaCardSheet } from "@/components/plaza/PlazaCardSheet";
 import { usePlazaActive } from "@/hooks/usePlazaActive";
+import { useAuth } from "@/context/AuthContext";
 import type { PlazaMerchant } from "@/api/plaza";
 import { BrandBookColors } from "@/lib/palette";
 
@@ -13,9 +15,16 @@ import { BrandBookColors } from "@/lib/palette";
 // active via the public GET /plaza/public/active endpoint.
 export function LaPlazaPage() {
   const { data, isLoading, isError } = usePlazaActive();
+  const { isLoggedIn, hasMembership, user, membership } = useAuth();
   const [query, setQuery] = useState("");
   const [categoryKey, setCategoryKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<PlazaMerchant | null>(null);
+  const [cardOpen, setCardOpen] = useState(false);
+
+  // Android contingency: active members get an in-stand "Usar mi weincard" that
+  // shows their card. Display-only — no redemption flow. The public page stays
+  // info-only for everyone else.
+  const canShowCard = isLoggedIn && hasMembership && !!user && !!membership;
 
   const edition = data?.edition ?? null;
   const merchants = data?.merchants ?? [];
@@ -304,12 +313,51 @@ export function LaPlazaPage() {
 
       <Footer />
 
+      {/* Active-member contingency: floating "Usar mi weincard" button. Only
+          rendered once the live feria has loaded so it doesn't float over the
+          loading/error/no-feria states. */}
+      {canShowCard && edition && (
+        <button
+          onClick={() => setCardOpen(true)}
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: "24px",
+            transform: "translateX(-50%)",
+            zIndex: 40,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "14px 24px",
+            borderRadius: "9999px",
+            background: "#000",
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: '"Clash Grotesk", sans-serif',
+            fontWeight: 700,
+            fontSize: "15px",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2.5" />
+            <path d="M2 10h20" strokeLinecap="round" />
+          </svg>
+          Usar mi weincard
+        </button>
+      )}
+
       {selected && edition && (
         <PlazaMerchantModal
           merchant={selected}
           edition={edition}
           onClose={() => setSelected(null)}
         />
+      )}
+
+      {cardOpen && canShowCard && (
+        <PlazaCardSheet onClose={() => setCardOpen(false)} />
       )}
     </main>
   );

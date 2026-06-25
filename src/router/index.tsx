@@ -5,6 +5,7 @@ import { RegistroPage } from "@/pages/RegistroPage";
 import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
 import { LaPlazaPage } from "@/pages/LaPlazaPage";
+import { PlazaFloatingLink } from "@/components/plaza/PlazaFloatingLink";
 import { VerificacionPage } from "@/pages/VerificacionPage";
 import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
 import { PoliticaPrivacidadPage } from "@/pages/legal/PoliticaPrivacidadPage";
@@ -28,7 +29,14 @@ export const router = createBrowserRouter([
   // any descendant route, so users get the friendly ErrorPage instead of React
   // Router's raw error screen.
   {
-    element: <Outlet />,
+    element: (
+      <>
+        <Outlet />
+        {/* Floating shortcut to La Plaza de Wein on every route (hides itself
+            on the Plaza page). */}
+        <PlazaFloatingLink />
+      </>
+    ),
     errorElement: <ErrorPage />,
     children: [
   // Public routes
