@@ -49,7 +49,7 @@ export function PromoModal() {
 
   return (
     <>
-      <button
+      {/* <button
         onClick={() => setPromoOpen(true)}
         style={{
           background: "#000",
@@ -72,10 +72,17 @@ export function PromoModal() {
       >
         {purchasing && <Loader size={14} color="white" />}
         Comienza tu prueba gratis de 30 días
-      </button>
+      </button> */}
 
       {error && (
-        <p style={{ color: "#dc2626", fontSize: "13px", marginTop: "8px", fontFamily: '"Hepta Slab", serif' }}>
+        <p
+          style={{
+            color: "#dc2626",
+            fontSize: "13px",
+            marginTop: "8px",
+            fontFamily: '"Hepta Slab", serif',
+          }}
+        >
           {error}
         </p>
       )}
@@ -198,7 +205,10 @@ export function PromoModal() {
             </button>
           ) : (
             <button
-              onClick={() => { setPromoOpen(false); navigate("/registro?plan=monthly&next=/app/card"); }}
+              onClick={() => {
+                setPromoOpen(false);
+                navigate("/registro?plan=monthly&next=/app/card");
+              }}
               style={{
                 width: "100%",
                 padding: "13px",
