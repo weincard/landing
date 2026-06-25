@@ -58,6 +58,31 @@ export const verifyOtp = (phone: string, code: string) =>
     code,
   });
 
+// ─────────────────────── Account deletion (public, OTP) ────────────────────
+// Store-compliance self-service deletion. The user proves ownership of the
+// account by receiving a one-time code on the SAME channel that identifies it
+// (phone or email); the account tied to that identifier is then anonymized +
+// soft-deleted. No login session is created. For phone, callers pass the
+// 10-digit local number — we prepend +57 to match the rest of the app.
+export type DeleteChannel = "phone" | "email";
+
+export const requestDeleteOtp = (channel: DeleteChannel, value: string) =>
+  honoClient.post<{ found: boolean }>("/auth/delete-account/request-otp", {
+    channel,
+    value: channel === "phone" ? `+57${value}` : value,
+  });
+
+export const confirmDeleteAccount = (
+  channel: DeleteChannel,
+  value: string,
+  code: string,
+) =>
+  honoClient.post<{ message: string }>("/auth/delete-account/confirm", {
+    channel,
+    value: channel === "phone" ? `+57${value}` : value,
+    code,
+  });
+
 // ───────────────────────────── Email + password ────────────────────────────
 export const emailCheck = (email: string) =>
   honoClient.post<{ exists: boolean; verified?: boolean }>("/auth/email/check", {
