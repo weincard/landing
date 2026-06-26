@@ -16,11 +16,21 @@ import {
 import { completeRegistration, getUserStatus } from "@/api/users";
 import { createCheckoutSession } from "@/api/memberships";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { DOCUMENT_TYPES } from "@/lib/documentTypes";
+import {
+  DEFAULT_COUNTRY,
+  composePhone,
+  splitPhone,
+  type Country,
+} from "@/lib/countries";
 import type { PlanKey } from "@/types";
 import { ErrorMsg } from "./ErrorMsg";
 import { SuccessMsg } from "./SuccessMsg";
 import { SubmitButton } from "./SubmitButton";
 import { FormInput } from "./FormInput";
+import { CodeInput } from "./CodeInput";
+import { PhoneCountryInput } from "./PhoneCountryInput";
 
 // One unified auth funnel for the whole app. Both identity methods (phone OTP
 // and email+password) converge on a shared profile step, then a membership-aware
@@ -67,65 +77,10 @@ function apiError(err: unknown, fallback: string): string {
   );
 }
 
-// 6-digit code input shared by phone OTP and email verification.
-function CodeInput({
-  value,
-  onChange,
-}: {
-  value: string[];
-  onChange: (next: string[]) => void;
-}) {
-  const refs = useRef<(HTMLInputElement | null)[]>([]);
-  useEffect(() => {
-    setTimeout(() => refs.current[0]?.focus(), 100);
-  }, []);
-
-  function handleChange(i: number, raw: string) {
-    const digit = raw.replace(/\D/g, "").slice(-1);
-    const next = [...value];
-    next[i] = digit;
-    onChange(next);
-    if (digit && i < 5) refs.current[i + 1]?.focus();
-  }
-  function handleKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace" && !value[i] && i > 0) refs.current[i - 1]?.focus();
-  }
-  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pasted) return;
-    const next = [...value];
-    for (let i = 0; i < 6; i++) next[i] = pasted[i] ?? "";
-    onChange(next);
-    refs.current[Math.min(pasted.length, 5)]?.focus();
-  }
-
-  return (
-    <div style={{ display: "flex", gap: "8px", justifyContent: "space-between" }}>
-      {value.map((digit, i) => (
-        <input
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digit}
-          onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(i, e)}
-          onPaste={i === 0 ? handlePaste : undefined}
-          className="otp-input"
-          aria-label={`Dígito ${i + 1}`}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function RegistroFlow() {
   const { login, refreshUser, isLoggedIn, profileComplete, isLoading: authLoading } = useAuth();
   const showCouponInput = useShowCouponInput();
+  const gate = useEmailVerificationGate();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/app/card";
@@ -144,6 +99,11 @@ export function RegistroFlow() {
   const [document, setDocument] = useState("");
   const [documentType, setDocumentType] = useState("CC");
   const [couponCode, setCouponCode] = useState("");
+  // Data-step phone (with country picker). For the phone-signup path it's the
+  // already-verified login number (locked); for email signup it's a new field.
+  const [regCountry, setRegCountry] = useState<Country>(DEFAULT_COUNTRY);
+  const [regNumber, setRegNumber] = useState("");
+  const [consent, setConsent] = useState(false);
 
   // flow control state
   const [emailFlowToken, setEmailFlowToken] = useState<string | undefined>();
@@ -183,6 +143,17 @@ export function RegistroFlow() {
       if (me.lastName) setLastName(me.lastName);
       if (me.email || knownEmail) setEmail(me.email ?? knownEmail ?? "");
       if (me.document) setDocument(me.document);
+      // Prefill the phone field: an existing account phone (already verified via
+      // OTP login) takes precedence; otherwise seed from the number just typed
+      // on the phone-identify step.
+      if (me.phone) {
+        const split = splitPhone(me.phone);
+        setRegCountry(split.country);
+        setRegNumber(split.number);
+      } else if (method === "phone" && phone) {
+        setRegCountry(DEFAULT_COUNTRY);
+        setRegNumber(phone);
+      }
       setStep("register");
       return;
     }
@@ -352,6 +323,10 @@ export function RegistroFlow() {
     e.preventDefault();
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !document.trim())
       return;
+    if (!consent) {
+      setError("Debes aceptar los términos y la política de privacidad para continuar.");
+      return;
+    }
     resetMessages();
     setIsLoading(true);
     try {
@@ -361,6 +336,7 @@ export function RegistroFlow() {
         email: email.trim(),
         document: document.trim(),
         documentType,
+        ...(regNumber.trim() ? { phone: composePhone(regCountry, regNumber) } : {}),
         ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
         termsAcceptedAt: new Date().toISOString(),
       });
@@ -375,6 +351,9 @@ export function RegistroFlow() {
   // ───────── subscribe (Treli checkout prompt) ─────────
   async function goToCheckout() {
     resetMessages();
+    // Treli needs a verified email — if it isn't, open the verification modal
+    // (which resumes into checkout via ?then=checkout) instead of paying now.
+    if (gate(plan)) return;
     setIsLoading(true);
     try {
       const res = await createCheckoutSession(email.trim(), plan);
@@ -698,21 +677,65 @@ export function RegistroFlow() {
                     boxSizing: "border-box",
                   }}
                 >
-                  <option value="CC">C.C.</option>
-                  <option value="CE">C.E.</option>
-                  <option value="PP">Pasaporte</option>
+                  {DOCUMENT_TYPES.map((dt) => (
+                    <option key={dt.value} value={dt.value}>
+                      {dt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <FormInput label="Documento" required id="document" type="text" inputMode="numeric" value={document} onChange={(e) => setDocument(e.target.value)} placeholder="1234567890" />
+            </div>
+            <div style={{ marginBottom: "12px" }}>
+              <PhoneCountryInput
+                country={regCountry}
+                number={regNumber}
+                onCountryChange={setRegCountry}
+                onNumberChange={setRegNumber}
+                disabled={method === "phone"}
+              />
+              {method === "phone" && (
+                <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+                  Teléfono verificado.
+                </p>
+              )}
             </div>
             {showCouponInput && (
               <div style={{ marginBottom: "12px" }}>
                 <FormInput label="Código promocional" id="coupon" type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Opcional" />
               </div>
             )}
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                marginBottom: "14px",
+                fontSize: "12px",
+                color: "#4b5563",
+                fontFamily: '"Hepta Slab", serif',
+                lineHeight: 1.5,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                style={{ marginTop: "2px", flexShrink: 0, accentColor: "#FF3B47", width: "16px", height: "16px" }}
+              />
+              <span>
+                Acepto los{" "}
+                <Link to="/terminos-y-condiciones" target="_blank" style={{ color: "#FF3B47", textDecoration: "underline" }}>Términos y Condiciones</Link>
+                , la{" "}
+                <Link to="/politica-de-privacidad" target="_blank" style={{ color: "#FF3B47", textDecoration: "underline" }}>Política de Privacidad</Link>
+                {" "}y la{" "}
+                <Link to="/politica-de-cookies" target="_blank" style={{ color: "#FF3B47", textDecoration: "underline" }}>Política de Cookies</Link>.
+              </span>
+            </label>
             {error && <ErrorMsg msg={error} />}
             <SubmitButton
-              disabled={isLoading || !firstName.trim() || !lastName.trim() || !email.trim() || !document.trim()}
+              disabled={isLoading || !consent || !firstName.trim() || !lastName.trim() || !email.trim() || !document.trim()}
               loading={isLoading}
             >
               Crear mi cuenta

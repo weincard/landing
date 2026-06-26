@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Stack,
   Title,
@@ -11,6 +11,7 @@ import {
   Paper,
   Divider,
   Anchor,
+  Badge,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { modals } from "@mantine/modals";
@@ -25,10 +26,26 @@ type ProfileForm = {
   email?: string;
 };
 
+function VerifiedBadge({ verified }: { verified: boolean }) {
+  return verified ? (
+    <Badge color="green" variant="light" size="sm">
+      Verificado
+    </Badge>
+  ) : (
+    <Badge color="orange" variant="light" size="sm">
+      Sin verificar
+    </Badge>
+  );
+}
+
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [, setParams] = useSearchParams();
   const updateMutation = useUpdateUser();
+
+  const emailVerified = !!user?.isEmailVerified;
+  const phoneVerified = !!user?.isPhoneVerified;
 
   const form = useForm<ProfileForm>({
     initialValues: {
@@ -56,15 +73,27 @@ export function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  function openVerify(kind: "email" | "phone") {
+    setParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("verify", kind);
+      return p;
+    });
+  }
+
   async function handleSubmit(values: ProfileForm) {
     if (!user) return;
     try {
       await updateMutation.mutateAsync({
         id: user.id,
-        // Email is intentionally omitted — it's a fixed account identifier.
         data: {
           name: values.name.trim(),
           lastname: values.lastname?.trim(),
+          // Email is editable only while unverified; once verified it's a locked
+          // account identifier. Only send it when it actually changed.
+          ...(!emailVerified && values.email?.trim() && values.email.trim() !== (user.email ?? "")
+            ? { email: values.email.trim() }
+            : {}),
         },
       });
       toast.success("Datos actualizados.");
@@ -72,6 +101,28 @@ export function ProfilePage() {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? "No se pudo actualizar.");
     }
+  }
+
+  // Verify email: persist any edit first (so the modal verifies the saved
+  // address), then open the unified verification modal.
+  async function handleVerifyEmail() {
+    if (!user) return;
+    const email = form.values.email?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Ingresa un correo válido antes de verificar.");
+      return;
+    }
+    if (email !== (user.email ?? "")) {
+      try {
+        await updateMutation.mutateAsync({ id: user.id, data: { email } });
+        await refreshUser();
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.error(msg ?? "No se pudo guardar el correo.");
+        return;
+      }
+    }
+    openVerify("email");
   }
 
   function handleDeleteAccount() {
@@ -116,21 +167,90 @@ export function ProfilePage() {
                   placeholder="Tu apellido"
                   {...form.getInputProps("lastname")}
                 />
-                <TextInput
-                  label="Correo electrónico"
-                  type="email"
-                  value={user?.email ?? ""}
-                  readOnly
-                  description="Tu correo es un identificador de la cuenta y no puede cambiarse."
-                  styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
-                />
-                <TextInput
-                  label="Teléfono"
-                  value={user?.phone ?? ""}
-                  readOnly
-                  description="El número de teléfono es tu identificador de inicio de sesión y no puede cambiar."
-                  styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
-                />
+
+                {/* Email — editable until verified, then locked */}
+                <div>
+                  <Group justify="space-between" align="center" mb={4}>
+                    <Text size="sm" fw={500}>
+                      Correo electrónico
+                    </Text>
+                    <VerifiedBadge verified={emailVerified} />
+                  </Group>
+                  {emailVerified ? (
+                    <TextInput
+                      type="email"
+                      value={user?.email ?? ""}
+                      readOnly
+                      description="Tu correo está verificado y no puede cambiarse."
+                      styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
+                    />
+                  ) : (
+                    <Stack gap="xs">
+                      <TextInput
+                        type="email"
+                        placeholder="tu@correo.com"
+                        {...form.getInputProps("email")}
+                      />
+                      <Group justify="space-between" align="center">
+                        <Text size="xs" c="dimmed">
+                          Verifica tu correo para poder activar tu membresía.
+                        </Text>
+                        <Button
+                          variant="light"
+                          color="dark"
+                          size="xs"
+                          onClick={handleVerifyEmail}
+                          loading={updateMutation.isPending}
+                        >
+                          Verificar correo
+                        </Button>
+                      </Group>
+                    </Stack>
+                  )}
+                </div>
+
+                {/* Phone — set + verified together via OTP; locked once verified */}
+                <div>
+                  <Group justify="space-between" align="center" mb={4}>
+                    <Text size="sm" fw={500}>
+                      Teléfono
+                    </Text>
+                    <VerifiedBadge verified={phoneVerified} />
+                  </Group>
+                  {phoneVerified ? (
+                    <TextInput
+                      value={user?.phone ?? ""}
+                      readOnly
+                      description="Tu teléfono está verificado y no puede cambiarse."
+                      styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
+                    />
+                  ) : (
+                    <Stack gap="xs">
+                      <TextInput
+                        value={user?.phone ?? ""}
+                        readOnly
+                        placeholder="Sin teléfono"
+                        styles={{ input: { cursor: "not-allowed", opacity: 0.7 } }}
+                      />
+                      <Group justify="space-between" align="center">
+                        <Text size="xs" c="dimmed">
+                          {user?.phone
+                            ? "Verifica tu número para confirmarlo."
+                            : "Agrega y verifica un número de teléfono."}
+                        </Text>
+                        <Button
+                          variant="light"
+                          color="dark"
+                          size="xs"
+                          onClick={() => openVerify("phone")}
+                        >
+                          {user?.phone ? "Verificar teléfono" : "Agregar teléfono"}
+                        </Button>
+                      </Group>
+                    </Stack>
+                  )}
+                </div>
+
                 <Group justify="flex-end" mt="sm">
                   <Button type="submit" color="dark" loading={updateMutation.isPending}>
                     Guardar cambios

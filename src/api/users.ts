@@ -1,9 +1,19 @@
 import { honoClient } from "./honoClient";
 import type { UserStatusResponse } from "@/types";
 
+// Allowlisted by the backend PATCH /users/update/:id handler. `email`/`phone`/
+// `document`/`documentType` are editable here only while still unverified — the
+// UI locks them once verified.
 export const updateUser = (
   id: number,
-  data: Partial<{ name: string; lastname: string; email: string }>
+  data: Partial<{
+    name: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    document: string;
+    documentType: string;
+  }>
 ) => honoClient.patch(`/users/update/${id}`, data);
 
 export const getUserStatus = () =>
@@ -18,6 +28,8 @@ export interface CompleteRegistrationPayload {
   email: string;
   document: string;
   documentType?: string;
+  /** Full E.164 phone (dial code + number). Stored unverified until OTP. */
+  phone?: string;
   couponCode?: string;
   termsAcceptedAt?: string;
 }

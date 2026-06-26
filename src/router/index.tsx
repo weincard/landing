@@ -14,6 +14,7 @@ import { TerminosPage } from "@/pages/legal/TerminosPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { VerifyContactModal } from "@/components/auth/VerifyContactModal";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MembershipCardPage } from "@/pages/app/MembershipCardPage";
 import { MembershipManagementPage } from "@/pages/app/MembershipManagementPage";
@@ -35,6 +36,9 @@ export const router = createBrowserRouter([
         {/* Floating shortcut to La Plaza de Wein on every route (hides itself
             on the Plaza page). */}
         <PlazaFloatingLink />
+        {/* Unified email/phone verification surface, driven by the ?verify=
+            query param so it's available (and reload-safe) on every route. */}
+        <VerifyContactModal />
       </>
     ),
     errorElement: <ErrorPage />,

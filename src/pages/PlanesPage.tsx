@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createCheckoutSession } from "@/api/memberships";
 import { updateUser } from "@/api/users";
 import { getMe } from "@/api/auth";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { PlanKey } from "@/types";
 
 const PLANS = [
@@ -32,6 +33,7 @@ const PLANS = [
 export function PlanesPage() {
   const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser } =
     useAuth();
+  const gate = useEmailVerificationGate();
   const navigate = useNavigate();
 
   const [purchasing, setPurchasing] = useState(false);
@@ -45,6 +47,12 @@ export function PlanesPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   async function startCheckout(planKey: PlanKey, email: string) {
+    // Email must be verified before Treli checkout — gate opens the verify modal
+    // (resuming into checkout) and we stop here when it does.
+    if (gate(planKey)) {
+      setPendingPlan(null);
+      return;
+    }
     setError(null);
     setPurchasing(true);
     setCheckoutOpened(false);

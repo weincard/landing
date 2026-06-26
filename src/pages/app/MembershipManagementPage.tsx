@@ -28,6 +28,7 @@ import {
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { PlanKey } from "@/types";
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
@@ -57,7 +58,7 @@ export function MembershipManagementPage() {
     refreshMembership,
   } = useAuth();
   const showCouponInput = useShowCouponInput();
-  console.log("debug, area1, showCouponInput: ", showCouponInput);
+  const gate = useEmailVerificationGate();
   const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans();
   const cancelMutation = useCancelMembership();
   const checkoutMutation = useCreateCheckout();
@@ -92,6 +93,12 @@ export function MembershipManagementPage() {
   }, [membership?.status, checkoutInitiated]);
 
   async function startCheckout(planKey: PlanKey, email: string) {
+    // Treli checkout requires a verified email — gate opens the verify modal
+    // (resuming into checkout) and we stop here when it does.
+    if (gate(planKey)) {
+      setEmailNeeded(null);
+      return;
+    }
     try {
       const data = await checkoutMutation.mutateAsync({ email, plan: planKey });
       if (data?.url) {

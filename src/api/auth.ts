@@ -13,6 +13,8 @@ type RawUser = {
   document?: string | null;
   profileUrl?: string | null;
   isVerified?: boolean;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
   role?: { name?: string | null } | string | null;
   createdAt?: string;
 };
@@ -37,6 +39,8 @@ export function mapAuthUser(raw: RawUser): AuthUser {
     profileUrl: raw.profileUrl ?? null,
     role,
     isVerified: raw.isVerified,
+    isEmailVerified: raw.isEmailVerified,
+    isPhoneVerified: raw.isPhoneVerified,
     createdAt: raw.createdAt,
   };
 }
@@ -57,6 +61,22 @@ export const verifyOtp = (phone: string, code: string) =>
     phone: `+57${phone}`,
     code,
   });
+
+// ──────────────── Authenticated phone attach + verify (profile) ─────────────
+// Unlike requestOtp/verifyOtp (the login funnel, which find-or-create a user BY
+// phone and mint a new session), these attach + verify a phone onto the CURRENT
+// logged-in account. The Bearer token is added by the honoClient interceptor.
+// `phone` is the full E.164 string (dial code + number) from the country picker.
+export const phoneAttachRequestOtp = (phone: string) =>
+  honoClient.post<{ message: string }>("/auth/phone/attach/request-otp", {
+    phone,
+  });
+
+export const phoneAttachVerifyOtp = (phone: string, code: string) =>
+  honoClient.post<{ message: string; isVerified: boolean }>(
+    "/auth/phone/attach/verify-otp",
+    { phone, code },
+  );
 
 // ─────────────────────── Account deletion (public, OTP) ────────────────────
 // Store-compliance self-service deletion. The user proves ownership of the

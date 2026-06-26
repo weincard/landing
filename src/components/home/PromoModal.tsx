@@ -4,11 +4,13 @@ import { Modal, Loader } from "@mantine/core";
 import { Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createCheckoutSession } from "@/api/memberships";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 
 const PROMO_CODE = "BIENVENIDOWEB";
 
 export function PromoModal() {
   const { isLoggedIn, user } = useAuth();
+  const gate = useEmailVerificationGate();
   const navigate = useNavigate();
   const [promoOpen, setPromoOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -24,6 +26,9 @@ export function PromoModal() {
 
   async function handleActivate(email: string) {
     setPromoOpen(false);
+    // Email must be verified before Treli checkout — gate opens the verify modal
+    // (resuming into checkout) and we stop here when it does.
+    if (gate("monthly")) return;
     setError("");
     setPurchasing(true);
     try {

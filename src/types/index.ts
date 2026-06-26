@@ -14,6 +14,10 @@ export interface AuthUser {
   profileUrl?: string | null;
   role: string | null;
   isVerified?: boolean;
+  /** Email proven via the email verification code flow. */
+  isEmailVerified?: boolean;
+  /** Phone proven via OTP. Distinct from `isVerified` (set on any finished registration). */
+  isPhoneVerified?: boolean;
   createdAt?: string;
 }
 
