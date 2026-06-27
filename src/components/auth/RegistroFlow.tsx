@@ -18,6 +18,7 @@ import { createCheckoutSession } from "@/api/memberships";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { DOCUMENT_TYPES } from "@/lib/documentTypes";
+import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_HINT } from "@/lib/password";
 import {
   DEFAULT_COUNTRY,
   composePhone,
@@ -269,8 +270,9 @@ export function RegistroFlow() {
 
   async function submitSetPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    const pwError = validatePassword(password);
+    if (pwError) {
+      setError(pwError);
       return;
     }
     resetMessages();
@@ -569,12 +571,15 @@ export function RegistroFlow() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 autoFocus
               />
+              <p style={{ fontSize: "12px", color: "#6b6375", marginTop: "6px" }}>
+                {PASSWORD_REQUIREMENTS_HINT}
+              </p>
             </div>
             {error && <ErrorMsg msg={error} />}
-            <SubmitButton disabled={isLoading || password.length < 6} loading={isLoading}>
+            <SubmitButton disabled={isLoading || password.length < PASSWORD_MIN_LENGTH} loading={isLoading}>
               Continuar
             </SubmitButton>
           </form>

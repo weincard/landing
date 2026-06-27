@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ErrorMsg } from "@/components/auth/ErrorMsg";
 import { SuccessMsg } from "@/components/auth/SuccessMsg";
 import { PageMeta } from "@/components/layout/PageMeta";
+import { validatePassword, PASSWORD_REQUIREMENTS_HINT } from "@/lib/password";
 
 const headingStyle: React.CSSProperties = {
   fontFamily: '"Clash Grotesk", sans-serif',
@@ -29,8 +30,9 @@ export function ResetPasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+    const pwError = validatePassword(password);
+    if (pwError) {
+      setError(pwError);
       return;
     }
     if (password !== confirm) {
@@ -118,6 +120,9 @@ export function ResetPasswordPage() {
                     placeholder="Mínimo 8 caracteres"
                     autoFocus
                   />
+                  <p style={{ fontSize: "12px", color: "#6b6375", marginTop: "6px" }}>
+                    {PASSWORD_REQUIREMENTS_HINT}
+                  </p>
                 </div>
                 <div style={{ marginBottom: "12px" }}>
                   <FormInput
