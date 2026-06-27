@@ -18,14 +18,22 @@ import {
   SimpleGrid,
   Box,
 } from "@mantine/core";
-import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star } from "lucide-react";
+import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useBranchDetail } from "@/hooks/useBranches";
-import { useFavorites, useAddFavorite, useRemoveFavorite } from "@/hooks/useFavorites";
+import {
+  useFavorites,
+  useAddFavorite,
+  useRemoveFavorite,
+} from "@/hooks/useFavorites";
 import { useReviews, useCreateReview } from "@/hooks/useReviews";
 import { DayBadges } from "@/components/catalog/DayBadges";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { OFFER_TYPE_LABELS, OFFER_TYPE_COLORS, formatOfferValue } from "@/lib/offerTypes";
+import {
+  OFFER_TYPE_LABELS,
+  OFFER_TYPE_COLORS,
+  formatOfferValue,
+} from "@/lib/offerTypes";
 import { useAuth } from "@/context/AuthContext";
 
 export function BranchDetailPage() {
@@ -36,7 +44,8 @@ export function BranchDetailPage() {
 
   const { data: branch, isLoading, isError } = useBranchDetail(branchId);
   const { data: favorites = [] } = useFavorites();
-  const { data: reviews = [], isLoading: loadingReviews } = useReviews(branchId);
+  const { data: reviews = [], isLoading: loadingReviews } =
+    useReviews(branchId);
   const addFav = useAddFavorite();
   const removeFav = useRemoveFavorite();
   const createReview = useCreateReview(branchId);
@@ -66,7 +75,10 @@ export function BranchDetailPage() {
       return;
     }
     try {
-      await createReview.mutateAsync({ rating: reviewRating, comment: reviewComment });
+      await createReview.mutateAsync({
+        rating: reviewRating,
+        comment: reviewComment,
+      });
       toast.success("Reseña enviada.");
       setReviewRating(0);
       setReviewComment("");
@@ -93,7 +105,12 @@ export function BranchDetailPage() {
     return (
       <Stack py="lg">
         <Alert color="red">No se pudo cargar el restaurante.</Alert>
-        <Button variant="subtle" color="dark" onClick={() => navigate(-1)} leftSection={<ArrowLeft size={14} />}>
+        <Button
+          variant="subtle"
+          color="dark"
+          onClick={() => navigate(-1)}
+          leftSection={<ArrowLeft size={14} />}
+        >
           Volver
         </Button>
       </Stack>
@@ -103,15 +120,18 @@ export function BranchDetailPage() {
   const images = branch.images?.length
     ? branch.images
     : branch.coverImageUrl
-    ? [branch.coverImageUrl]
-    : [];
+      ? [branch.coverImageUrl]
+      : [];
 
   // Defensive: the branch-detail payload may omit `offers` entirely.
   const offers = branch.offers ?? [];
-
   return (
     <>
-      <PageMeta title={branch.name} description={branch.description} path={`/app/explore/${branchId}`} />
+      <PageMeta
+        title={branch.name}
+        description={branch.description}
+        path={`/app/explore/${branchId}`}
+      />
       <Stack gap="lg" py="lg" maw={900} mx="auto">
         {/* Back */}
         <Button
@@ -131,14 +151,37 @@ export function BranchDetailPage() {
           <Stack flex={1} gap="lg" style={{ minWidth: 0 }}>
             {/* Image gallery */}
             {images.length > 0 && (
-              <Box style={{ position: "relative", borderRadius: 16, overflow: "hidden", aspectRatio: "16/9", background: "#f3f4f6" }}>
+              <Box
+                style={{
+                  position: "relative",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  aspectRatio: "16/9",
+                  background: "#f3f4f6",
+                }}
+              >
                 <img
                   src={images[imgIndex]}
                   alt={`${branch.name} ${imgIndex + 1}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
                 />
                 {images.length > 1 && (
-                  <Group justify="center" gap={6} mt="xs" style={{ position: "absolute", bottom: 12, left: 0, right: 0 }}>
+                  <Group
+                    justify="center"
+                    gap={6}
+                    mt="xs"
+                    style={{
+                      position: "absolute",
+                      bottom: 12,
+                      left: 0,
+                      right: 0,
+                    }}
+                  >
                     {images.map((_, i) => (
                       <Box
                         key={i}
@@ -147,7 +190,8 @@ export function BranchDetailPage() {
                           width: 8,
                           height: 8,
                           borderRadius: "50%",
-                          background: i === imgIndex ? "#fff" : "rgba(255,255,255,0.5)",
+                          background:
+                            i === imgIndex ? "#fff" : "rgba(255,255,255,0.5)",
                           cursor: "pointer",
                         }}
                       />
@@ -163,11 +207,20 @@ export function BranchDetailPage() {
                 <img
                   src={branch.logoUrl}
                   alt={`Logo ${branch.name}`}
-                  style={{ width: 56, height: 56, borderRadius: 12, objectFit: "contain", background: "#f7f5f3" }}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 12,
+                    objectFit: "contain",
+                    background: "#f7f5f3",
+                  }}
                 />
               )}
               <Stack gap={4} flex={1}>
-                <Title order={3} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
+                <Title
+                  order={3}
+                  style={{ fontFamily: '"Clash Grotesk", sans-serif' }}
+                >
                   {branch.name}
                 </Title>
                 {branch.category?.name && (
@@ -176,10 +229,27 @@ export function BranchDetailPage() {
                   </Badge>
                 )}
                 {branch.address && (
-                  <Text size="sm" c="dimmed">{branch.address}, {branch.city}</Text>
+                  <Text size="sm" c="dimmed">
+                    {branch.address}, {branch.city}
+                  </Text>
                 )}
               </Stack>
             </Group>
+
+            {/* Direct redeem CTA — mirrors the mobile branch-detail shortcut:
+                straight to code generation for THIS branch, no picker step. */}
+            {hasMembership && (
+              <Button
+                color="dark"
+                radius="xl"
+                size="md"
+                leftSection={<Zap size={16} />}
+                component={Link}
+                to={`/app/redeem/${branchId}`}
+              >
+                Usar mi Weincard
+              </Button>
+            )}
 
             {branch.description && (
               <Text size="sm" c="dimmed" style={{ lineHeight: 1.7 }}>
@@ -201,8 +271,10 @@ export function BranchDetailPage() {
                 >
                   Beneficios
                 </Text>
+
                 {offers.map((offer) => {
-                  const typeColor = OFFER_TYPE_COLORS[offer.offerType] ?? "#1B1A1A";
+                  const typeColor =
+                    OFFER_TYPE_COLORS[offer.offerType] ?? "#1B1A1A";
                   return (
                     <Paper
                       key={offer.offerId}
@@ -240,12 +312,23 @@ export function BranchDetailPage() {
 
                         {/* Right: title, description, valid days */}
                         <Box style={{ flex: 1, padding: 16, minWidth: 0 }}>
-                          <Group justify="space-between" align="flex-start" gap="xs" mb={4}>
+                          <Group
+                            justify="space-between"
+                            align="flex-start"
+                            gap="xs"
+                            mb={4}
+                          >
                             <Text fw={700} size="sm" style={{ flex: 1 }}>
                               {offer.title}
                             </Text>
-                            <Badge size="xs" radius="xl" variant="light" color="gray">
-                              {OFFER_TYPE_LABELS[offer.offerType] ?? offer.offerType}
+                            <Badge
+                              size="xs"
+                              radius="xl"
+                              variant="light"
+                              color="gray"
+                            >
+                              {OFFER_TYPE_LABELS[offer.offerType] ??
+                                offer.offerType}
                             </Badge>
                           </Group>
                           {offer.description && (
@@ -256,7 +339,6 @@ export function BranchDetailPage() {
                           <DayBadges validDays={offer.validDays} />
                         </Box>
                       </Group>
-
                       {/* Conditions footer */}
                       {offer.conditions && (
                         <Box
@@ -268,20 +350,6 @@ export function BranchDetailPage() {
                           <Text size="xs" c="dimmed">
                             {offer.conditions}
                           </Text>
-                        </Box>
-                      )}
-
-                      {hasMembership && (
-                        <Box style={{ padding: "0 16px 16px" }}>
-                          <Button
-                            size="xs"
-                            color="dark"
-                            fullWidth
-                            component={Link}
-                            to={`/app/redeem/${branchId}`}
-                          >
-                            Generar código
-                          </Button>
                         </Box>
                       )}
                     </Paper>
@@ -320,7 +388,9 @@ export function BranchDetailPage() {
                     </Avatar>
                     <Stack gap={2}>
                       <Text size="xs" fw={700}>
-                        {[review.user.name, review.user.lastname].filter(Boolean).join(" ")}
+                        {[review.user.name, review.user.lastname]
+                          .filter(Boolean)
+                          .join(" ")}
                       </Text>
                       <Rating value={review.rating} readOnly size="xs" />
                     </Stack>
@@ -411,7 +481,13 @@ export function BranchDetailPage() {
 
               <Divider />
 
-              <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.07em" }}>
+              <Text
+                size="xs"
+                fw={700}
+                c="dimmed"
+                tt="uppercase"
+                style={{ letterSpacing: "0.07em" }}
+              >
                 Establecimiento
               </Text>
               <Text size="xs" c="dimmed">

@@ -16,7 +16,7 @@ import {
   Badge,
   Box,
 } from "@mantine/core";
-import { ArrowLeft, Copy, Check, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, Copy, Check, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { useGenerateCode } from "@/hooks/useRedemptions";
 import { PageMeta } from "@/components/layout/PageMeta";
 import type { GeneratedCode } from "@/types";
@@ -40,13 +40,16 @@ export function RedeemPage() {
   const [expired, setExpired] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Generate code on mount (once)
-  useEffect(() => {
+  // Request a code and (re)start the countdown. Reused by the mount effect, the
+  // error-retry button, and the "Obtener nuevo código" button.
+  function startCode() {
     if (branchId <= 0) return;
     generateCode.mutate(branchId, {
       onSuccess: (code) => {
         setGeneratedCode(code);
-        // Start countdown after code is received
+        setExpired(false);
+        setSecondsLeft(COUNTDOWN_SECONDS);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
           setSecondsLeft((s) => {
             if (s <= 1) {
@@ -59,7 +62,11 @@ export function RedeemPage() {
         }, 1000);
       },
     });
+  }
 
+  // Generate a code on mount; the button below lets the user request a new one.
+  useEffect(() => {
+    startCode();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -116,11 +123,7 @@ export function RedeemPage() {
               size="xs"
               color="red"
               variant="outline"
-              onClick={() =>
-                generateCode.mutate(branchId, {
-                  onSuccess: (code) => setGeneratedCode(code),
-                })
-              }
+              onClick={startCode}
             >
               Reintentar
             </Button>
@@ -242,6 +245,17 @@ export function RedeemPage() {
                 Muestra este código al personal del restaurante <strong>antes de pagar</strong>.
                 Es de un solo uso.
               </Text>
+
+              <Button
+                color="dark"
+                radius="xl"
+                size="sm"
+                leftSection={<RefreshCw size={14} />}
+                loading={generateCode.isPending}
+                onClick={startCode}
+              >
+                Obtener nuevo código
+              </Button>
 
               <Button
                 variant="subtle"

@@ -21,6 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { UsarWeincardButton } from "@/components/redeem/UsarWeincardButton";
 
 const NAV_ITEMS = [
   { href: "/app/card",       label: "Mi tarjeta",  icon: CreditCard },
@@ -157,6 +158,7 @@ export function AppLayout() {
           inherit white and become invisible on the light background. */}
       <AppShell.Main bg="gray.0" style={{ color: "#1B1A1A" }}>
         <Outlet />
+        <UsarWeincardButton />
       </AppShell.Main>
     </AppShell>
   );

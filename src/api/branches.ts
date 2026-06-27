@@ -1,8 +1,29 @@
 import { honoClient } from "./honoClient";
-import type { Branch } from "@/types";
+import type { Branch, Offer } from "@/types";
 
 export const getBranchById = (branchId: number) =>
   honoClient.get<{ branch: Branch }>(`/branches/one/${branchId}`);
+
+// ─── Branch detail (the SAME aggregating endpoint the Flutter app uses) ───────
+// GET /branches/detail returns the full branch PLUS its active offers (as a
+// top-level array, each carrying membership-plan + channel info, admin-sorted)
+// and sibling `sucursales`. Unlike /branches/one, which omits offers entirely,
+// this is what powers the branch-detail view and its redeem CTAs.
+export interface BranchDetailResponse {
+  kind: string;
+  branch: Branch;
+  offers: Offer[];
+  sucursales: Array<{
+    branchId: number;
+    name: string | null;
+    image: string | null;
+    city: string | null;
+    location: [number, number] | null;
+  }>;
+}
+
+export const getBranchDetail = (branchId: number) =>
+  honoClient.get<BranchDetailResponse>(`/branches/detail/${branchId}`);
 
 // ─── Branch tiles (the SAME browse endpoint the Flutter app uses) ─────────────
 // GET /branches/tiles is public, Typesense-backed, and supports server-side

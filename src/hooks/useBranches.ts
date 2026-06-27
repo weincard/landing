@@ -1,8 +1,9 @@
 import { useInfiniteQuery, useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
-  getBranchById,
+  getBranchDetail,
   getBranchTiles,
   tileToBranch,
+  type BranchTilesResponse,
 } from "@/api/branches";
 import { getDeliveryBranches, deliveryBranchToBranch } from "@/api/deliveries";
 import type { Branch } from "@/types";
@@ -14,6 +15,9 @@ export interface BrowseFilters {
   search: string;
   merchantCategoryId: number | null;
   validDays: string[];
+  /** "Cerca de mí": when true we send lat/lng so results are geo-sorted and the
+   *  backend returns a populated near_me set; when false we omit coordinates. */
+  nearMe: boolean;
 }
 
 // Unified branch browse/search — backed by GET /branches/tiles, the SAME public
@@ -32,8 +36,10 @@ export function useBranchBrowse(filters: BrowseFilters, location: Coords, enable
         q: filters.search.trim() || undefined,
         merchantCategoryId: filters.merchantCategoryId ?? undefined,
         validDays: filters.validDays.length ? filters.validDays : undefined,
-        lat: location.lat,
-        lng: location.lng,
+        // Only send coordinates when "Cerca de mí" is on. Without them the
+        // backend returns near_me=[] and a full, non-geo-sorted `below` list.
+        lat: filters.nearMe ? location.lat : undefined,
+        lng: filters.nearMe ? location.lng : undefined,
         page: pageParam as number,
         limit: BROWSE_PAGE_SIZE,
       });
@@ -44,11 +50,16 @@ export function useBranchBrowse(filters: BrowseFilters, location: Coords, enable
   });
 }
 
-/** Flattens the infinite-query pages into Branch cards. */
-export function browseBranches(
-  pages: { below: Parameters<typeof tileToBranch>[0][] }[] | undefined,
-): Branch[] {
-  return (pages ?? []).flatMap((p) => p.below).map(tileToBranch);
+/** Flattens the infinite-query pages into Branch cards. When "Cerca de mí" is
+ *  on, the first page carries a `near_me` set (the nearby branches) — surface
+ *  those first, then the paginated `below` list, de-duplicated by branchId.
+ *  When it's off, near_me is empty and this is just the `below` list. */
+export function browseBranches(pages: BranchTilesResponse[] | undefined): Branch[] {
+  const all = pages ?? [];
+  const nearMe = (all[0]?.near_me ?? []).map(tileToBranch);
+  const below = all.flatMap((p) => p.below).map(tileToBranch);
+  const seen = new Set(nearMe.map((b) => b.branchId));
+  return [...nearMe, ...below.filter((b) => !seen.has(b.branchId))];
 }
 
 // The "Domicilios" merchant category uses GET /deliveries/branches (not tiles),
@@ -62,10 +73,16 @@ export function useDeliveryBranches(location: Coords, enabled: boolean) {
   });
 }
 
+// Calls /branches/detail (offers included) and merges the top-level `offers`
+// array onto the branch, so consumers keep reading `branch.offers`.
 export function useBranchDetail(branchId: number) {
   return useQuery({
     queryKey: ["branch", branchId],
-    queryFn: () => getBranchById(branchId).then((r) => r.data.branch),
+    queryFn: () =>
+      getBranchDetail(branchId).then((r) => ({
+        ...r.data.branch,
+        offers: r.data.offers ?? [],
+      })),
     enabled: branchId > 0,
   });
 }

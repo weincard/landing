@@ -11,8 +11,9 @@ import {
   SimpleGrid,
   Skeleton,
   Center,
+  Switch,
 } from "@mantine/core";
-import { Search, Compass } from "lucide-react";
+import { Search, Compass, MapPin } from "lucide-react";
 import { useMerchantCategories } from "@/hooks/useMerchantCategories";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import {
@@ -29,6 +30,7 @@ const INITIAL: BrowseFilters = {
   search: "",
   merchantCategoryId: null,
   validDays: [],
+  nearMe: false,
 };
 
 const MC_ALL = "all";
@@ -92,6 +94,25 @@ export function BranchBrowser({ onOpenBranch }: Props) {
               setFilters((f) => ({ ...f, search }));
             }}
           />
+
+          <Group gap="xs" align="center">
+            <MapPin size={15} style={{ opacity: 0.6 }} />
+            <Switch
+              size="sm"
+              color="dark"
+              label="Cerca de mí"
+              // Force a dark label so it stays readable on the white filter
+              // Paper — the inherited color was rendering white-on-white.
+              styles={{ label: { color: "#1B1A1A" } }}
+              checked={filters.nearMe}
+              onChange={(e) => {
+                // Read synchronously: e.currentTarget is null by the time the
+                // functional setState updater runs.
+                const nearMe = e.currentTarget.checked;
+                setFilters((f) => ({ ...f, nearMe }));
+              }}
+            />
+          </Group>
 
           {merchantCategories.length > 0 && (
             <Chip.Group
