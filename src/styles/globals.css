@@ -20,7 +20,7 @@
   --color-cream: #f7f5f3;
   --color-burgundy: #300203;
   --color-accent: #fd293d;
-  --color-accent-ui: #FF3B47;
+  --color-accent-ui: #ff3b47;
 }
 
 * {
@@ -32,18 +32,36 @@
 body {
   font-family: "Hepta Slab", serif;
   background-color: #000;
-  color: #fff;
+  color: #000;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Mantine portals its dropdowns to document.body, where the `color:#fff` above
+   (set for the dark marketing pages) leaks in: Combobox.Option uses
+   `color: inherit`, so option text renders white-on-white and becomes invisible
+   (Select "Tipo", any MultiSelect/Autocomplete/Menu). Reassert the Mantine text
+   token on portaled dropdowns so they stay legible regardless of body color. */
+.mantine-Popover-dropdown,
+.mantine-Combobox-dropdown {
+  color: var(--mantine-color-text);
+}
+
 @keyframes scroll-right {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes scroll-left {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0); }
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .animate-scroll-right {
@@ -71,12 +89,14 @@ body {
   border-radius: 8px;
   outline: none;
   caret-color: transparent;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .otp-input:focus {
   border-color: transparent;
-  box-shadow: 0 0 0 2px #FF3B47;
+  box-shadow: 0 0 0 2px #ff3b47;
 }
 
 /* Carousel section overflow */
