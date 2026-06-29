@@ -11,6 +11,7 @@ export interface AuthUser {
   email: string | null;
   phone: string | null;
   document: string | null;
+  documentType: string | null;
   profileUrl?: string | null;
   role: string | null;
   isVerified?: boolean;
@@ -28,7 +29,10 @@ export interface MembershipInfo {
   status: "active" | "canceled" | "pending_cancel" | "trialing" | "ended" | "pastDue" | "unpaid" | "paused" | "incomplete" | string;
   startedAt: string;
   renewedAt: string | null;
+  /** @deprecated Treli checkout-session lifespan, not the access-end date. Use membershipActiveUntil. */
   expiredAt: string | null;
+  /** Backend-computed access-end (renewedAt + plan duration). Source of truth for "válido hasta". */
+  membershipActiveUntil: string | null;
   membershipPlanId: number;
   membershipPlanName: string;
   membershipPlanDuration: "monthly" | "quarterly" | "yearly";

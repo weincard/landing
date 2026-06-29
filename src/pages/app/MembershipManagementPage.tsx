@@ -69,6 +69,11 @@ export function MembershipManagementPage() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [emailNeeded, setEmailNeeded] = useState<PlanKey | null>(null);
 
+  // Apple In-App Purchase subscriptions can't be canceled server-side — Apple
+  // requires the user to do it through iOS Settings. Calling our cancel endpoint
+  // would error, so for IAP we show instructions instead of the cancel button.
+  const isIapMembership = membership?.paymentMethod === "apple_iap";
+
   // Poll for membership activation after checkout
   useEffect(() => {
     if (!checkoutInitiated || membership?.status === "active") return;
@@ -139,6 +144,14 @@ export function MembershipManagementPage() {
 
   function handleCancel() {
     if (!membership) return;
+    // Safety net: never hit the server cancel for IAP — the UI already hides the
+    // button, but guard the handler too in case it's ever wired up elsewhere.
+    if (isIapMembership) {
+      toast.info(
+        "Tu suscripción se gestiona desde Apple. Cancélala en Ajustes de tu iPhone.",
+      );
+      return;
+    }
     modals.openConfirmModal({
       title: "¿Cancelar membresía?",
       children: (
@@ -215,17 +228,44 @@ export function MembershipManagementPage() {
 
             <Divider my="md" />
 
-            {membership.status === "active" && (
-              <Button
-                variant="subtle"
-                color="red"
-                size="xs"
-                onClick={handleCancel}
-                loading={cancelMutation.isPending}
-              >
-                Cancelar suscripción
-              </Button>
-            )}
+            {membership.status === "active" &&
+              (isIapMembership ? (
+                <Alert
+                  icon={<AlertCircle size={16} />}
+                  color="gray"
+                  variant="light"
+                  title="¿Quieres cancelar?"
+                >
+                  Compraste tu membresía a través de la App Store, así que debes
+                  cancelarla desde Apple:
+                  <Text size="sm" mt="xs">
+                    Abre <strong>Ajustes</strong> en tu iPhone → toca tu nombre →{" "}
+                    <strong>Suscripciones</strong> → <strong>Weincard</strong> →{" "}
+                    <strong>Cancelar suscripción</strong>.
+                  </Text>
+                  <Text size="sm" mt="xs">
+                    También puedes gestionarla en{" "}
+                    <a
+                      href="https://apps.apple.com/account/subscriptions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      apps.apple.com/account/subscriptions
+                    </a>
+                    .
+                  </Text>
+                </Alert>
+              ) : (
+                <Button
+                  variant="subtle"
+                  color="red"
+                  size="xs"
+                  onClick={handleCancel}
+                  loading={cancelMutation.isPending}
+                >
+                  Cancelar suscripción
+                </Button>
+              ))}
             {membership.status === "pending_cancel" && (
               <Alert
                 icon={<AlertCircle size={16} />}

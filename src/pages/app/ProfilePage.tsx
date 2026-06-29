@@ -5,6 +5,7 @@ import {
   Title,
   Tabs,
   TextInput,
+  Select,
   Button,
   Group,
   Text,
@@ -19,11 +20,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { PageMeta } from "@/components/layout/PageMeta";
+import { DOCUMENT_TYPES, DEFAULT_DOCUMENT_TYPE } from "@/lib/documentTypes";
 
 type ProfileForm = {
   name: string;
   lastname?: string;
   email?: string;
+  document?: string;
+  documentType: string;
 };
 
 function VerifiedBadge({ verified }: { verified: boolean }) {
@@ -52,6 +56,8 @@ export function ProfilePage() {
       name: user?.firstName ?? "",
       lastname: user?.lastName ?? "",
       email: user?.email ?? "",
+      document: user?.document ?? "",
+      documentType: user?.documentType ?? DEFAULT_DOCUMENT_TYPE,
     },
     validate: {
       name: (v) => (!v?.trim() ? "Nombre requerido" : null),
@@ -68,6 +74,8 @@ export function ProfilePage() {
         name: user.firstName ?? "",
         lastname: user.lastName ?? "",
         email: user.email ?? "",
+        document: user.document ?? "",
+        documentType: user.documentType ?? DEFAULT_DOCUMENT_TYPE,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,6 +92,7 @@ export function ProfilePage() {
   async function handleSubmit(values: ProfileForm) {
     if (!user) return;
     try {
+      const document = values.document?.trim() ?? "";
       await updateMutation.mutateAsync({
         id: user.id,
         data: {
@@ -93,6 +102,12 @@ export function ProfilePage() {
           // account identifier. Only send it when it actually changed.
           ...(!emailVerified && values.email?.trim() && values.email.trim() !== (user.email ?? "")
             ? { email: values.email.trim() }
+            : {}),
+          // Document has no verification gate — freely editable. Send the type
+          // alongside it so the pair stays consistent. Only send when changed.
+          ...(document && (document !== (user.document ?? "") ||
+            values.documentType !== (user.documentType ?? DEFAULT_DOCUMENT_TYPE))
+            ? { document, documentType: values.documentType }
             : {}),
         },
       });
@@ -167,6 +182,24 @@ export function ProfilePage() {
                   placeholder="Tu apellido"
                   {...form.getInputProps("lastname")}
                 />
+
+                {/* Document — no verification gate; freely editable */}
+                <Group align="flex-end" gap="sm" grow={false} wrap="nowrap">
+                  <Select
+                    label="Tipo"
+                    data={DOCUMENT_TYPES.map((dt) => ({ value: dt.value, label: dt.label }))}
+                    allowDeselect={false}
+                    w={120}
+                    {...form.getInputProps("documentType")}
+                  />
+                  <TextInput
+                    label="Documento"
+                    placeholder="1234567890"
+                    inputMode="numeric"
+                    style={{ flex: 1 }}
+                    {...form.getInputProps("document")}
+                  />
+                </Group>
 
                 {/* Email — editable until verified, then locked */}
                 <div>

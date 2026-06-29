@@ -11,6 +11,7 @@ type RawUser = {
   email?: string | null;
   phone?: string | null;
   document?: string | null;
+  documentType?: string | null;
   profileUrl?: string | null;
   isVerified?: boolean;
   isEmailVerified?: boolean;
@@ -36,6 +37,7 @@ export function mapAuthUser(raw: RawUser): AuthUser {
     email: raw.email ?? null,
     phone: raw.phone ?? null,
     document: raw.document ?? null,
+    documentType: raw.documentType ?? null,
     profileUrl: raw.profileUrl ?? null,
     role,
     isVerified: raw.isVerified,
@@ -51,14 +53,16 @@ export const getMe = async (): Promise<AuthUser> => {
 };
 
 // ───────────────────────────── Phone (OTP) ─────────────────────────────────
+// `phone` is the full E.164 string (dial code + number), composed by the caller
+// via composePhone() from the country picker. Don't prepend a dial code here.
 export const requestOtp = (phone: string) =>
   honoClient.post<{ newUser: boolean; message: string }>("/auth/request-otp", {
-    phone: `+57${phone}`,
+    phone,
   });
 
 export const verifyOtp = (phone: string, code: string) =>
   honoClient.post<{ accessToken: string }>("/auth/verify-otp", {
-    phone: `+57${phone}`,
+    phone,
     code,
   });
 

@@ -4,7 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 
 type UpdateUserVars = {
   id: number;
-  data: Partial<{ name: string; lastname: string; email: string }>;
+  data: Partial<{
+    name: string;
+    lastname: string;
+    email: string;
+    document: string;
+    documentType: string;
+  }>;
 };
 
 export function useUpdateUser() {

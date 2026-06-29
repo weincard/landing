@@ -115,8 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? derivePlanKey(membership?.membershipPlanDuration ?? null)
     : null;
   const membershipName = membership?.membershipPlanName ?? null;
+  // Prefer the backend-computed access-end (renewedAt + plan duration). The DB
+  // `expiredAt` is unreliable (it held the Treli checkout-session lifespan), so
+  // it's only a last-resort fallback for older payloads.
   const membershipActiveUntil =
-    couponRedemption?.membershipExpiresAt ?? membership?.expiredAt ?? null;
+    membership?.membershipActiveUntil ??
+    couponRedemption?.membershipExpiresAt ??
+    membership?.expiredAt ??
+    null;
 
   return (
     <AuthContext.Provider

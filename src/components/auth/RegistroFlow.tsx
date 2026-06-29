@@ -92,6 +92,10 @@ export function RegistroFlow() {
 
   // shared field state
   const [phone, setPhone] = useState("");
+  // Country for the phone-identify (login/signup) step. Defaults to Colombia but
+  // the user may pick any dial code; the chosen country is composed into the
+  // full E.164 phone sent to the OTP endpoints.
+  const [identifyCountry, setIdentifyCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -152,7 +156,7 @@ export function RegistroFlow() {
         setRegCountry(split.country);
         setRegNumber(split.number);
       } else if (method === "phone" && phone) {
-        setRegCountry(DEFAULT_COUNTRY);
+        setRegCountry(identifyCountry);
         setRegNumber(phone);
       }
       setStep("register");
@@ -181,14 +185,21 @@ export function RegistroFlow() {
   // ───────── identify: phone ─────────
   async function submitPhone(e: React.FormEvent) {
     e.preventDefault();
-    if (phone.length !== 10) {
-      setError("El número debe tener exactamente 10 dígitos.");
+    // Colombian mobiles are exactly 10 digits; other countries vary, so only
+    // enforce a sane general range when a non-CO dial code is chosen.
+    if (identifyCountry.code === "CO") {
+      if (phone.length !== 10) {
+        setError("El número debe tener exactamente 10 dígitos.");
+        return;
+      }
+    } else if (phone.length < 6 || phone.length > 15) {
+      setError("Ingresa un número de teléfono válido.");
       return;
     }
     resetMessages();
     setIsLoading(true);
     try {
-      const res = await requestOtp(phone);
+      const res = await requestOtp(composePhone(identifyCountry, phone));
       setSuccessMsg(res.data?.message ?? "Código enviado por WhatsApp.");
       setCode(["", "", "", "", "", ""]);
       setStep("otp");
@@ -209,7 +220,7 @@ export function RegistroFlow() {
     resetMessages();
     setIsLoading(true);
     try {
-      const res = await verifyOtp(phone, joined);
+      const res = await verifyOtp(composePhone(identifyCountry, phone), joined);
       await afterLogin(res.data.accessToken);
     } catch (err) {
       setError(apiError(err, "Código incorrecto o expirado."));
@@ -423,56 +434,28 @@ export function RegistroFlow() {
           {method === "phone" ? (
             <form onSubmit={submitPhone} noValidate>
               <div style={{ marginBottom: "12px" }}>
-                <label style={labelStyle}>
-                  Número de celular <span style={{ color: "#FF3B47" }}>*</span>
-                </label>
-                <div style={{ display: "flex" }}>
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "0 14px",
-                      background: "#f9fafb",
-                      border: "1px solid #d1d5db",
-                      borderRight: "none",
-                      borderRadius: "8px 0 0 8px",
-                      fontSize: "13px",
-                      color: "#4b5563",
-                      fontWeight: 500,
-                      userSelect: "none",
-                      flexShrink: 0,
-                    }}
-                  >
-                    +57
-                  </span>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    autoComplete="tel-national"
-                    value={phone}
-                    onChange={(e) =>
-                      setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
-                    }
-                    placeholder="3001234567"
-                    maxLength={10}
-                    autoFocus
-                    style={{
-                      flex: 1,
-                      padding: "12px 14px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0 8px 8px 0",
-                      fontSize: "14px",
-                      outline: "none",
-                      fontFamily: "inherit",
-                    }}
-                  />
-                </div>
+                <PhoneCountryInput
+                  country={identifyCountry}
+                  number={phone}
+                  onCountryChange={setIdentifyCountry}
+                  onNumberChange={setPhone}
+                  required
+                  autoFocus
+                />
                 <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
                   Te enviaremos un código por WhatsApp.
                 </p>
               </div>
               {error && <ErrorMsg msg={error} />}
-              <SubmitButton disabled={isLoading || phone.length !== 10} loading={isLoading}>
+              <SubmitButton
+                disabled={
+                  isLoading ||
+                  (identifyCountry.code === "CO"
+                    ? phone.length !== 10
+                    : phone.length < 6 || phone.length > 15)
+                }
+                loading={isLoading}
+              >
                 Enviar código
               </SubmitButton>
             </form>
@@ -507,7 +490,7 @@ export function RegistroFlow() {
             <h2 style={headingStyle}>VERIFICA TU NÚMERO</h2>
             <p style={subStyle}>
               Código de 6 dígitos enviado al{" "}
-              <strong style={{ color: "#374151" }}>+57 {phone}</strong>.
+              <strong style={{ color: "#374151" }}>{identifyCountry.dial} {phone}</strong>.
             </p>
           </div>
           {successMsg && <SuccessMsg msg={successMsg} />}
