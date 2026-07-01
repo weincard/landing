@@ -5,8 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { Loader } from "@mantine/core";
 import { useAuth } from "@/context/AuthContext";
-import { createCheckoutSession } from "@/api/memberships";
-import { updateUser } from "@/api/users";
+import { useCreateCheckout } from "@/hooks/useMembership";
+import { useUpdateUser } from "@/hooks/useUsers";
 import { getMe } from "@/api/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { PlanKey } from "@/types";
@@ -34,6 +34,8 @@ export function PlanesPage() {
   const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser } =
     useAuth();
   const gate = useEmailVerificationGate();
+  const checkout = useCreateCheckout();
+  const updateMutation = useUpdateUser();
   const navigate = useNavigate();
 
   const [purchasing, setPurchasing] = useState(false);
@@ -57,9 +59,9 @@ export function PlanesPage() {
     setPurchasing(true);
     setCheckoutOpened(false);
     try {
-      const res = await createCheckoutSession(email, planKey);
-      if (res.data?.url) {
-        window.open(res.data.url, "_blank", "noopener,noreferrer");
+      const data = await checkout.mutateAsync({ email, plan: planKey });
+      if (data?.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
         setCheckoutOpened(true);
         setPendingPlan(null);
       } else {
@@ -110,7 +112,10 @@ export function PlanesPage() {
     try {
       const me = await getMe();
       const userId = me.id;
-      await updateUser(userId, { email: emailInput.trim() });
+      await updateMutation.mutateAsync({
+        id: userId,
+        data: { email: emailInput.trim() },
+      });
       await refreshUser();
       await startCheckout(pendingPlan, emailInput.trim());
     } catch (err: unknown) {

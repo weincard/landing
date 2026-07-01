@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Modal, Loader } from "@mantine/core";
 import { Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { createCheckoutSession } from "@/api/memberships";
+import { useCreateCheckout } from "@/hooks/useMembership";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 
 const PROMO_CODE = "BIENVENIDOWEB";
@@ -11,6 +11,7 @@ const PROMO_CODE = "BIENVENIDOWEB";
 export function PromoModal() {
   const { isLoggedIn, user } = useAuth();
   const gate = useEmailVerificationGate();
+  const checkout = useCreateCheckout();
   const navigate = useNavigate();
   const [promoOpen, setPromoOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,9 +33,9 @@ export function PromoModal() {
     setError("");
     setPurchasing(true);
     try {
-      const res = await createCheckoutSession(email, "monthly");
-      if (res.data?.url) {
-        window.open(res.data.url, "_blank", "noopener,noreferrer");
+      const data = await checkout.mutateAsync({ email, plan: "monthly" });
+      if (data?.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
       }
     } catch {
       setError("No se pudo iniciar el proceso de pago. Intenta de nuevo.");

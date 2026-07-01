@@ -3,11 +3,11 @@ import axios from "axios";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
+import { type DeleteChannel } from "@/api/auth";
 import {
-  requestDeleteOtp,
-  confirmDeleteAccount,
-  type DeleteChannel,
-} from "@/api/auth";
+  useRequestDeleteOtp,
+  useConfirmDeleteAccount,
+} from "@/hooks/useAccountActions";
 
 type Step = "request" | "verify" | "done";
 
@@ -26,6 +26,8 @@ export function DeleteAccountPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const requestOtpMutation = useRequestDeleteOtp();
+  const confirmMutation = useConfirmDeleteAccount();
 
   const valueValid =
     channel === "phone"
@@ -44,7 +46,10 @@ export function DeleteAccountPage() {
     setIsLoading(true);
     setError("");
     try {
-      const { data } = await requestDeleteOtp(channel, value.trim());
+      const data = await requestOtpMutation.mutateAsync({
+        channel,
+        value: value.trim(),
+      });
       if (!data.found) {
         setError(
           channel === "phone"
@@ -67,7 +72,11 @@ export function DeleteAccountPage() {
     setIsLoading(true);
     setError("");
     try {
-      await confirmDeleteAccount(channel, value.trim(), code.trim());
+      await confirmMutation.mutateAsync({
+        channel,
+        value: value.trim(),
+        code: code.trim(),
+      });
       setStep("done");
     } catch (err) {
       setError(apiError(err, "No pudimos eliminar tu cuenta. Intenta de nuevo."));

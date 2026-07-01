@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyRedemptions, generateCode } from "@/api/redemptions";
+import { getMyRedemptions, generateCode, verifyCode } from "@/api/redemptions";
 
 export function useMyRedemptions() {
   return useQuery({
@@ -15,5 +15,14 @@ export function useGenerateCode() {
     mutationFn: (branchId: number) =>
       generateCode(branchId).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["redemptions"] }),
+  });
+}
+
+// Stand-side: verify a scanned branch code (and optionally record the amount
+// paid). Returns the raw response body for the caller to narrow.
+export function useVerifyCode() {
+  return useMutation({
+    mutationFn: ({ code, totalPaid }: { code: string; totalPaid?: number }) =>
+      verifyCode(code, totalPaid).then((r) => r.data),
   });
 }

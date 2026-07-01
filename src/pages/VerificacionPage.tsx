@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { verifyCode } from "@/api/redemptions";
+import { useVerifyCode } from "@/hooks/useRedemptions";
 import { StatusCard } from "@/components/verificacion/StatusCard";
 import type { RedemptionResult } from "@/types";
 
@@ -14,6 +14,7 @@ export function VerificacionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<RedemptionResult | null>(null);
+  const verify = useVerifyCode();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,11 +28,13 @@ export function VerificacionPage() {
       const paid = totalPaid.trim()
         ? parseFloat(totalPaid.replace(/\./g, "").replace(",", "."))
         : undefined;
-      const res = await verifyCode(code.trim(), paid);
-      setStatus("success");
-      const data = res.data as {
+      const data = (await verify.mutateAsync({
+        code: code.trim(),
+        totalPaid: paid,
+      })) as {
         redemptionCode?: RedemptionResult;
       } & RedemptionResult;
+      setStatus("success");
       setResult(data.redemptionCode ?? data);
     } catch (err: unknown) {
       const status = (

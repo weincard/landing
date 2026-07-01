@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { resetPassword } from "@/api/auth";
+import { useResetPassword } from "@/hooks/useAccountActions";
 import { FormInput } from "@/components/auth/FormInput";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ErrorMsg } from "@/components/auth/ErrorMsg";
@@ -27,6 +27,7 @@ export function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const resetMutation = useResetPassword();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +43,7 @@ export function ResetPasswordPage() {
     setError("");
     setIsLoading(true);
     try {
-      await resetPassword(token!, password);
+      await resetMutation.mutateAsync({ token: token!, password });
       setSuccess(true);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;

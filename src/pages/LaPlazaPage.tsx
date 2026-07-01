@@ -324,7 +324,10 @@ export function LaPlazaPage() {
             left: "50%",
             bottom: "24px",
             transform: "translateX(-50%)",
-            zIndex: 40,
+            // Above the merchant detail modal (z-50) so it persists/stays
+            // tappable while a stand's detail is open — that context is what
+            // gives the QR its stand.
+            zIndex: 55,
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
@@ -357,7 +360,7 @@ export function LaPlazaPage() {
       )}
 
       {cardOpen && canShowCard && (
-        <PlazaCardSheet onClose={() => setCardOpen(false)} />
+        <PlazaCardSheet merchant={selected} onClose={() => setCardOpen(false)} />
       )}
     </main>
   );

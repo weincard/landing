@@ -67,3 +67,43 @@ export interface PlazaActive {
 // active merchants, or { edition: null, merchants: [] } when no feria is live.
 export const getPlazaActive = () =>
   honoClient.get<PlazaActive>("/plaza/public/active");
+
+// ── Plaza redemptions (QR verify) ──────────────────────────────────────────
+
+export interface PlazaVerifyRedemption {
+  code: string;
+  active: boolean;
+  verified: boolean;
+  verifiedAt: string | null;
+  user: { name: string | null; phone: string | null } | null;
+  merchant: { plazaMerchantId: number; name: string } | null;
+  edition: { plazaEditionId: number; name: string } | null;
+}
+
+export interface PlazaVerifyResponse {
+  message: string;
+  alreadyVerified?: boolean;
+  expired?: boolean;
+  redemption?: PlazaVerifyRedemption;
+}
+
+// POST /plaza/redemptions/verify is PUBLIC (the stand opens the QR link). It
+// auto-completes the redemption when the user is active.
+export const verifyPlazaCode = (code: string) =>
+  honoClient.post<PlazaVerifyResponse>("/plaza/redemptions/verify", { code });
+
+export interface PlazaGenerateResponse {
+  /** One-time bearer token embedded in the verification URL/QR. */
+  code: string;
+  /** ISO expiry (short TTL) or null. */
+  expiresAt: string | null;
+  plazaMerchantId: number;
+}
+
+// POST /plaza/redemptions/generate (requireAuth — active member). Mints a
+// one-time code for the member to present as a QR at the given stand. The stand
+// opens `${origin}/plaza/verificacion?code=...` to verify + record the redemption.
+export const generatePlazaRedemption = (plazaMerchantId: number) =>
+  honoClient.post<PlazaGenerateResponse>("/plaza/redemptions/generate", {
+    plazaMerchantId,
+  });

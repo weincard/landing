@@ -96,8 +96,13 @@ export function ProfilePage() {
       await updateMutation.mutateAsync({
         id: user.id,
         data: {
-          name: values.name.trim(),
-          lastname: values.lastname?.trim(),
+          // The backend stores the full name tilde-joined ("first~last") in a
+          // single `name` column — there is no surname column. Combine the two
+          // form fields here so the surname isn't dropped. (When a lastname
+          // column is added later, send them separately and drop the `~`.)
+          name: [values.name.trim(), values.lastname?.trim()]
+            .filter(Boolean)
+            .join("~"),
           // Email is editable only while unverified; once verified it's a locked
           // account identifier. Only send it when it actually changed.
           ...(!emailVerified && values.email?.trim() && values.email.trim() !== (user.email ?? "")

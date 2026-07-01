@@ -1,15 +1,22 @@
 import { useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/context/AuthContext";
 import { MembershipCard } from "@/components/membership/MembershipCard";
+import { type PlazaMerchant } from "@/api/plaza";
+import { useGeneratePlazaRedemption } from "@/hooks/usePlazaActive";
 
 interface PlazaCardSheetProps {
   onClose: () => void;
+  /** When a stand is in context (its detail modal is open), the sheet also
+   *  mints a one-time QR the stand can scan to verify + record the redemption. */
+  merchant?: PlazaMerchant | null;
 }
 
 // Bottom-sheet that shows the member's weincard inside the Plaza page. Android
 // contingency: the store-rejected app means active members need an in-stand way
-// to present their card on the web. Display-only — NO code redemption flow.
-export function PlazaCardSheet({ onClose }: PlazaCardSheetProps) {
+// to present their card on the web. When opened over a stand's detail, it also
+// shows a scannable QR for that stand.
+export function PlazaCardSheet({ onClose, merchant }: PlazaCardSheetProps) {
   const { user, membership, membershipActiveUntil } = useAuth();
 
   useEffect(() => {
@@ -126,6 +133,22 @@ export function PlazaCardSheet({ onClose }: PlazaCardSheetProps) {
             activeUntil={membershipActiveUntil}
           />
         </div>
+
+        {merchant ? (
+          <PlazaQrSection merchant={merchant} />
+        ) : (
+          <p
+            style={{
+              fontFamily: '"Hepta Slab", serif',
+              fontSize: "13px",
+              color: "#9ca3af",
+              textAlign: "center",
+              marginTop: "20px",
+            }}
+          >
+            Abre un aliado para generar tu código QR.
+          </p>
+        )}
       </div>
 
       <style>{`
@@ -135,6 +158,130 @@ export function PlazaCardSheet({ onClose }: PlazaCardSheetProps) {
             margin-bottom: 24px;
           }
         }
+      `}</style>
+    </div>
+  );
+}
+
+// ── QR section ───────────────────────────────────────────────────────────────
+// Mints a one-time redemption code for the stand and renders it as a QR the
+// stand scans. The QR points at the public verification page on THIS origin, so
+// it works regardless of which domain the web app is served from.
+function PlazaQrSection({ merchant }: { merchant: PlazaMerchant }) {
+  const gen = useGeneratePlazaRedemption();
+  const generate = () => gen.mutate(merchant.plazaMerchantId);
+
+  useEffect(() => {
+    gen.mutate(merchant.plazaMerchantId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant.plazaMerchantId]);
+
+  // `isIdle` covers the first frame before the mount effect fires the mutation.
+  const loading = gen.isIdle || gen.isPending;
+  const error = gen.isError;
+  const code = gen.data?.code ?? null;
+  const qrUrl = code
+    ? `${window.location.origin}/plaza/verificacion?code=${encodeURIComponent(code)}`
+    : null;
+
+  return (
+    <div
+      style={{
+        marginTop: "24px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "14px",
+      }}
+    >
+      <p
+        style={{
+          fontFamily: '"Hepta Slab", serif',
+          fontSize: "14px",
+          color: "#374151",
+          textAlign: "center",
+          margin: 0,
+        }}
+      >
+        Muestra este código en el stand de <strong>{merchant.name}</strong>.
+      </p>
+
+      {loading && (
+        <div
+          style={{
+            width: "216px",
+            height: "216px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg className="spin" width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="#e5e7eb" strokeWidth="4" />
+            <path fill="#9ca3af" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        </div>
+      )}
+
+      {!loading && error && (
+        <button
+          type="button"
+          onClick={generate}
+          style={{
+            padding: "10px 20px",
+            borderRadius: "9999px",
+            border: "1px solid #d1d5db",
+            background: "#fff",
+            color: "#111",
+            cursor: "pointer",
+            fontFamily: '"Clash Grotesk", sans-serif',
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          No se pudo generar. Reintentar
+        </button>
+      )}
+
+      {!loading && qrUrl && (
+        <>
+          <div
+            style={{
+              padding: "16px",
+              background: "#fff",
+              borderRadius: "16px",
+              border: "1px solid #eee",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+            }}
+          >
+            <QRCodeSVG value={qrUrl} size={200} level="M" />
+          </div>
+          <button
+            type="button"
+            onClick={generate}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 16px",
+              borderRadius: "9999px",
+              border: "none",
+              background: "transparent",
+              color: "#6b7280",
+              cursor: "pointer",
+              fontFamily: '"Clash Grotesk", sans-serif',
+              fontWeight: 700,
+              fontSize: "13px",
+            }}
+          >
+            Generar nuevo código
+          </button>
+        </>
+      )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
       `}</style>
     </div>
   );
