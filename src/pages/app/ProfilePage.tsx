@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { DOCUMENT_TYPES, DEFAULT_DOCUMENT_TYPE } from "@/lib/documentTypes";
+import { DOCUMENT_TYPES, DEFAULT_DOCUMENT_TYPE, validateDocument } from "@/lib/documentTypes";
 
 type ProfileForm = {
   name: string;
@@ -65,6 +65,9 @@ export function ProfilePage() {
         if (!v || v === "") return null;
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Correo inválido";
       },
+      // Validate the document against the rules for the selected type. Empty is
+      // allowed (the field is optional here); a filled-in value must be valid.
+      document: (v, values) => validateDocument(values.documentType, v),
     },
   });
 

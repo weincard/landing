@@ -17,7 +17,7 @@ import { completeRegistration, getUserStatus } from "@/api/users";
 import { createCheckoutSession } from "@/api/memberships";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
-import { DOCUMENT_TYPES } from "@/lib/documentTypes";
+import { DOCUMENT_TYPES, validateDocument } from "@/lib/documentTypes";
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_HINT } from "@/lib/password";
 import {
   DEFAULT_COUNTRY,
@@ -336,6 +336,11 @@ export function RegistroFlow() {
     e.preventDefault();
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !document.trim())
       return;
+    const docError = validateDocument(documentType, document);
+    if (docError) {
+      setError(docError);
+      return;
+    }
     if (!consent) {
       setError("Debes aceptar los términos y la política de privacidad para continuar.");
       return;
