@@ -4,8 +4,6 @@ import { ErrorPage } from "@/pages/ErrorPage";
 import { RegistroPage } from "@/pages/RegistroPage";
 import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
-import { LaPlazaPage } from "@/pages/LaPlazaPage";
-import { PlazaFloatingLink } from "@/components/plaza/PlazaFloatingLink";
 import { VerificacionPage } from "@/pages/VerificacionPage";
 import { PlazaVerificacionPage } from "@/pages/PlazaVerificacionPage";
 import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
@@ -36,7 +34,7 @@ export const router = createBrowserRouter([
         <Outlet />
         {/* Floating shortcut to La Plaza de Wein on every route (hides itself
             on the Plaza page). */}
-        <PlazaFloatingLink />
+        {/* <PlazaFloatingLink /> */}
         {/* Unified email/phone verification surface, driven by the ?verify=
             query param so it's available (and reload-safe) on every route. */}
         <VerifyContactModal />
@@ -44,45 +42,48 @@ export const router = createBrowserRouter([
     ),
     errorElement: <ErrorPage />,
     children: [
-  // Public routes
-  { path: "/", element: <HomePage /> },
-  // Unified auth entry point at /registro (marketing-locked path). Legacy /login
-  // redirects here so existing links keep working.
-  { path: "/registro", element: <RegistroPage /> },
-  { path: "/login", element: <Navigate to="/registro" replace /> },
-  { path: "/planes", element: <PlanesPage /> },
-  { path: "/catalogo", element: <CatalogoPage /> },
-  { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
-  { path: "/verificacion", element: <VerificacionPage /> },
-  { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
-  { path: "/delete-account", element: <DeleteAccountPage /> },
-  { path: "/reset-password", element: <ResetPasswordPage /> },
-  { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
-  { path: "/politica-de-cookies", element: <PoliticaCookiesPage /> },
-  { path: "/terminos-y-condiciones", element: <TerminosPage /> },
+      // Public routes
+      { path: "/", element: <HomePage /> },
+      // Unified auth entry point at /registro (marketing-locked path). Legacy /login
+      // redirects here so existing links keep working.
+      { path: "/registro", element: <RegistroPage /> },
+      { path: "/login", element: <Navigate to="/registro" replace /> },
+      { path: "/planes", element: <PlanesPage /> },
+      { path: "/catalogo", element: <CatalogoPage /> },
+      // { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
+      { path: "/verificacion", element: <VerificacionPage /> },
+      { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
+      { path: "/delete-account", element: <DeleteAccountPage /> },
+      { path: "/reset-password", element: <ResetPasswordPage /> },
+      { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
+      { path: "/politica-de-cookies", element: <PoliticaCookiesPage /> },
+      { path: "/terminos-y-condiciones", element: <TerminosPage /> },
 
-  // Protected app shell
-  {
-    element: <RequireAuth />,
-    children: [
+      // Protected app shell
       {
-        element: <AppLayout />,
+        element: <RequireAuth />,
         children: [
-          { path: "/app", element: <Navigate to="/app/card" replace /> },
-          { path: "/app/card", element: <MembershipCardPage /> },
-          { path: "/app/explore", element: <ExplorePage /> },
-          { path: "/app/explore/:branchId", element: <BranchDetailPage /> },
-          { path: "/app/savings", element: <SavingsPage /> },
-          { path: "/app/favorites", element: <FavoritesPage /> },
-          { path: "/app/profile", element: <ProfilePage /> },
-          { path: "/app/membership", element: <MembershipManagementPage /> },
-          { path: "/app/redeem/:branchId", element: <RedeemPage /> },
+          {
+            element: <AppLayout />,
+            children: [
+              { path: "/app", element: <Navigate to="/app/card" replace /> },
+              { path: "/app/card", element: <MembershipCardPage /> },
+              { path: "/app/explore", element: <ExplorePage /> },
+              { path: "/app/explore/:branchId", element: <BranchDetailPage /> },
+              { path: "/app/savings", element: <SavingsPage /> },
+              { path: "/app/favorites", element: <FavoritesPage /> },
+              { path: "/app/profile", element: <ProfilePage /> },
+              {
+                path: "/app/membership",
+                element: <MembershipManagementPage />,
+              },
+              { path: "/app/redeem/:branchId", element: <RedeemPage /> },
+            ],
+          },
         ],
       },
-    ],
-  },
 
-  { path: "*", element: <NotFoundPage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
