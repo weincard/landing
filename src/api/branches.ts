@@ -22,8 +22,16 @@ export interface BranchDetailResponse {
   }>;
 }
 
-export const getBranchDetail = (branchId: number) =>
-  honoClient.get<BranchDetailResponse>(`/branches/detail/${branchId}`);
+// Optional `channelIds` scopes the returned offers to the browsing merchant
+// category's allowed channels (e.g. Domicilios → delivery), matching Flutter's
+// `GET /branches/detail/:branchId?channelIds=2`.
+export const getBranchDetail = (branchId: number, channelIds: number[] = []) => {
+  const path =
+    channelIds.length > 0
+      ? `/branches/detail/${branchId}?channelIds=${channelIds.join(",")}`
+      : `/branches/detail/${branchId}`;
+  return honoClient.get<BranchDetailResponse>(path);
+};
 
 // ─── Branch tiles (the SAME browse endpoint the Flutter app uses) ─────────────
 // GET /branches/tiles is public, Typesense-backed, and supports server-side

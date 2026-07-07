@@ -11,7 +11,10 @@ import type { Branch } from "@/types";
 // membership status. Only difference: opening a branch shows a modal here vs a
 // route push in the app shell.
 export function CatalogoPage() {
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [selected, setSelected] = useState<{
+    branch: Branch;
+    channelIds: number[];
+  } | null>(null);
 
   return (
     <main style={{ minHeight: "100vh", background: "#f7f5f3" }}>
@@ -23,13 +26,19 @@ export function CatalogoPage() {
       <Header sticky />
 
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px 16px 64px" }}>
-        <BranchBrowser onOpenBranch={setSelectedBranch} />
+        <BranchBrowser
+          onOpenBranch={(branch, channelIds) => setSelected({ branch, channelIds })}
+        />
       </div>
 
       <Footer />
 
-      {selectedBranch && (
-        <BranchModal branch={selectedBranch} onClose={() => setSelectedBranch(null)} />
+      {selected && (
+        <BranchModal
+          branch={selected.branch}
+          channelIds={selected.channelIds}
+          onClose={() => setSelected(null)}
+        />
       )}
     </main>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
   Stack,
   Group,
@@ -39,10 +39,18 @@ import { useAuth } from "@/context/AuthContext";
 export function BranchDetailPage() {
   const { branchId: branchIdParam } = useParams<{ branchId: string }>();
   const branchId = Number(branchIdParam ?? "0");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { hasMembership } = useAuth();
 
-  const { data: branch, isLoading, isError } = useBranchDetail(branchId);
+  // Scope offers to the browsing category's channels when arriving from a
+  // category-filtered list (e.g. Domicilios → ?channelIds=2), same as Flutter.
+  const channelIds = (searchParams.get("channelIds") ?? "")
+    .split(",")
+    .map((s) => Number(s))
+    .filter((n) => Number.isFinite(n) && n > 0);
+
+  const { data: branch, isLoading, isError } = useBranchDetail(branchId, channelIds);
   const { data: favorites = [] } = useFavorites();
   const { data: reviews = [], isLoading: loadingReviews } =
     useReviews(branchId);

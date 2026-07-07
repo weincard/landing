@@ -75,11 +75,13 @@ export function useDeliveryBranches(location: Coords, enabled: boolean) {
 
 // Calls /branches/detail (offers included) and merges the top-level `offers`
 // array onto the branch, so consumers keep reading `branch.offers`.
-export function useBranchDetail(branchId: number) {
+export function useBranchDetail(branchId: number, channelIds: number[] = []) {
   return useQuery({
-    queryKey: ["branch", branchId],
+    // channelIds is part of the key: the same branch returns a different offer
+    // set when scoped to a category's channels (e.g. Domicilios → delivery).
+    queryKey: ["branch", branchId, channelIds],
     queryFn: () =>
-      getBranchDetail(branchId).then((r) => ({
+      getBranchDetail(branchId, channelIds).then((r) => ({
         ...r.data.branch,
         offers: r.data.offers ?? [],
       })),

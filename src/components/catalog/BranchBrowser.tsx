@@ -36,8 +36,10 @@ const INITIAL: BrowseFilters = {
 const MC_ALL = "all";
 
 interface Props {
-  /** What to do when a branch card is opened (route push vs modal). */
-  onOpenBranch: (branch: Branch) => void;
+  /** What to do when a branch card is opened (route push vs modal). Receives the
+   *  browsing category's `allowedChannelIds` so the opener can scope the branch
+   *  detail to those channels (e.g. Domicilios → delivery), same as Flutter. */
+  onOpenBranch: (branch: Branch, channelIds: number[]) => void;
 }
 
 // Shared browse experience for /app/explore and /catalogo. Both are about
@@ -52,11 +54,15 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const { data: merchantCategories = [] } = useMerchantCategories();
 
   // "Domicilios" is special: like Flutter, it lists via GET /deliveries/branches
-  // instead of /branches/tiles. Resolve the selected category's slug to decide.
-  const selectedSlug = merchantCategories
-    .find((mc) => mc.merchantCategoryId === debounced.merchantCategoryId)
-    ?.slug?.toLowerCase();
-  const isDelivery = selectedSlug === "domicilios";
+  // instead of /branches/tiles. Resolve the selected category to decide, and to
+  // carry its allowedChannelIds into the branch-detail navigation.
+  const selectedCategory = merchantCategories.find(
+    (mc) => mc.merchantCategoryId === debounced.merchantCategoryId,
+  );
+  const isDelivery = selectedCategory?.slug?.toLowerCase() === "domicilios";
+  // The browsing category's channels (e.g. [2] for delivery). Empty when "Todos"
+  // is selected → detail fetch stays unscoped, showing all offers.
+  const channelIds = selectedCategory?.allowedChannelIds ?? [];
 
   const browse = useBranchBrowse(debounced, location, !isDelivery);
   const delivery = useDeliveryBranches(location, isDelivery);
@@ -190,7 +196,11 @@ export function BranchBrowser({ onOpenBranch }: Props) {
       {!isLoading && branches.length > 0 && (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}>
           {branches.map((branch) => (
-            <BranchCard key={branch.branchId} branch={branch} onOpen={onOpenBranch} />
+            <BranchCard
+              key={branch.branchId}
+              branch={branch}
+              onOpen={(b) => onOpenBranch(b, channelIds)}
+            />
           ))}
         </SimpleGrid>
       )}

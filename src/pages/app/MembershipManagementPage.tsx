@@ -29,6 +29,7 @@ import { MembershipStatusBadge } from "@/components/membership/MembershipStatusB
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useMembershipActivation } from "@/hooks/useMembershipActivation";
 import type { PlanKey } from "@/types";
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
@@ -74,21 +75,13 @@ export function MembershipManagementPage() {
   // would error, so for IAP we show instructions instead of the cancel button.
   const isIapMembership = membership?.paymentMethod === "apple_iap";
 
-  // Poll for membership activation after checkout
-  useEffect(() => {
-    if (!checkoutInitiated || membership?.status === "active") return;
-
-    const interval = setInterval(() => {
-      refreshMembership();
-    }, 4000);
-
-    const timeout = setTimeout(() => clearInterval(interval), 180000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [checkoutInitiated, membership?.status, refreshMembership]);
+  // Detect membership activation after checkout via a WebSocket push (replaces
+  // the old 4s polling loop). Active while waiting; on the activation signal it
+  // refreshes the session, and the effect below flips the UI + toast when the
+  // status becomes "active".
+  const waitingForActivation =
+    checkoutInitiated && membership?.status !== "active";
+  useMembershipActivation(waitingForActivation, refreshMembership);
 
   useEffect(() => {
     if (checkoutInitiated && membership?.status === "active") {
