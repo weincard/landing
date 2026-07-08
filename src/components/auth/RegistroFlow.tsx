@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Loader } from "@mantine/core";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -14,9 +13,7 @@ import {
   getMe,
 } from "@/api/auth";
 import { completeRegistration, getUserStatus } from "@/api/users";
-import { createCheckoutSession } from "@/api/memberships";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
-import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { DOCUMENT_TYPES, validateDocument } from "@/lib/documentTypes";
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_HINT } from "@/lib/password";
 import {
@@ -25,7 +22,6 @@ import {
   splitPhone,
   type Country,
 } from "@/lib/countries";
-import type { PlanKey } from "@/types";
 import { ErrorMsg } from "./ErrorMsg";
 import { SuccessMsg } from "./SuccessMsg";
 import { SubmitButton } from "./SubmitButton";
@@ -43,8 +39,7 @@ type Step =
   | "email-code"
   | "email-set-password"
   | "email-login-password"
-  | "register"
-  | "subscribe";
+  | "register";
 
 type Method = "phone" | "email";
 
@@ -81,11 +76,9 @@ function apiError(err: unknown, fallback: string): string {
 export function RegistroFlow() {
   const { login, refreshUser, isLoggedIn, profileComplete, isLoading: authLoading } = useAuth();
   const showCouponInput = useShowCouponInput();
-  const gate = useEmailVerificationGate();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/app/card";
-  const planParam = (params.get("plan") as PlanKey | null) ?? null;
 
   const [step, setStep] = useState<Step>("identify");
   const [method, setMethod] = useState<Method>("phone");
@@ -112,7 +105,6 @@ export function RegistroFlow() {
 
   // flow control state
   const [emailFlowToken, setEmailFlowToken] = useState<string | undefined>();
-  const [plan, setPlan] = useState<PlanKey>(planParam ?? "monthly");
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -162,10 +154,10 @@ export function RegistroFlow() {
       setStep("register");
       return;
     }
-    await landAfterAuth(me.email ?? knownEmail ?? "");
+    await landAfterAuth();
   }
 
-  async function landAfterAuth(userEmail: string) {
+  async function landAfterAuth() {
     const status = await getUserStatus();
     const hasMembership = [
       "active",
@@ -178,8 +170,10 @@ export function RegistroFlow() {
       navigate(next, { replace: true });
       return;
     }
-    setEmail(status.data.userInfo?.email ?? userEmail);
-    setStep("subscribe");
+    // No membership yet → send them to the membership screen to pick a plan and
+    // pay. That screen opens the Treli checkout (new tab) and holds the realtime
+    // activation socket, so we don't open checkout — or a full redirect — here.
+    navigate("/app/membership", { replace: true });
   }
 
   // ───────── identify: phone ─────────
@@ -358,30 +352,10 @@ export function RegistroFlow() {
         ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
         termsAcceptedAt: new Date().toISOString(),
       });
-      await landAfterAuth(email.trim());
+      await landAfterAuth();
     } catch (err) {
       setError(apiError(err, "No pudimos completar tu registro."));
     } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // ───────── subscribe (Treli checkout prompt) ─────────
-  async function goToCheckout() {
-    resetMessages();
-    // Treli needs a verified email — if it isn't, open the verification modal
-    // (which resumes into checkout via ?then=checkout) instead of paying now.
-    if (gate(plan)) return;
-    setIsLoading(true);
-    try {
-      const res = await createCheckoutSession(email.trim(), plan);
-      if (res.data?.url) {
-        window.location.href = res.data.url;
-      } else {
-        throw new Error("no url");
-      }
-    } catch (err) {
-      setError(apiError(err, "No pudimos iniciar el pago."));
       setIsLoading(false);
     }
   }
@@ -734,73 +708,6 @@ export function RegistroFlow() {
               Crear mi cuenta
             </SubmitButton>
           </form>
-        </>
-      )}
-
-      {/* subscribe (Treli prompt) */}
-      {step === "subscribe" && (
-        <>
-          <div style={{ marginBottom: "20px" }}>
-            <h2 style={headingStyle}>¡TU CUENTA ESTÁ LISTA!</h2>
-            <p style={subStyle}>Activa tu membresía para empezar a ahorrar.</p>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
-            {(["monthly", "yearly"] as PlanKey[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPlan(p)}
-                style={{
-                  textAlign: "left",
-                  padding: "14px 16px",
-                  borderRadius: "12px",
-                  border: plan === p ? "2px solid #000" : "1px solid #d1d5db",
-                  background: plan === p ? "#fafafa" : "#fff",
-                  cursor: "pointer",
-                  fontFamily: '"Hepta Slab", serif',
-                }}
-              >
-                <span style={{ fontFamily: '"Clash Grotesk", sans-serif', fontWeight: 700, fontSize: "14px" }}>
-                  {p === "monthly" ? "Plan mensual" : "Plan anual"}
-                </span>
-                <span style={{ display: "block", fontSize: "12px", color: "#6b7280" }}>
-                  {p === "monthly" ? "Renovación cada mes" : "Mejor precio, renovación anual"}
-                </span>
-              </button>
-            ))}
-          </div>
-          {error && <ErrorMsg msg={error} />}
-          <button
-            type="button"
-            onClick={goToCheckout}
-            disabled={isLoading}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "9999px",
-              background: isLoading ? "#d1d5db" : "#000",
-              color: "#fff",
-              fontFamily: '"Clash Grotesk", sans-serif',
-              fontWeight: 700,
-              fontSize: "13px",
-              border: "none",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-            }}
-          >
-            {isLoading && <Loader size={14} color="white" />}
-            {isLoading ? "Cargando..." : "Ir al pago"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(next, { replace: true })}
-            style={{ ...linkBtnStyle, width: "100%", textAlign: "center", marginTop: "10px" }}
-          >
-            Explorar primero
-          </button>
         </>
       )}
 

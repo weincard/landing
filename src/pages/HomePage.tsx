@@ -76,9 +76,9 @@ export function HomePage() {
                 <strong>$18,900 COP/mes,</strong> o ahorra dos meses con una
                 suscripción anual de <strong>$189,000 COP!</strong>
               </p>
-              <div style={{ display: "flex", justifyContent: "center" }}>
+              {/* <div style={{ display: "flex", justifyContent: "center" }}>
                 <PromoModal />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -94,7 +94,9 @@ export function HomePage() {
           borderRadius: "0 0 60px 60px",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", textAlign: "center" }}>
+        <div
+          style={{ maxWidth: "1280px", margin: "0 auto", textAlign: "center" }}
+        >
           <h2
             style={{
               fontFamily: '"Hepta Slab", serif',
@@ -229,7 +231,14 @@ export function HomePage() {
             ))}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              alignItems: "center",
+            }}
+          >
             <p
               style={{
                 fontFamily: '"Clash Grotesk", sans-serif',
@@ -239,9 +248,7 @@ export function HomePage() {
             >
               QUE PODRÍAS LIBRAR EN TU PRIMERA SALIDA.
             </p>
-            <p
-              style={{ fontFamily: '"Hepta Slab", serif', fontSize: "18px" }}
-            >
+            <p style={{ fontFamily: '"Hepta Slab", serif', fontSize: "18px" }}>
               Cancela cuando quieras.
             </p>
             {!isLoggedIn && (
