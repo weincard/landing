@@ -19,16 +19,17 @@ import {
   User,
   LogOut,
   Settings,
+  CompassIcon,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { UsarWeincardButton } from "@/components/redeem/UsarWeincardButton";
 
 const NAV_ITEMS = [
-  { href: "/app/card",       label: "Mi tarjeta",  icon: CreditCard },
-  { href: "/app/explore",    label: "Explorar",    icon: Compass },
-  { href: "/app/savings",    label: "Mis ahorros", icon: TrendingUp },
-  { href: "/app/favorites",  label: "Favoritos",   icon: Heart },
-  { href: "/app/profile",    label: "Perfil",      icon: User },
+  { href: "/app/card", label: "Mi tarjeta", icon: CreditCard },
+  { href: "/app/explore", label: "Explorar", icon: Compass },
+  { href: "/app/savings", label: "Mis ahorros", icon: TrendingUp },
+  { href: "/app/favorites", label: "Favoritos", icon: Heart },
+  { href: "/app/profile", label: "Perfil", icon: User },
 ];
 
 export function AppLayout() {
@@ -37,7 +38,9 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { user, hasMembership, membershipName, logout } = useAuth();
 
-  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "WC";
+  const initials =
+    `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() ||
+    "WC";
   const fullName = user?.name ?? "Usuario";
 
   function handleLogout() {
@@ -111,13 +114,19 @@ export function AppLayout() {
                 leftSection={<Settings size={14} />}
                 onClick={() => navigate("/app/profile")}
               >
-                Perfil y configuración
+                Perfil
               </Menu.Item>
               <Menu.Item
                 leftSection={<CreditCard size={14} />}
                 onClick={() => navigate("/app/membership")}
               >
                 Membresía
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<CompassIcon size={14} />}
+                onClick={() => navigate("/app/explore")}
+              >
+                Explorar
               </Menu.Item>
               <Menu.Divider />
               <Menu.Item

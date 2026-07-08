@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal, Loader } from "@mantine/core";
 import { Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCreateCheckout } from "@/hooks/useMembership";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useMembershipActivation } from "@/hooks/useMembershipActivation";
 
 const PROMO_CODE = "BIENVENIDOWEB";
 
 export function PromoModal() {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, hasMembership, refreshMembership } = useAuth();
   const gate = useEmailVerificationGate();
   const checkout = useCreateCheckout();
   const navigate = useNavigate();
@@ -17,6 +18,20 @@ export function PromoModal() {
   const [copied, setCopied] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState("");
+  const [checkoutOpened, setCheckoutOpened] = useState(false);
+
+  // Hold a realtime socket while the Treli checkout tab is open; refresh
+  // membership when activation lands.
+  useMembershipActivation(checkoutOpened && !hasMembership, refreshMembership);
+
+  // On activation (membership flips active), land the user on their card.
+  // Gated on hasMembership so the race-guard refresh on open never navigates
+  // prematurely.
+  useEffect(() => {
+    if (checkoutOpened && hasMembership) {
+      navigate("/app/card");
+    }
+  }, [checkoutOpened, hasMembership, navigate]);
 
   function handleCopy() {
     navigator.clipboard.writeText(PROMO_CODE).then(() => {
@@ -36,6 +51,7 @@ export function PromoModal() {
       const data = await checkout.mutateAsync({ email, plan: "monthly" });
       if (data?.url) {
         window.open(data.url, "_blank", "noopener,noreferrer");
+        setCheckoutOpened(true);
       }
     } catch {
       setError("No se pudo iniciar el proceso de pago. Intenta de nuevo.");
@@ -45,6 +61,13 @@ export function PromoModal() {
   }
 
   async function handleLoggedInActivate() {
+    // Already have a plan (active/trialing/unpaid/pending_cancel) → never open
+    // the Treli checkout; send them to their card instead.
+    if (hasMembership) {
+      setPromoOpen(false);
+      navigate("/app/card");
+      return;
+    }
     if (!user?.email) {
       setPromoOpen(false);
       navigate("/registro?plan=monthly&next=/app/card");
@@ -55,7 +78,7 @@ export function PromoModal() {
 
   return (
     <>
-      {/* <button
+      <button
         onClick={() => setPromoOpen(true)}
         style={{
           background: "#000",
@@ -78,7 +101,7 @@ export function PromoModal() {
       >
         {purchasing && <Loader size={14} color="white" />}
         Comienza tu prueba gratis de 30 días
-      </button> */}
+      </button>
 
       {error && (
         <p

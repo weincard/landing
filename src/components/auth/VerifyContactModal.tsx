@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Modal, Button, Stack, Text, Group } from "@mantine/core";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +9,6 @@ import {
   phoneAttachRequestOtp,
   phoneAttachVerifyOtp,
 } from "@/api/auth";
-import { createCheckoutSession } from "@/api/memberships";
 import { CodeInput } from "./CodeInput";
 import { PhoneCountryInput } from "./PhoneCountryInput";
 import {
@@ -17,7 +16,6 @@ import {
   splitPhone,
   type Country,
 } from "@/lib/countries";
-import type { PlanKey } from "@/types";
 
 // One unified, URL-synced verification surface for both email and phone. It is
 // mounted once at the router root and driven entirely by the query string:
@@ -85,6 +83,7 @@ function VerifyBody({
 }) {
   const { user, refreshUser } = useAuth();
   const [params] = useSearchParams();
+  const navigate = useNavigate();
 
   const seed = splitPhone(user?.phone);
   const [stage, setStage] = useState<"start" | "code">("start");
@@ -99,16 +98,13 @@ function VerifyBody({
   async function runThenAndClose(targetEmail: string | null) {
     const then = params.get("then");
     if (then === "checkout" && targetEmail) {
-      const plan = (params.get("plan") as PlanKey | null) ?? "monthly";
-      try {
-        const res = await createCheckoutSession(targetEmail, plan);
-        if (res.data?.url) {
-          window.location.href = res.data.url;
-          return; // navigating away — leave the URL as-is
-        }
-      } catch (err) {
-        toast.error(apiError(err, "No pudimos iniciar el pago."));
-      }
+      // Contact is now verified (refreshUser already ran) → send them to the
+      // membership screen to pick a plan and pay. That screen opens the Treli
+      // checkout (new tab) and holds the realtime activation socket, so we
+      // neither open checkout nor full-redirect here.
+      onClose();
+      navigate("/app/membership");
+      return;
     }
     onClose();
   }

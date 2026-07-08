@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenu() {
-  const { user, hasMembership, membershipName, isLoading, isLoggedIn, logout } = useAuth();
+  const { user, hasMembership, membershipName, isLoading, isLoggedIn, logout } =
+    useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -56,8 +57,10 @@ export function UserMenu() {
     );
   }
 
-  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
-  const fullName = user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  const initials =
+    `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+  const fullName =
+    user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
   function handleLogout() {
     logout();
@@ -189,7 +192,9 @@ export function UserMenu() {
               to="/app/card"
               onClick={() => setOpen(false)}
               style={menuItemStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f9fafb")
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
               Mi tarjeta
@@ -198,12 +203,27 @@ export function UserMenu() {
               to="/app/explore"
               onClick={() => setOpen(false)}
               style={menuItemStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f9fafb")
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
               Explorar
             </Link>
-            <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
+            <Link
+              to="/app/profile"
+              onClick={() => setOpen(false)}
+              style={menuItemStyle}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f9fafb")
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+            >
+              Perfil
+            </Link>
+            <div
+              style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }}
+            />
             <button
               onClick={handleLogout}
               style={{
@@ -220,7 +240,9 @@ export function UserMenu() {
                 cursor: "pointer",
                 display: "block",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#fef2f2")
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
               Cerrar sesión

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -9,6 +9,7 @@ import { useCreateCheckout } from "@/hooks/useMembership";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { getMe } from "@/api/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useMembershipActivation } from "@/hooks/useMembershipActivation";
 import type { PlanKey } from "@/types";
 
 const PLANS = [
@@ -31,7 +32,7 @@ const PLANS = [
 ];
 
 export function PlanesPage() {
-  const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser } =
+  const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser, refreshMembership } =
     useAuth();
   const gate = useEmailVerificationGate();
   const checkout = useCreateCheckout();
@@ -47,6 +48,20 @@ export function PlanesPage() {
   const [emailInput, setEmailInput] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+
+  // While the Treli checkout tab is open, hold a realtime socket and refresh the
+  // membership when activation lands (replaces the manual "actualiza tu
+  // membresía" button below).
+  useMembershipActivation(checkoutOpened && !hasMembership, refreshMembership);
+
+  // Once activation is detected (membership flips active), land the user on
+  // their card. Gated on hasMembership so the socket's race-guard refresh on
+  // open never navigates prematurely.
+  useEffect(() => {
+    if (checkoutOpened && hasMembership) {
+      navigate("/app/card");
+    }
+  }, [checkoutOpened, hasMembership, navigate]);
 
   async function startCheckout(planKey: PlanKey, email: string) {
     // Email must be verified before Treli checkout — gate opens the verify modal
@@ -76,6 +91,11 @@ export function PlanesPage() {
   }
 
   async function handleSelectPlan(planKey: PlanKey) {
+    // Never open the Treli checkout for a user who already has a plan — active,
+    // trialing, unpaid, or pending_cancel all report hasMembership. Beyond the
+    // product rule, opening it would set checkoutOpened while hasMembership is
+    // already true, bouncing them off the page before the socket can connect.
+    if (hasMembership) return;
     if (activePlanKey === planKey) return;
 
     // Unauthenticated users go through the unified auth funnel, which lands on
@@ -469,7 +489,7 @@ export function PlanesPage() {
               <button
                 type="button"
                 onClick={() => handleSelectPlan(plan.key)}
-                disabled={purchasing || activePlanKey === plan.key}
+                disabled={purchasing || hasMembership || activePlanKey === plan.key}
                 style={{
                   width: "100%",
                   padding: "12px",
@@ -480,16 +500,16 @@ export function PlanesPage() {
                   fontWeight: 700,
                   fontSize: "13px",
                   border: "none",
-                  cursor: activePlanKey === plan.key || purchasing ? "not-allowed" : "pointer",
+                  cursor: hasMembership || activePlanKey === plan.key || purchasing ? "not-allowed" : "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
                   transition: "transform 0.15s, background 0.15s",
-                  opacity: activePlanKey === plan.key ? 0.6 : 1,
+                  opacity: hasMembership || activePlanKey === plan.key ? 0.6 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  if (activePlanKey !== plan.key && !purchasing) {
+                  if (activePlanKey !== plan.key && !purchasing && !hasMembership) {
                     e.currentTarget.style.background = "#000";
                     e.currentTarget.style.color = "#fff";
                   }
@@ -500,11 +520,7 @@ export function PlanesPage() {
                 }}
               >
                 {purchasing && <Loader size={14} color="black" />}
-                {activePlanKey === plan.key
-                  ? "Plan actual"
-                  : hasMembership
-                  ? "Quiero este plan"
-                  : "Adquirir plan"}
+                {activePlanKey === plan.key ? "Plan actual" : "Adquirir plan"}
               </button>
             </div>
           ))}
