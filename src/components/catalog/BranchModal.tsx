@@ -5,10 +5,13 @@ import type { Branch } from "@/types";
 
 interface BranchModalProps {
   branch: Branch;
+  /** Browsing category's channels; forwarded to the branch-detail route so its
+   *  offers stay scoped to those channels (e.g. Domicilios → delivery). */
+  channelIds?: number[];
   onClose: () => void;
 }
 
-export function BranchModal({ branch, onClose }: BranchModalProps) {
+export function BranchModal({ branch, channelIds = [], onClose }: BranchModalProps) {
   const { isLoggedIn, hasMembership } = useAuth();
   const navigate = useNavigate();
   const [imgIndex, setImgIndex] = useState(0);
@@ -25,15 +28,22 @@ export function BranchModal({ branch, onClose }: BranchModalProps) {
     ? [branch.coverImageUrl]
     : [];
 
+  const detailPath =
+    channelIds.length > 0
+      ? `/app/explore/${branch.branchId}?channelIds=${channelIds.join(",")}`
+      : `/app/explore/${branch.branchId}`;
+
   function handleCta() {
     if (!isLoggedIn) {
       onClose();
-      navigate(`/registro?next=/app/explore/${branch.branchId}`);
+      // Encode: detailPath may itself carry a `?channelIds=` query, which must
+      // survive as part of `next` rather than leaking into the registro URL.
+      navigate(`/registro?next=${encodeURIComponent(detailPath)}`);
       return;
     }
     if (hasMembership) {
       onClose();
-      navigate(`/app/explore/${branch.branchId}`);
+      navigate(detailPath);
       return;
     }
     onClose();

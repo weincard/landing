@@ -106,6 +106,11 @@ export interface MerchantCategory {
   merchantCategoryId: number;
   name: string;
   slug: string;
+  /** Channels a branch of this category may offer (e.g. Domicilios → delivery).
+   *  Empty/undefined = no restriction. Passed as `?channelIds=` to the branch
+   *  detail endpoint to scope offers to the browsing category's channels, same
+   *  as the Flutter app. */
+  allowedChannelIds?: number[];
 }
 
 export interface Merchant {

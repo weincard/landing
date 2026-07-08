@@ -16,7 +16,13 @@ export function ExplorePage() {
         </Title>
 
         <BranchBrowser
-          onOpenBranch={(branch: Branch) => navigate(`/app/explore/${branch.branchId}`)}
+          onOpenBranch={(branch: Branch, channelIds: number[]) =>
+            navigate(
+              channelIds.length
+                ? `/app/explore/${branch.branchId}?channelIds=${channelIds.join(",")}`
+                : `/app/explore/${branch.branchId}`,
+            )
+          }
         />
       </Stack>
     </>
