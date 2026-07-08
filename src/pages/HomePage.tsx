@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
-import { PromoModal } from "@/components/home/PromoModal";
 import { LogoCarousel } from "@/components/home/LogoCarousel";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { Testimonials } from "@/components/home/Testimonials";
