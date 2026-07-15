@@ -138,7 +138,6 @@ export function SomosVerificacionPage() {
                 required
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Ej: SOMOS2026-1234"
                 style={{
                   width: "100%",
                   padding: "12px 14px",
