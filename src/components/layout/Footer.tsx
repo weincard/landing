@@ -20,7 +20,11 @@ function FooterLink({
   return (
     <Link
       to={to}
-      style={{ ...baseLinkStyle, opacity: rest, fontSize: dim ? "12px" : undefined }}
+      style={{
+        ...baseLinkStyle,
+        opacity: rest,
+        fontSize: dim ? "12px" : undefined,
+      }}
       onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
       onMouseLeave={(e) => (e.currentTarget.style.opacity = rest)}
     >
@@ -48,8 +52,15 @@ export function Footer() {
     <footer style={{ background: "#000", color: "#fff", padding: "32px 16px" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
         {/* Primary nav */}
-        <div style={{ ...rowStyle, gap: "16px", fontSize: "13px", letterSpacing: "0.05em" }}>
-          <FooterLink to="/catalogo">RESTAURANTES</FooterLink>
+        <div
+          style={{
+            ...rowStyle,
+            gap: "16px",
+            fontSize: "13px",
+            letterSpacing: "0.05em",
+          }}
+        >
+          <FooterLink to="/catalogo">BENEFICIOS</FooterLink>
           <Sep />
           <FooterLink to="/planes">PLANES</FooterLink>
           {!isLoggedIn && (
