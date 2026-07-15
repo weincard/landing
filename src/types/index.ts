@@ -190,10 +190,16 @@ export interface Review {
   createdAt: string;
 }
 
-// ─── Typesense (unchanged) ───────────────────────────────────────────────────
+// ─── Typesense ────────────────────────────────────────────────────────────────
+// NOTE: currently unused — public-web reads tiles/search via the hono REST API.
+// Since the master-offers M2M migration the offers collection holds one doc per
+// branch_offers link: id = "<masterOfferId>_<branchId>"; read `offerId` (the
+// masterOfferId), never parse `id`.
 
 export interface TypesenseOfferDocument {
   id: string;
+  offerId: number;
+  branchOfferId: number;
   title: string;
   description: string;
   conditions: string;

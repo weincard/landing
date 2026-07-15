@@ -6,6 +6,7 @@ import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
 import { VerificacionPage } from "@/pages/VerificacionPage";
 import { PlazaVerificacionPage } from "@/pages/PlazaVerificacionPage";
+import { SomosVerificacionPage } from "@/pages/SomosVerificacionPage";
 import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
 import { PoliticaPrivacidadPage } from "@/pages/legal/PoliticaPrivacidadPage";
 import { PoliticaCookiesPage } from "@/pages/legal/PoliticaCookiesPage";
@@ -53,6 +54,7 @@ export const router = createBrowserRouter([
       // { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
       { path: "/verificacion", element: <VerificacionPage /> },
       { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
+      { path: "/verificacion-somos", element: <SomosVerificacionPage /> },
       { path: "/delete-account", element: <DeleteAccountPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
       { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
