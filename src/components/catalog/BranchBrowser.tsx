@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDebouncedValue } from "@mantine/hooks";
 import {
   Stack,
@@ -34,6 +35,9 @@ const INITIAL: BrowseFilters = {
 };
 
 const MC_ALL = "all";
+// URL search param mirroring the selected category, so filtered views can be
+// linked/shared (e.g. /catalogo?merchantCategoryId=3). Absent = "Todos".
+const MC_PARAM = "merchantCategoryId";
 
 interface Props {
   /** What to do when a branch card is opened (route push vs modal). Receives the
@@ -46,7 +50,36 @@ interface Props {
 // helping users find what they want, so they render the exact same component;
 // only the "open a branch" behavior differs (passed via onOpenBranch).
 export function BranchBrowser({ onOpenBranch }: Props) {
-  const [filters, setFilters] = useState<BrowseFilters>(INITIAL);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState<BrowseFilters>(() => {
+    const id = Number(searchParams.get(MC_PARAM));
+    return Number.isInteger(id) && id > 0 ? { ...INITIAL, merchantCategoryId: id } : INITIAL;
+  });
+
+  // Keep the URL in sync with the category selection. replace: true so toggling
+  // chips doesn't pile up history entries.
+  const setMerchantCategoryId = (merchantCategoryId: number | null) => {
+    setFilters((f) => ({ ...f, merchantCategoryId }));
+    setSearchParams(
+      (params) => {
+        if (merchantCategoryId) params.set(MC_PARAM, String(merchantCategoryId));
+        else params.delete(MC_PARAM);
+        return params;
+      },
+      { replace: true },
+    );
+  };
+
+  const clearFilters = () => {
+    setFilters(INITIAL);
+    setSearchParams(
+      (params) => {
+        params.delete(MC_PARAM);
+        return params;
+      },
+      { replace: true },
+    );
+  };
   // Debounce so typing / toggling chips doesn't fire a request per keystroke.
   const [debounced] = useDebouncedValue(filters, 350);
 
@@ -123,12 +156,7 @@ export function BranchBrowser({ onOpenBranch }: Props) {
           {merchantCategories.length > 0 && (
             <Chip.Group
               value={filters.merchantCategoryId ? String(filters.merchantCategoryId) : MC_ALL}
-              onChange={(v) =>
-                setFilters((f) => ({
-                  ...f,
-                  merchantCategoryId: !v || v === MC_ALL ? null : Number(v),
-                }))
-              }
+              onChange={(v) => setMerchantCategoryId(!v || v === MC_ALL ? null : Number(v))}
             >
               <Group gap={6}>
                 <Chip value={MC_ALL} size="sm" radius="xl">
@@ -186,7 +214,7 @@ export function BranchBrowser({ onOpenBranch }: Props) {
             <Text c="dimmed" size="sm">
               No se encontraron resultados con esos filtros.
             </Text>
-            <Button variant="subtle" color="dark" size="xs" onClick={() => setFilters(INITIAL)}>
+            <Button variant="subtle" color="dark" size="xs" onClick={clearFilters}>
               Limpiar filtros
             </Button>
           </Stack>
