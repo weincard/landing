@@ -28,7 +28,7 @@ export interface DeliveryBranch {
     offerId: number;
     title: string;
     offerType: string;
-    validDays: string[];
+    validDays: string[] | null;
     membershipPlanId: number | null;
     membershipPlanLevel: number | null;
   }[];
@@ -81,7 +81,7 @@ export function deliveryBranchToBranch(d: DeliveryBranch): Branch {
       conditions: "",
       validFrom: "",
       validTo: null,
-      validDays: o.validDays,
+      validDays: o.validDays ?? [],
       isActive: true,
       expiresAt: null,
       excludesBankHolidays: false,
