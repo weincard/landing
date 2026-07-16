@@ -62,6 +62,11 @@ export interface UserStatusResponse {
   };
   membership: MembershipInfo | null;
   couponRedemption: CouponRedemptionInfo | null;
+  /** Backend-computed: no consent log yet, or latest log is for an older terms
+   *  version. Drives the blocking ConsentGateModal (habeas data compliance). */
+  consentRequired: boolean;
+  currentTermsVersion?: string;
+  userConsent: { acceptedAt: string; termsVersion: string } | null;
 }
 
 // ─── Plans ───────────────────────────────────────────────────────────────────
