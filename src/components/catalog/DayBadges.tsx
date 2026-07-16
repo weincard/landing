@@ -29,11 +29,12 @@ export const DAY_LETTER: Record<string, string> = {
 };
 
 interface DayBadgesProps {
-  validDays: string[];
+  /** null/undefined/empty all mean "valid every day" — validDays is optional on offers. */
+  validDays: string[] | null | undefined;
 }
 
 export function DayBadges({ validDays }: DayBadgesProps) {
-  const activeSet = new Set(validDays.length === 0 ? DAY_ORDER : validDays);
+  const activeSet = new Set(!validDays || validDays.length === 0 ? DAY_ORDER : validDays);
   return (
     <div style={{ display: "flex", gap: "2px" }}>
       {DAY_ORDER.map((day) => (

@@ -43,7 +43,7 @@ export interface BranchTileOffer {
   title: string;
   description: string;
   offerType: string;
-  validDays: string[];
+  validDays: string[] | null;
   membershipPlanId: number | null;
   membershipPlanLevel: number | null;
 }
@@ -145,7 +145,7 @@ export function tileToBranch(tile: BranchTile): Branch {
       conditions: "",
       validFrom: "",
       validTo: null,
-      validDays: o.validDays,
+      validDays: o.validDays ?? [],
       isActive: true,
       expiresAt: null,
       excludesBankHolidays: false,

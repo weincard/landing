@@ -86,7 +86,8 @@ export interface Offer {
   conditions: string;
   validFrom: string;
   validTo: string | null;
-  validDays: string[];
+  /** Not required on offers — null/empty means valid every day. */
+  validDays: string[] | null;
   isActive: boolean;
   expiresAt: string | null;
   excludesBankHolidays: boolean;

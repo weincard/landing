@@ -2,8 +2,9 @@ import type { Branch } from "@/types";
 import { DayBadges, DAY_ORDER } from "./DayBadges";
 
 export function mergedValidDays(offers: Branch["offers"]): string[] {
-  if (offers.some((o) => o.validDays.length === 0)) return [];
-  const unique = Array.from(new Set(offers.flatMap((o) => o.validDays)));
+  // No validDays (null or empty) means the offer is valid every day.
+  if (offers.some((o) => !o.validDays?.length)) return [];
+  const unique = Array.from(new Set(offers.flatMap((o) => o.validDays ?? [])));
   return unique.sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
 }
 
