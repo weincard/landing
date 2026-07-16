@@ -19,6 +19,14 @@ export const updateUser = (
 export const getUserStatus = () =>
   honoClient.get<UserStatusResponse>("/users/status");
 
+// Records a consent log row (backend stamps termsVersion, IP and user-agent).
+// Same PATCH the Flutter CompleteProfileView uses; clears `consentRequired`
+// on the next /users/status fetch.
+export const acceptConsent = (userId: number) =>
+  honoClient.patch(`/users/update/${userId}`, {
+    termsAcceptedAt: new Date().toISOString(),
+  });
+
 // Canonical "finish registration" call (mirrors the Flutter app). Auth is the
 // Bearer JWT obtained from phone OTP / email verify, set by the honoClient
 // interceptor. `name`/`lastName` are stored tilde-joined server-side.

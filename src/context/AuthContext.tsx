@@ -27,6 +27,9 @@ interface AuthContextValue {
   isLoggedIn: boolean;
   /** True once name, email and document are all set — i.e. registration done. */
   profileComplete: boolean;
+  /** Backend flag: user must (re-)accept the current T&C version. Drives the
+   *  blocking ConsentGateModal on every route while a session exists. */
+  consentRequired: boolean;
   hasMembership: boolean;
   activePlanKey: PlanKey | null;
   membershipName: string | null;
@@ -43,6 +46,7 @@ interface Session {
   user: AuthUser;
   membership: MembershipInfo | null;
   couponRedemption: CouponRedemptionInfo | null;
+  consentRequired: boolean;
 }
 
 const SESSION_KEY = ["auth", "session"] as const;
@@ -53,6 +57,7 @@ async function fetchSession(): Promise<Session> {
     user,
     membership: statusRes.data.membership ?? null,
     couponRedemption: statusRes.data.couponRedemption ?? null,
+    consentRequired: statusRes.data.consentRequired ?? false,
   };
 }
 
@@ -74,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = sessionQuery.data?.user ?? null;
   const membership = sessionQuery.data?.membership ?? null;
   const couponRedemption = sessionQuery.data?.couponRedemption ?? null;
+  const consentRequired = sessionQuery.data?.consentRequired ?? false;
   // `isLoading` is false when the query is disabled (no token), so this is only
   // true while an actual session fetch is in flight.
   const isLoading = sessionQuery.isLoading;
@@ -133,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isLoggedIn,
         profileComplete,
+        consentRequired,
         hasMembership,
         activePlanKey,
         membershipName,

@@ -16,6 +16,7 @@ import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { VerifyContactModal } from "@/components/auth/VerifyContactModal";
+import { ConsentGateModal } from "@/components/auth/ConsentGateModal";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MembershipCardPage } from "@/pages/app/MembershipCardPage";
 import { MembershipManagementPage } from "@/pages/app/MembershipManagementPage";
@@ -40,6 +41,9 @@ export const router = createBrowserRouter([
         {/* Unified email/phone verification surface, driven by the ?verify=
             query param so it's available (and reload-safe) on every route. */}
         <VerifyContactModal />
+        {/* Blocking T&C/habeas-data consent gate — covers every route while a
+            session exists (see ConsentGateModal for the exempt paths). */}
+        <ConsentGateModal />
       </>
     ),
     errorElement: <ErrorPage />,
