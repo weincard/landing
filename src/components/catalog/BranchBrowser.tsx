@@ -17,6 +17,7 @@ import {
 import { Search, Compass, MapPin } from "lucide-react";
 import { useMerchantCategories } from "@/hooks/useMerchantCategories";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useAppConfig } from "@/hooks/useAppConfig";
 import {
   useBranchBrowse,
   useDeliveryBranches,
@@ -24,6 +25,7 @@ import {
   type BrowseFilters,
 } from "@/hooks/useBranches";
 import { BranchCard } from "@/components/catalog/BranchCard";
+import { SomosPromoModal } from "@/components/catalog/SomosPromoModal";
 import { DAY_ORDER, DAY_LETTER } from "@/components/catalog/DayBadges";
 import type { Branch } from "@/types";
 
@@ -38,6 +40,7 @@ const MC_ALL = "all";
 // URL search param mirroring the selected category, so filtered views can be
 // linked/shared (e.g. /catalogo?merchantCategoryId=3). Absent = "Todos".
 const MC_PARAM = "merchantCategoryId";
+const SOMOS = "somos";
 
 interface Props {
   /** What to do when a branch card is opened (route push vs modal). Receives the
@@ -53,8 +56,13 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<BrowseFilters>(() => {
     const id = Number(searchParams.get(MC_PARAM));
-    return Number.isInteger(id) && id > 0 ? { ...INITIAL, merchantCategoryId: id } : INITIAL;
+    return Number.isInteger(id) && id > 0
+      ? { ...INITIAL, merchantCategoryId: id }
+      : INITIAL;
   });
+  const [somosModalOpened, setSomosModalOpened] = useState(false);
+
+  const { data: appConfig } = useAppConfig();
 
   // Keep the URL in sync with the category selection. replace: true so toggling
   // chips doesn't pile up history entries.
@@ -62,7 +70,8 @@ export function BranchBrowser({ onOpenBranch }: Props) {
     setFilters((f) => ({ ...f, merchantCategoryId }));
     setSearchParams(
       (params) => {
-        if (merchantCategoryId) params.set(MC_PARAM, String(merchantCategoryId));
+        if (merchantCategoryId)
+          params.set(MC_PARAM, String(merchantCategoryId));
         else params.delete(MC_PARAM);
         return params;
       },
@@ -155,18 +164,36 @@ export function BranchBrowser({ onOpenBranch }: Props) {
 
           {merchantCategories.length > 0 && (
             <Chip.Group
-              value={filters.merchantCategoryId ? String(filters.merchantCategoryId) : MC_ALL}
-              onChange={(v) => setMerchantCategoryId(!v || v === MC_ALL ? null : Number(v))}
+              value={
+                filters.merchantCategoryId
+                  ? String(filters.merchantCategoryId)
+                  : MC_ALL
+              }
+              onChange={(v) => {
+                if (v === SOMOS) {
+                  setSomosModalOpened(true);
+                  return;
+                }
+                setMerchantCategoryId(!v || v === MC_ALL ? null : Number(v));
+              }}
             >
               <Group gap={6}>
                 <Chip value={MC_ALL} size="sm" radius="xl">
                   Todos
                 </Chip>
                 {merchantCategories.map((mc) => (
-                  <Chip key={mc.merchantCategoryId} value={String(mc.merchantCategoryId)} size="sm" radius="xl">
+                  <Chip
+                    key={mc.merchantCategoryId}
+                    value={String(mc.merchantCategoryId)}
+                    size="sm"
+                    radius="xl"
+                  >
                     {mc.name}
                   </Chip>
                 ))}
+                <Chip value={SOMOS} size="sm" radius="xl">
+                  Somos Internet
+                </Chip>
               </Group>
             </Chip.Group>
           )}
@@ -177,7 +204,13 @@ export function BranchBrowser({ onOpenBranch }: Props) {
             onChange={(vals) => setFilters((f) => ({ ...f, validDays: vals }))}
           >
             <Group gap={4}>
-              <Text size="xs" fw={700} tt="uppercase" c="dimmed" style={{ letterSpacing: "0.07em", marginRight: 4 }}>
+              <Text
+                size="xs"
+                fw={700}
+                tt="uppercase"
+                c="dimmed"
+                style={{ letterSpacing: "0.07em", marginRight: 4 }}
+              >
                 Días
               </Text>
               {DAY_ORDER.map((day) => (
@@ -214,7 +247,12 @@ export function BranchBrowser({ onOpenBranch }: Props) {
             <Text c="dimmed" size="sm">
               No se encontraron resultados con esos filtros.
             </Text>
-            <Button variant="subtle" color="dark" size="xs" onClick={clearFilters}>
+            <Button
+              variant="subtle"
+              color="dark"
+              size="xs"
+              onClick={clearFilters}
+            >
               Limpiar filtros
             </Button>
           </Stack>
@@ -245,6 +283,14 @@ export function BranchBrowser({ onOpenBranch }: Props) {
             Ver más
           </Button>
         </Group>
+      )}
+
+      {appConfig?.somosPromo && (
+        <SomosPromoModal
+          opened={somosModalOpened}
+          onClose={() => setSomosModalOpened(false)}
+          somosPromo={appConfig.somosPromo}
+        />
       )}
     </Stack>
   );
