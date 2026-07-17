@@ -92,6 +92,7 @@ export function RegistroFlow() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [otpChannel, setOtpChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [document, setDocument] = useState("");
@@ -193,7 +194,7 @@ export function RegistroFlow() {
     resetMessages();
     setIsLoading(true);
     try {
-      const res = await requestOtp(composePhone(identifyCountry, phone));
+      const res = await requestOtp(composePhone(identifyCountry, phone), otpChannel);
       setSuccessMsg(res.data?.message ?? "Código enviado por WhatsApp.");
       setCode(["", "", "", "", "", ""]);
       setStep("otp");
@@ -421,9 +422,51 @@ export function RegistroFlow() {
                   required
                   autoFocus
                 />
-                <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
-                  Te enviaremos un código por WhatsApp.
-                </p>
+
+                {/* OTP Channel Selection */}
+                <div style={{ marginTop: "12px", marginBottom: "12px" }}>
+                  <p style={labelStyle}>Elige cómo recibir el código:</p>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setOtpChannel('whatsapp')}
+                      style={{
+                        flex: 1,
+                        padding: "10px 12px",
+                        border: otpChannel === 'whatsapp' ? "2px solid #000" : "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        background: otpChannel === 'whatsapp' ? "#000" : "#fff",
+                        color: otpChannel === 'whatsapp' ? "#fff" : "#374151",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        fontFamily: "inherit",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOtpChannel('sms')}
+                      style={{
+                        flex: 1,
+                        padding: "10px 12px",
+                        border: otpChannel === 'sms' ? "2px solid #000" : "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        background: otpChannel === 'sms' ? "#000" : "#fff",
+                        color: otpChannel === 'sms' ? "#fff" : "#374151",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        fontFamily: "inherit",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      SMS
+                    </button>
+                  </div>
+                </div>
               </div>
               {error && <ErrorMsg msg={error} />}
               <SubmitButton

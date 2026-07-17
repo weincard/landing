@@ -55,9 +55,14 @@ export const getMe = async (): Promise<AuthUser> => {
 // ───────────────────────────── Phone (OTP) ─────────────────────────────────
 // `phone` is the full E.164 string (dial code + number), composed by the caller
 // via composePhone() from the country picker. Don't prepend a dial code here.
-export const requestOtp = (phone: string) =>
-  honoClient.post<{ newUser: boolean; message: string }>("/auth/request-otp", {
+export const requestOtp = (phone: string, channel: 'whatsapp' | 'sms' = 'whatsapp') =>
+  honoClient.post<{
+    newUser: boolean;
+    message: string;
+    channel: 'whatsapp' | 'sms';
+  }>("/auth/request-otp", {
     phone,
+    channel,
   });
 
 export const verifyOtp = (phone: string, code: string) =>
