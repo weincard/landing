@@ -45,20 +45,22 @@ export function BranchModal({ branchId, channelIds = [], onClose }: BranchModalP
       ? `/app/explore/${branchId}?channelIds=${channelIds.join(",")}`
       : `/app/explore/${branchId}`;
 
+  // NOTE: don't call onClose() here. Since the modal became URL-driven,
+  // onClose navigates (navigate(-1) when the open pushed a history entry); the
+  // browser processes that pop asynchronously AFTER our push below, so it
+  // clobbered the redirect and the click appeared to "just close the modal".
+  // Navigating to another route unmounts CatalogoPage — and the modal with it.
   function handleCta() {
     if (!isLoggedIn) {
-      onClose();
       // Encode: detailPath may itself carry a `?channelIds=` query, which must
       // survive as part of `next` rather than leaking into the registro URL.
       navigate(`/registro?next=${encodeURIComponent(detailPath)}`);
       return;
     }
     if (hasMembership) {
-      onClose();
       navigate(detailPath);
       return;
     }
-    onClose();
     navigate("/app/membership");
   }
 
