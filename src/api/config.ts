@@ -20,6 +20,18 @@ export interface PublicAppConfig {
     verificationCode: string;
     allowedPlanIds: number[];
   };
+  /** Editable copy + kill switch for the b2b "cancel your Apple IAP sub"
+   *  notice. `{orgName}` in title/body1/body2 is interpolated at render time.
+   *  Absent or `enabled: false` → the notice never shows. */
+  iapCancelNotice?: {
+    enabled: boolean;
+    title?: string;
+    body1?: string;
+    body2?: string;
+    ctaLabel?: string;
+    alreadyCancelledLabel?: string;
+    dismissLabel?: string;
+  };
 }
 
 export const getAppConfig = () => honoClient.get<PublicAppConfig>("/config/app");

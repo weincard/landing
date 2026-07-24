@@ -74,6 +74,8 @@ export interface BranchTilesResponse {
 export interface BranchTilesParams {
   q?: string;
   merchantCategoryId?: number;
+  /** Branch (food) category — the category chips inside a merchant category. */
+  categoryId?: number;
   validDays?: string[];
   page?: number;
   limit?: number;
@@ -85,6 +87,7 @@ export const getBranchTiles = (params: BranchTilesParams) => {
   const qs = new URLSearchParams();
   if (params.q) qs.set("q", params.q);
   if (params.merchantCategoryId) qs.set("merchantCategoryId", String(params.merchantCategoryId));
+  if (params.categoryId) qs.set("categoryId", String(params.categoryId));
   if (params.validDays?.length) qs.set("validDays", params.validDays.join(","));
   if (params.page) qs.set("page", String(params.page));
   if (params.limit) qs.set("limit", String(params.limit));

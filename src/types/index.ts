@@ -52,6 +52,15 @@ export interface CouponRedemptionInfo {
   usesLeft: number;
 }
 
+/** An open "cancel your Apple IAP subscription" issue from a b2b import: the
+ *  user was added to an org but still holds an active App Store subscription
+ *  only they can cancel. Drives the IapCancelNoticeModal. */
+export interface PendingIapIssue {
+  issueId: number;
+  orgName: string | null;
+  subId: string | null;
+}
+
 export interface UserStatusResponse {
   userInfo: {
     userId: number;
@@ -67,6 +76,9 @@ export interface UserStatusResponse {
   consentRequired: boolean;
   currentTermsVersion?: string;
   userConsent: { acceptedAt: string; termsVersion: string } | null;
+  /** Set when the user belongs to a b2b organization. */
+  organizationName?: string | null;
+  pendingIapIssues?: PendingIapIssue[];
 }
 
 // ─── Plans ───────────────────────────────────────────────────────────────────

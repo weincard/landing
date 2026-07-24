@@ -16,6 +16,7 @@ import {
 } from "@mantine/core";
 import { Search, Compass, MapPin } from "lucide-react";
 import { useMerchantCategories } from "@/hooks/useMerchantCategories";
+import { useCategories } from "@/hooks/useCategories";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import {
@@ -24,6 +25,7 @@ import {
   browseBranches,
   type BrowseFilters,
 } from "@/hooks/useBranches";
+import type { FoodCategory } from "@/api/categories";
 import { BranchCard } from "@/components/catalog/BranchCard";
 import { SomosPromoModal } from "@/components/catalog/SomosPromoModal";
 import { DAY_ORDER, DAY_LETTER } from "@/components/catalog/DayBadges";
@@ -32,6 +34,7 @@ import type { Branch } from "@/types";
 const INITIAL: BrowseFilters = {
   search: "",
   merchantCategoryId: null,
+  categoryId: null,
   validDays: [],
   nearMe: false,
 };
@@ -67,7 +70,9 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   // Keep the URL in sync with the category selection. replace: true so toggling
   // chips doesn't pile up history entries.
   const setMerchantCategoryId = (merchantCategoryId: number | null) => {
-    setFilters((f) => ({ ...f, merchantCategoryId }));
+    // Switching merchant category resets the food-category chip: the previous
+    // selection belongs to another category's chip set.
+    setFilters((f) => ({ ...f, merchantCategoryId, categoryId: null }));
     setSearchParams(
       (params) => {
         if (merchantCategoryId)
@@ -95,6 +100,24 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const location = useUserLocation();
   const { data: merchantCategories = [] } = useMerchantCategories();
 
+  // LIVE (non-debounced) view of the selected category, for UI decisions like
+  // which chip source to use — so the chips don't flash the wrong set for the
+  // debounce window after switching category.
+  const isDeliveryLive =
+    merchantCategories
+      .find((mc) => mc.merchantCategoryId === filters.merchantCategoryId)
+      ?.slug?.toLowerCase() === "domicilios";
+
+  // Food-category chips scoped to the selected merchant category (same fetch
+  // the Flutter CategoryFilterBar uses). Not fetched while on "Todos" — the
+  // chips only render inside a category context. Keyed on the LIVE filter (not
+  // the debounced one) so the row appears as soon as a category is picked.
+  // Domicilios doesn't use this set: its listed branches span all verticals,
+  // so the Domicilios-scoped categories wouldn't match them.
+  const { data: scopedCategories = [] } = useCategories(
+    isDeliveryLive ? null : filters.merchantCategoryId,
+  );
+
   // "Domicilios" is special: like Flutter, it lists via GET /deliveries/branches
   // instead of /branches/tiles. Resolve the selected category to decide, and to
   // carry its allowedChannelIds into the branch-detail navigation.
@@ -107,18 +130,34 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const channelIds = selectedCategory?.allowedChannelIds ?? [];
 
   const browse = useBranchBrowse(debounced, location, !isDelivery);
-  const delivery = useDeliveryBranches(location, isDelivery);
+  // All Domicilios filtering happens SERVER-side (text via the Typesense
+  // /deliveries/search, categoryId + validDays on both endpoints).
+  const delivery = useDeliveryBranches(location, isDelivery, {
+    q: debounced.search,
+    categoryId: debounced.categoryId,
+    validDays: debounced.validDays,
+  });
 
-  // The delivery endpoint returns ALL matching branches (no pagination, no
-  // server-side text filter), so filter by the search box client-side.
-  const branches = useMemo(() => {
-    if (isDelivery) {
-      const q = debounced.search.trim().toLowerCase();
-      const all = delivery.data ?? [];
-      return q ? all.filter((b) => b.name.toLowerCase().includes(q)) : all;
+  // Domicilios chips derive from the UNFILTERED listing (a chip then always
+  // matches ≥1 branch, and the row doesn't shrink once a filter applies).
+  // Same cache entry as the display query while no filter is active.
+  const deliveryBase = useDeliveryBranches(location, isDeliveryLive);
+  const deliveryCategories = useMemo<FoodCategory[]>(() => {
+    const seen = new Map<number, string>();
+    for (const b of deliveryBase.data ?? []) {
+      if (b.category.categoryId) seen.set(b.category.categoryId, b.category.name);
     }
+    return [...seen]
+      .map(([categoryId, name]) => ({ categoryId, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [deliveryBase.data]);
+
+  const foodCategories = isDeliveryLive ? deliveryCategories : scopedCategories;
+
+  const branches = useMemo(() => {
+    if (isDelivery) return delivery.data ?? [];
     return browseBranches(browse.data?.pages);
-  }, [isDelivery, delivery.data, debounced.search, browse.data]);
+  }, [isDelivery, delivery.data, browse.data]);
 
   const isLoading = isDelivery ? delivery.isLoading : browse.isLoading;
   const isError = isDelivery ? delivery.isError : browse.isError;
@@ -194,6 +233,33 @@ export function BranchBrowser({ onOpenBranch }: Props) {
                 <Chip value={SOMOS} size="sm" radius="xl">
                   Somos Internet
                 </Chip>
+              </Group>
+            </Chip.Group>
+          )}
+
+          {filters.merchantCategoryId != null && foodCategories.length > 0 && (
+            <Chip.Group
+              value={filters.categoryId ? String(filters.categoryId) : "all"}
+              onChange={(v) => {
+                const categoryId = !v || v === "all" ? null : Number(v);
+                setFilters((f) => ({ ...f, categoryId }));
+              }}
+            >
+              <Group gap={6}>
+                <Chip value="all" size="xs" radius="xl" color="dark">
+                  Todas
+                </Chip>
+                {foodCategories.map((cat) => (
+                  <Chip
+                    key={cat.categoryId}
+                    value={String(cat.categoryId)}
+                    size="xs"
+                    radius="xl"
+                    color="dark"
+                  >
+                    {cat.name}
+                  </Chip>
+                ))}
               </Group>
             </Chip.Group>
           )}

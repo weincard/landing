@@ -14,6 +14,8 @@ const BROWSE_PAGE_SIZE = 18;
 export interface BrowseFilters {
   search: string;
   merchantCategoryId: number | null;
+  /** Branch (food) category chip — server-side filter on tiles AND deliveries. */
+  categoryId: number | null;
   validDays: string[];
   /** "Cerca de mí": when true we send lat/lng so results are geo-sorted and the
    *  backend returns a populated near_me set; when false we omit coordinates. */
@@ -35,6 +37,7 @@ export function useBranchBrowse(filters: BrowseFilters, location: Coords, enable
       const res = await getBranchTiles({
         q: filters.search.trim() || undefined,
         merchantCategoryId: filters.merchantCategoryId ?? undefined,
+        categoryId: filters.categoryId ?? undefined,
         validDays: filters.validDays.length ? filters.validDays : undefined,
         // Only send coordinates when "Cerca de mí" is on. Without them the
         // backend returns near_me=[] and a full, non-geo-sorted `below` list.
@@ -64,12 +67,24 @@ export function browseBranches(pages: BranchTilesResponse[] | undefined): Branch
 
 // The "Domicilios" merchant category uses GET /deliveries/branches (not tiles),
 // matching Flutter. Returns ALL matching branches geo-sorted (not paginated).
-export function useDeliveryBranches(location: Coords, enabled: boolean) {
+// With a search text it switches to the Typesense-backed /deliveries/search
+// (server-side matching incl. merchant tags). All filters are server-side —
+// pass the DEBOUNCED values.
+export function useDeliveryBranches(
+  location: Coords,
+  enabled: boolean,
+  filters: { q?: string; categoryId?: number | null; validDays?: string[] } = {},
+) {
+  const query = (filters.q ?? "").trim();
+  const categoryId = filters.categoryId ?? undefined;
+  const validDays = filters.validDays?.length ? filters.validDays : undefined;
   return useQuery({
-    queryKey: ["delivery-branches", location],
+    queryKey: ["delivery-branches", location, query, categoryId, validDays],
     enabled,
     queryFn: () =>
-      getDeliveryBranches(location).then((r) => r.data.data.map(deliveryBranchToBranch)),
+      getDeliveryBranches(location, { q: query, categoryId, validDays }).then(
+        (r) => r.data.data.map(deliveryBranchToBranch),
+      ),
   });
 }
 
