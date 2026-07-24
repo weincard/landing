@@ -6,7 +6,13 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AuthUser, MembershipInfo, CouponRedemptionInfo, PlanKey } from "@/types";
+import type {
+  AuthUser,
+  MembershipInfo,
+  CouponRedemptionInfo,
+  PendingIapIssue,
+  PlanKey,
+} from "@/types";
 import { getMe } from "@/api/auth";
 import { getUserStatus } from "@/api/users";
 
@@ -30,6 +36,10 @@ interface AuthContextValue {
   /** Backend flag: user must (re-)accept the current T&C version. Drives the
    *  blocking ConsentGateModal on every route while a session exists. */
   consentRequired: boolean;
+  /** Open b2b "cancel your Apple IAP sub" issues. Drives IapCancelNoticeModal. */
+  pendingIapIssues: PendingIapIssue[];
+  /** The user's b2b organization name, when they belong to one. */
+  organizationName: string | null;
   hasMembership: boolean;
   activePlanKey: PlanKey | null;
   membershipName: string | null;
@@ -47,6 +57,8 @@ interface Session {
   membership: MembershipInfo | null;
   couponRedemption: CouponRedemptionInfo | null;
   consentRequired: boolean;
+  pendingIapIssues: PendingIapIssue[];
+  organizationName: string | null;
 }
 
 const SESSION_KEY = ["auth", "session"] as const;
@@ -58,6 +70,8 @@ async function fetchSession(): Promise<Session> {
     membership: statusRes.data.membership ?? null,
     couponRedemption: statusRes.data.couponRedemption ?? null,
     consentRequired: statusRes.data.consentRequired ?? false,
+    pendingIapIssues: statusRes.data.pendingIapIssues ?? [],
+    organizationName: statusRes.data.organizationName ?? null,
   };
 }
 
@@ -80,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const membership = sessionQuery.data?.membership ?? null;
   const couponRedemption = sessionQuery.data?.couponRedemption ?? null;
   const consentRequired = sessionQuery.data?.consentRequired ?? false;
+  const pendingIapIssues = sessionQuery.data?.pendingIapIssues ?? [];
+  const organizationName = sessionQuery.data?.organizationName ?? null;
   // `isLoading` is false when the query is disabled (no token), so this is only
   // true while an actual session fetch is in flight.
   const isLoading = sessionQuery.isLoading;
@@ -140,6 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         profileComplete,
         consentRequired,
+        pendingIapIssues,
+        organizationName,
         hasMembership,
         activePlanKey,
         membershipName,

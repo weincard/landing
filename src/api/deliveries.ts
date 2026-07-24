@@ -15,6 +15,9 @@ export interface DeliveryBranch {
   country: string;
   logoUrl: string;
   coverImageUrl: string | null;
+  /** Branch (food) category — the Domicilios chips derive from these. */
+  categoryId: number | null;
+  categoryName: string | null;
   delivery: {
     contactType: string | null;
     whatsapp: string | null;
@@ -34,10 +37,31 @@ export interface DeliveryBranch {
   }[];
 }
 
-export const getDeliveryBranches = (coords: Coords) =>
-  honoClient.get<{ data: DeliveryBranch[]; count: number }>(
-    `/deliveries/branches?lat=${coords.lat}&lng=${coords.lng}`,
-  );
+export interface DeliveryBranchesParams {
+  q?: string;
+  /** Branch (food) category — the category chips. Both endpoints accept it. */
+  categoryId?: number;
+  /** Only branches with a delivery-eligible offer valid on ANY of these days. */
+  validDays?: string[];
+}
+
+export const getDeliveryBranches = (
+  coords: Coords,
+  { q, categoryId, validDays }: DeliveryBranchesParams = {},
+) => {
+  // With a search text, use the Typesense-backed GET /deliveries/search
+  // (matches branch/offer text + merchant tags, typo/accent tolerant).
+  // Without one, keep the DB-backed listing. Both accept the same filters.
+  const query = q?.trim();
+  const qs = new URLSearchParams();
+  if (query) qs.set("q", query);
+  qs.set("lat", String(coords.lat));
+  qs.set("lng", String(coords.lng));
+  if (categoryId) qs.set("categoryId", String(categoryId));
+  if (validDays?.length) qs.set("validDays", validDays.join(","));
+  const path = `${query ? "/deliveries/search" : "/deliveries/branches"}?${qs.toString()}`;
+  return honoClient.get<{ data: DeliveryBranch[]; count: number }>(path);
+};
 
 // Map a delivery listing item into the Branch shape BranchCard / BranchModal use.
 export function deliveryBranchToBranch(d: DeliveryBranch): Branch {
@@ -61,7 +85,13 @@ export function deliveryBranchToBranch(d: DeliveryBranch): Branch {
     images: [],
     tags: null,
     createdAt: "",
-    category: { categoryId: 0, name: "", description: "", image: "", slug: "" },
+    category: {
+      categoryId: d.categoryId ?? 0,
+      name: d.categoryName ?? "",
+      description: "",
+      image: "",
+      slug: "",
+    },
     merchant: {
       merchantId: 0,
       name: "",

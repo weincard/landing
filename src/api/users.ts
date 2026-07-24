@@ -19,6 +19,15 @@ export const updateUser = (
 export const getUserStatus = () =>
   honoClient.get<UserStatusResponse>("/users/status");
 
+// Asks the backend to recheck the caller's open "cancel your Apple IAP sub"
+// issues against the DB and auto-resolve the solved ones. Used by the
+// IapCancelNoticeModal ("Ya la cancelé") and as a silent pre-check before
+// showing it — same flow as the Flutter app.
+export const recheckIapIssues = () =>
+  honoClient.post<{ resolved: number; stillOpen: number }>(
+    "/b2b/issues/me/recheck",
+  );
+
 // Records a consent log row (backend stamps termsVersion, IP and user-agent).
 // Same PATCH the Flutter CompleteProfileView uses; clears `consentRequired`
 // on the next /users/status fetch.

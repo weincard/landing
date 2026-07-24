@@ -17,6 +17,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { VerifyContactModal } from "@/components/auth/VerifyContactModal";
 import { ConsentGateModal } from "@/components/auth/ConsentGateModal";
+import { IapCancelNoticeModal } from "@/components/auth/IapCancelNoticeModal";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MembershipCardPage } from "@/pages/app/MembershipCardPage";
 import { MembershipManagementPage } from "@/pages/app/MembershipManagementPage";
@@ -44,6 +45,9 @@ export const router = createBrowserRouter([
         {/* Blocking T&C/habeas-data consent gate — covers every route while a
             session exists (see ConsentGateModal for the exempt paths). */}
         <ConsentGateModal />
+        {/* Dismissible b2b "cancel your Apple IAP sub" notice — once per tab
+            session, anywhere a session exists. */}
+        <IapCancelNoticeModal />
       </>
     ),
     errorElement: <ErrorPage />,
