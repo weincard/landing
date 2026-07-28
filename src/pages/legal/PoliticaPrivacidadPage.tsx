@@ -216,6 +216,23 @@ export function PoliticaPrivacidadPage() {
           </section>
 
           <section>
+            <h2 style={h2Style}>11. ELIMINACIÓN DE CUENTA Y CONSERVACIÓN DE DATOS</h2>
+            <p style={{ ...bodyStyle, marginBottom: "12px" }}>
+              Cuando el Titular elimina su cuenta de WEINCARD, sus datos personales son suprimidos de nuestros
+              sistemas de uso general. No obstante, WEINCARD conservará durante un término de doce (12) meses,
+              contados desde la eliminación de la cuenta, un registro mínimo con los datos de contacto e información
+              de facturación del Titular (nombre, correo electrónico, teléfono, documento de identidad e información
+              de la suscripción), con la única finalidad de atender solicitudes de soporte, reclamaciones y disputas
+              de facturación relacionadas con la cuenta eliminada, en ejercicio de las excepciones previstas en la
+              Ley 1581 de 2012 y sus decretos reglamentarios.
+            </p>
+            <p style={bodyStyle}>
+              Este registro es de acceso restringido, no se utiliza con fines comerciales ni de mercadeo, y se
+              elimina de manera definitiva y automática al vencer dicho término.
+            </p>
+          </section>
+
+          <section>
             <h2 style={h2Style}>12. VIGENCIA</h2>
             <p style={bodyStyle}>
               La presente política rige a partir del 19 de septiembre de 2025, y hasta el momento en que expresamente
