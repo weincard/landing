@@ -8,6 +8,7 @@ import { VerificacionPage } from "@/pages/VerificacionPage";
 import { PlazaVerificacionPage } from "@/pages/PlazaVerificacionPage";
 import { SomosVerificacionPage } from "@/pages/SomosVerificacionPage";
 import { EmailUnsubscribePage } from "@/pages/EmailUnsubscribePage";
+import { ConflictoResolverPage } from "@/pages/ConflictoResolverPage";
 import { DeleteAccountPage } from "@/pages/DeleteAccountPage";
 import { PoliticaPrivacidadPage } from "@/pages/legal/PoliticaPrivacidadPage";
 import { PoliticaCookiesPage } from "@/pages/legal/PoliticaCookiesPage";
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
       { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
       { path: "/verificacion-somos", element: <SomosVerificacionPage /> },
       { path: "/email/desuscribirse", element: <EmailUnsubscribePage /> },
+      { path: "/resolver-conflicto", element: <ConflictoResolverPage /> },
       { path: "/delete-account", element: <DeleteAccountPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
       { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
