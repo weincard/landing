@@ -1,4 +1,4 @@
-import type { RedemptionResult } from "@/types";
+import type { RedemptionResult, VerifiedOfferChannels } from "@/types";
 
 interface StatusCardProps {
   type: "success" | "warning" | "error";
@@ -101,8 +101,67 @@ export function StatusCard({ type, title, body, detail }: StatusCardProps) {
               <strong>${detail.totalPaid.toLocaleString("es-CO")} COP</strong>
             </p>
           )}
+
+          {detail.offers && detail.offers.length > 0 && (
+            <div style={{ marginTop: "10px" }}>
+              <p
+                style={{
+                  ...detailStyle(c.title),
+                  fontWeight: 700,
+                  marginBottom: "6px",
+                }}
+              >
+                Ofertas de la sucursal
+              </p>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+              >
+                {detail.offers.map((offer) => (
+                  <div
+                    key={offer.offerId}
+                    style={{
+                      border: `1px solid ${c.border}`,
+                      borderRadius: "8px",
+                      padding: "8px 10px",
+                      background: "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    <p style={detailStyle(c.body)}>
+                      <strong>{offer.title}</strong>
+                      {channelTag(offer.channels) && (
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            padding: "1px 8px",
+                            borderRadius: "9999px",
+                            border: `1px solid ${c.border}`,
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {channelTag(offer.channels)}
+                        </span>
+                      )}
+                    </p>
+                    {offer.description && (
+                      <p style={detailStyle(c.body)}>{offer.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+// 'onsite' is the normal case — no tag; delivery variants get a badge so staff
+// can tell delivery-only and delivery-available offers apart at a glance.
+function channelTag(channels: VerifiedOfferChannels): string | null {
+  if (channels === "delivery") return "Solo domicilio";
+  if (channels === "both") return "Domicilio disponible";
+  return null;
 }

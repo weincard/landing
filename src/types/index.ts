@@ -254,6 +254,21 @@ export interface TypesenseGroupedResponse {
 
 export type PlanKey = "monthly" | "yearly";
 
+// Per-offer channel tag on the verify response: 'onsite' = not valid for
+// delivery, 'delivery' = delivery-only, 'both' = valid on delivery and on-site.
+export type VerifiedOfferChannels = "onsite" | "delivery" | "both";
+
+export interface VerifiedBranchOffer {
+  offerId: number;
+  title: string;
+  description?: string;
+  offerType?: string;
+  value?: string;
+  conditions?: string;
+  validDays?: string[];
+  channels: VerifiedOfferChannels;
+}
+
 export interface RedemptionResult {
   redemptionCode?: string;
   code?: string;
@@ -264,6 +279,9 @@ export interface RedemptionResult {
   branch?: { name?: string };
   phone?: string;
   message?: string;
+  // Active offers at the code's branch (additive field — absent until the
+  // backend deploy that adds it).
+  offers?: VerifiedBranchOffer[];
 }
 
 // ─── Legacy shape (kept for backward compat in existing pages) ───────────────
