@@ -7,12 +7,10 @@ import {
   Paper,
   Group,
   Button,
-  Badge,
   Alert,
   Progress,
   TextInput,
   Divider,
-  SimpleGrid,
   Loader,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -27,23 +25,12 @@ import {
 } from "@/hooks/useMembership";
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
 import { FamilySection } from "@/components/membership/FamilySection";
+import { PlanCardsGrid } from "@/components/membership/PlanCardsGrid";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useMembershipActivation } from "@/hooks/useMembershipActivation";
 import type { PlanKey } from "@/types";
-
-const PLAN_DESCRIPTIONS: Record<string, string> = {
-  monthly:
-    "Accede a descuentos y beneficios exclusivos mes a mes. Cancela cuando quieras.",
-  yearly:
-    "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
-  quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
-  family_monthly:
-    "Un solo pago mensual cubre al titular y hasta 4 beneficiarios. Invítalos por su celular.",
-  family_yearly:
-    "Un solo pago anual cubre al titular y hasta 4 beneficiarios. El mejor precio por persona.",
-};
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
@@ -303,117 +290,13 @@ export function MembershipManagementPage() {
 
         {!hasMembership && (
           <>
-            {/* Plan cards */}
-            {loadingPlans ? (
-              <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <Paper
-                    key={i}
-                    radius="xl"
-                    p="xl"
-                    withBorder
-                    style={{ height: 200 }}
-                  />
-                ))}
-              </SimpleGrid>
-            ) : (
-              <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                {plans.map((plan) => {
-                  // The DB stores durations UPPERCASE — normalize before any
-                  // comparison. Family plans get a `family_` checkout key.
-                  const dur = plan.duration.toLowerCase();
-                  const isFamily = plan.maxBeneficiaries != null;
-                  const planKey = (isFamily ? `family_${dur}` : dur) as PlanKey;
-                  const isYearlyIndividual = dur === "yearly" && !isFamily;
-                  return (
-                    <Paper
-                      key={plan.membershipPlanId}
-                      radius="xl"
-                      p="xl"
-                      withBorder
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 16,
-                        background: isYearlyIndividual
-                          ? "linear-gradient(135deg, #1B1A1A 0%, #2d2c2c 100%)"
-                          : undefined,
-                        color: isYearlyIndividual ? "#fff" : undefined,
-                        borderColor: isYearlyIndividual
-                          ? "transparent"
-                          : undefined,
-                      }}
-                    >
-                      {isYearlyIndividual && (
-                        <Badge
-                          color="red"
-                          variant="filled"
-                          size="sm"
-                          radius="xl"
-                        >
-                          RECOMENDADO
-                        </Badge>
-                      )}
-                      {isFamily && (
-                        <Badge
-                          color="dark"
-                          variant="light"
-                          size="sm"
-                          radius="xl"
-                        >
-                          TÚ + {plan.maxBeneficiaries} BENEFICIARIOS
-                        </Badge>
-                      )}
-                      <Stack gap={4}>
-                        <Text
-                          fw={900}
-                          size="xl"
-                          style={{ fontFamily: '"Clash Grotesk", sans-serif' }}
-                        >
-                          {plan.name}
-                        </Text>
-                        <Text fw={700} size="lg">
-                          ${plan.price.toLocaleString("es-CO")} COP
-                        </Text>
-                        <Text
-                          size="xs"
-                          style={{
-                            opacity: 0.6,
-                            fontFamily: '"Hepta Slab", serif',
-                          }}
-                        >
-                          {dur === "monthly"
-                            ? "por mes"
-                            : dur === "yearly"
-                              ? "por año"
-                              : "por periodo"}
-                        </Text>
-                      </Stack>
-                      <Text
-                        size="sm"
-                        style={{
-                          flex: 1,
-                          opacity: 0.8,
-                          fontFamily: '"Hepta Slab", serif',
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {PLAN_DESCRIPTIONS[planKey] ?? plan.description}
-                      </Text>
-                      <Button
-                        onClick={() => handleSelectPlan(planKey)}
-                        loading={checkoutMutation.isPending}
-                        color={isYearlyIndividual ? "white" : "dark"}
-                        variant={isYearlyIndividual ? "white" : "filled"}
-                        fullWidth
-                      >
-                        Suscribirme
-                      </Button>
-                    </Paper>
-                  );
-                })}
-              </SimpleGrid>
-            )}
+            {/* Plan cards — shared with /planes for UI consistency */}
+            <PlanCardsGrid
+              plans={plans}
+              loading={loadingPlans}
+              onSelect={handleSelectPlan}
+              pending={checkoutMutation.isPending}
+            />
 
             {/* Email capture */}
             {emailNeeded && (

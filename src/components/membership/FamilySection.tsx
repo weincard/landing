@@ -13,6 +13,7 @@ import {
 import { modals } from "@mantine/modals";
 import { toast } from "sonner";
 import { Users, UserPlus, Mail } from "lucide-react";
+import { sharedPlanLabel } from "@/types";
 import {
   useFamily,
   useInviteFamilyMember,
@@ -67,8 +68,8 @@ export function FamilySection() {
       title: "¿Retirar beneficiario?",
       children: (
         <Text size="sm">
-          {name ?? "Esta persona"} perderá su membresía del plan familiar de
-          inmediato y el cupo quedará libre.
+          {name ?? "Esta persona"} perderá su membresía del plan de inmediato
+          y el cupo quedará libre.
         </Text>
       ),
       labels: { confirm: "Sí, retirar", cancel: "Mantener" },
@@ -83,7 +84,7 @@ export function FamilySection() {
 
   function handleLeave() {
     modals.openConfirmModal({
-      title: "¿Salir del plan familiar?",
+      title: "¿Salir del plan?",
       children: (
         <Text size="sm">
           Perderás tu membresía de inmediato. Podrás adquirir un plan propio o
@@ -94,9 +95,9 @@ export function FamilySection() {
       confirmProps: { color: "red" },
       onConfirm: () =>
         leave.mutate(undefined, {
-          onSuccess: () => toast.info("Saliste del plan familiar."),
+          onSuccess: () => toast.info("Saliste del plan."),
           onError: (err) =>
-            toast.error(apiMessage(err, "No se pudo salir del plan familiar.")),
+            toast.error(apiMessage(err, "No se pudo salir del plan.")),
         }),
     });
   }
@@ -110,7 +111,7 @@ export function FamilySection() {
           icon={<Mail size={16} />}
           color="green"
           variant="light"
-          title="Te invitaron a un plan familiar"
+          title={`Te invitaron a un ${sharedPlanLabel(inv.seatsTotal)}`}
         >
           <Text size="sm">
             <strong>{inv.ownerName ?? "Un usuario"}</strong> te invitó a su{" "}
@@ -125,7 +126,7 @@ export function FamilySection() {
               onClick={() =>
                 accept.mutate(inv.familyBeneficiaryId, {
                   onSuccess: () =>
-                    toast.success("¡Bienvenido! Tu membresía familiar está activa."),
+                    toast.success("¡Bienvenido! Tu membresía está activa."),
                   onError: (err) =>
                     toast.error(apiMessage(err, "No se pudo aceptar la invitación.")),
                 })
@@ -158,7 +159,7 @@ export function FamilySection() {
             <Group gap="xs">
               <Users size={18} />
               <Text fw={700} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
-                Tu plan familiar
+                Tu {sharedPlanLabel(group.seatsTotal)}
               </Text>
             </Group>
             <Badge color="dark" variant="light" radius="xl">
@@ -166,9 +167,9 @@ export function FamilySection() {
             </Badge>
           </Group>
           <Text size="sm" c="dimmed" mb="md">
-            Invita hasta {group.seatsTotal ?? 0} beneficiarios por su número de
-            celular. Deben tener cuenta Weincard, no pertenecer a una
-            organización y no tener otra membresía activa.
+            {group.seatsTotal === 1
+              ? "Invita a tu beneficiario por su número de celular. Debe tener cuenta Weincard, no pertenecer a una organización y no tener otra membresía activa."
+              : `Invita hasta ${group.seatsTotal ?? 0} beneficiarios por su número de celular. Deben tener cuenta Weincard, no pertenecer a una organización y no tener otra membresía activa.`}
           </Text>
 
           {group.members.length > 0 && (
@@ -245,12 +246,17 @@ export function FamilySection() {
         <Paper radius="xl" p="xl" withBorder>
           <Group gap="xs" mb="xs">
             <Users size={18} />
-            <Text fw={700} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
-              Plan familiar
+            <Text
+              fw={700}
+              style={{ fontFamily: '"Clash Grotesk", sans-serif' }}
+              tt="capitalize"
+            >
+              {sharedPlanLabel(beneficiary.seatsTotal)}
             </Text>
           </Group>
           <Text size="sm" c="dimmed" mb="md">
-            Tu membresía hace parte del plan familiar de{" "}
+            Tu membresía hace parte del{" "}
+            {sharedPlanLabel(beneficiary.seatsTotal)} de{" "}
             <strong>{beneficiary.ownerName ?? "otro usuario"}</strong>. No tiene
             costo para ti y se gestiona desde la cuenta del titular.
           </Text>
@@ -261,7 +267,7 @@ export function FamilySection() {
             loading={leave.isPending}
             onClick={handleLeave}
           >
-            Salir del plan familiar
+            Salir del plan
           </Button>
         </Paper>
       )}

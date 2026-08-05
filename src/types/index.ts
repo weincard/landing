@@ -256,7 +256,18 @@ export interface TypesenseGroupedResponse {
   }>;
 }
 
-export type PlanKey = "monthly" | "yearly" | "family_monthly" | "family_yearly";
+export type PlanKey =
+  | "monthly"
+  | "yearly"
+  | "family_monthly"
+  | "family_yearly"
+  | "duo_monthly"
+  | "duo_yearly";
+
+/** UI label for a shared plan: duo = exactly 1 beneficiary seat. */
+export function sharedPlanLabel(seatsTotal: number | null | undefined): string {
+  return seatsTotal === 1 ? "plan dúo" : "plan familiar";
+}
 
 // ─── Family plans (spec: context/family-plans-design.md) ─────────────────────
 
@@ -274,6 +285,8 @@ export interface FamilyInvite {
   familyBeneficiaryId: number;
   ownerName: string | null;
   planName: string | null;
+  /** 1 = duo, >1 = family — drives the "plan dúo/familiar" label. */
+  seatsTotal?: number | null;
   invitedAt: string;
 }
 
@@ -291,6 +304,8 @@ export interface FamilyInfo {
   beneficiary?: {
     familyBeneficiaryId: number;
     ownerName: string | null;
+    planName?: string | null;
+    seatsTotal?: number | null;
     status: string | null;
     acceptedAt: string | null;
   };
