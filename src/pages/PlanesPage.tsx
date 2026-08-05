@@ -5,31 +5,22 @@ import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { Loader } from "@mantine/core";
 import { useAuth } from "@/context/AuthContext";
-import { useCreateCheckout } from "@/hooks/useMembership";
+import { useCreateCheckout, useMembershipPlans } from "@/hooks/useMembership";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { getMe } from "@/api/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useMembershipActivation } from "@/hooks/useMembershipActivation";
+import { PlanCardsGrid } from "@/components/membership/PlanCardsGrid";
 import type { PlanKey } from "@/types";
 
-const PLANS = [
-  {
-    key: "monthly" as PlanKey,
-    label: "MENSUAL",
-    price: "$18.900 COP/MES",
-    priceNote: "por mes",
-    description: "Accede a descuentos y beneficios exclusivos en los mejores restaurantes mes a mes.",
-    recommended: false,
-  },
-  {
-    key: "yearly" as PlanKey,
-    label: "ANUAL",
-    price: "$189.000 COP",
-    priceNote: "por año — ahorra 2 meses",
-    description: "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
-    recommended: true,
-  },
-];
+const PLAN_LABELS: Record<string, string> = {
+  monthly: "Mensual",
+  yearly: "Anual",
+  family_monthly: "Familiar Mensual",
+  family_yearly: "Familiar Anual",
+  duo_monthly: "Dúo Mensual",
+  duo_yearly: "Dúo Anual",
+};
 
 export function PlanesPage() {
   const { user, isLoggedIn, hasMembership, activePlanKey, membershipName, membershipActiveUntil, refreshUser, refreshMembership } =
@@ -42,6 +33,13 @@ export function PlanesPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [checkoutOpened, setCheckoutOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // All plans (individual + family) come from the API — the DB is the source
+  // of truth for prices, and PlanCardsGrid is shared with /app/membership so
+  // both pages render identical cards. Unsellable family plans (price <= 0)
+  // are hidden inside the grid.
+  const { data: plans = [], isLoading: loadingPlans } =
+    useMembershipPlans(true);
 
   // Email capture for logged-in users without email
   const [pendingPlan, setPendingPlan] = useState<PlanKey | null>(null);
@@ -328,7 +326,7 @@ export function PlanesPage() {
             </p>
             <p style={{ fontFamily: '"Hepta Slab", serif', color: "#78350f", fontSize: "13px", marginBottom: "16px", lineHeight: 1.6 }}>
               Para procesar el pago del{" "}
-              <strong>Plan {pendingPlan === "monthly" ? "Mensual" : "Anual"}</strong>{" "}
+              <strong>Plan {PLAN_LABELS[pendingPlan] ?? pendingPlan}</strong>{" "}
               necesitamos un correo.
             </p>
             <form
@@ -399,132 +397,15 @@ export function PlanesPage() {
           </div>
         )}
 
-        {/* Plan cards */}
-        <div className="plans-grid">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.key}
-              style={{
-                borderRadius: "24px",
-                padding: "48px 32px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "24px",
-                background:
-                  "linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1), transparent)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#000",
-              }}
-            >
-              {plan.recommended && (
-                <span
-                  style={{
-                    display: "inline-block",
-                    alignSelf: "flex-start",
-                    fontSize: "11px",
-                    fontFamily: '"Clash Grotesk", sans-serif',
-                    fontWeight: 700,
-                    padding: "4px 14px",
-                    borderRadius: "9999px",
-                    background: "#FF3B47",
-                    color: "#fff",
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  RECOMENDADO
-                </span>
-              )}
-              <div>
-                <h2
-                  style={{
-                    fontFamily: '"Hepta Slab", serif',
-                    fontWeight: 300,
-                    fontSize: "clamp(22px, 3vw, 28px)",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: '"Clash Grotesk", sans-serif',
-                      fontWeight: 700,
-                      display: "block",
-                    }}
-                  >
-                    PLAN
-                  </span>
-                  {plan.label}
-                </h2>
-              </div>
-              <div>
-                <p
-                  style={{
-                    fontFamily: '"Hepta Slab", serif',
-                    fontSize: "clamp(20px, 3vw, 26px)",
-                  }}
-                >
-                  {plan.price}
-                </p>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(0,0,0,0.5)",
-                    fontFamily: '"Hepta Slab", serif',
-                    marginTop: "4px",
-                  }}
-                >
-                  {plan.priceNote}
-                </p>
-              </div>
-              <p
-                style={{
-                  fontFamily: '"Hepta Slab", serif',
-                  fontSize: "14px",
-                  lineHeight: 1.6,
-                  flex: 1,
-                  color: "#000",
-                }}
-              >
-                {plan.description}
-              </p>
-              <button
-                type="button"
-                onClick={() => handleSelectPlan(plan.key)}
-                disabled={purchasing || hasMembership || activePlanKey === plan.key}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  background: activePlanKey === plan.key ? "#e5e7eb" : "#fff",
-                  color: "#000",
-                  fontFamily: '"Clash Grotesk", sans-serif',
-                  fontWeight: 700,
-                  fontSize: "13px",
-                  border: "none",
-                  cursor: hasMembership || activePlanKey === plan.key || purchasing ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  transition: "transform 0.15s, background 0.15s",
-                  opacity: hasMembership || activePlanKey === plan.key ? 0.6 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (activePlanKey !== plan.key && !purchasing && !hasMembership) {
-                    e.currentTarget.style.background = "#000";
-                    e.currentTarget.style.color = "#fff";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = activePlanKey === plan.key ? "#e5e7eb" : "#fff";
-                  e.currentTarget.style.color = "#000";
-                }}
-              >
-                {purchasing && <Loader size={14} color="black" />}
-                {activePlanKey === plan.key ? "Plan actual" : "Adquirir plan"}
-              </button>
-            </div>
-          ))}
-        </div>
+        {/* Plan cards — shared with /app/membership for UI consistency */}
+        <PlanCardsGrid
+          plans={plans}
+          loading={loadingPlans}
+          onSelect={handleSelectPlan}
+          pending={purchasing}
+          disabled={hasMembership}
+          activePlanKey={activePlanKey}
+        />
 
         <p
           style={{
@@ -540,17 +421,6 @@ export function PlanesPage() {
       </div>
 
       <Footer />
-
-      <style>{`
-        .plans-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 24px;
-        }
-        @media (min-width: 768px) {
-          .plans-grid { grid-template-columns: 1fr 1fr; }
-        }
-      `}</style>
     </main>
   );
 }

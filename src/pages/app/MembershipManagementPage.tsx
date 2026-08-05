@@ -7,12 +7,10 @@ import {
   Paper,
   Group,
   Button,
-  Badge,
   Alert,
   Progress,
   TextInput,
   Divider,
-  SimpleGrid,
   Loader,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -26,19 +24,13 @@ import {
   useRedeemCoupon,
 } from "@/hooks/useMembership";
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
+import { FamilySection } from "@/components/membership/FamilySection";
+import { PlanCardsGrid } from "@/components/membership/PlanCardsGrid";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useMembershipActivation } from "@/hooks/useMembershipActivation";
 import type { PlanKey } from "@/types";
-
-const PLAN_DESCRIPTIONS: Record<string, string> = {
-  monthly:
-    "Accede a descuentos y beneficios exclusivos mes a mes. Cancela cuando quieras.",
-  yearly:
-    "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
-  quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
-};
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
@@ -60,7 +52,7 @@ export function MembershipManagementPage() {
   } = useAuth();
   const showCouponInput = useShowCouponInput();
   const gate = useEmailVerificationGate();
-  const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans();
+  const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans(true);
   const cancelMutation = useCancelMembership();
   const checkoutMutation = useCreateCheckout();
   const redeemMutation = useRedeemCoupon();
@@ -74,6 +66,9 @@ export function MembershipManagementPage() {
   // requires the user to do it through iOS Settings. Calling our cancel endpoint
   // would error, so for IAP we show instructions instead of the cancel button.
   const isIapMembership = membership?.paymentMethod === "apple_iap";
+  // Family beneficiary rows have no subscription of their own (subId NULL) —
+  // the way out is leaving the family group, handled in FamilySection.
+  const isFamilyBeneficiary = membership?.paymentMethod === "family";
 
   // Detect membership activation after checkout via a WebSocket push (replaces
   // the old 4s polling loop). Active while waiting; on the activation signal it
@@ -222,7 +217,12 @@ export function MembershipManagementPage() {
             <Divider my="md" />
 
             {membership.status === "active" &&
-              (isIapMembership ? (
+              (isFamilyBeneficiary ? (
+                <Text size="sm" c="dimmed">
+                  Tu membresía hace parte de un plan familiar — gestiónala en
+                  la sección de abajo.
+                </Text>
+              ) : isIapMembership ? (
                 <Alert
                   icon={<AlertCircle size={16} />}
                   color="gray"
@@ -272,6 +272,9 @@ export function MembershipManagementPage() {
           </Paper>
         )}
 
+        {/* Family plan: pending invites + owner/beneficiary management */}
+        <FamilySection />
+
         {/* Post-checkout activation confirmation */}
         {checkoutInitiated && !hasMembership && (
           <Alert
@@ -287,106 +290,13 @@ export function MembershipManagementPage() {
 
         {!hasMembership && (
           <>
-            {/* Plan cards */}
-            {loadingPlans ? (
-              <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <Paper
-                    key={i}
-                    radius="xl"
-                    p="xl"
-                    withBorder
-                    style={{ height: 200 }}
-                  />
-                ))}
-              </SimpleGrid>
-            ) : (
-              <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                {plans.map((plan) => {
-                  const planKey = plan.duration as PlanKey;
-                  return (
-                    <Paper
-                      key={plan.membershipPlanId}
-                      radius="xl"
-                      p="xl"
-                      withBorder
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 16,
-                        background:
-                          plan.duration === "yearly"
-                            ? "linear-gradient(135deg, #1B1A1A 0%, #2d2c2c 100%)"
-                            : undefined,
-                        color: plan.duration === "yearly" ? "#fff" : undefined,
-                        borderColor:
-                          plan.duration === "yearly"
-                            ? "transparent"
-                            : undefined,
-                      }}
-                    >
-                      {plan.duration === "yearly" && (
-                        <Badge
-                          color="red"
-                          variant="filled"
-                          size="sm"
-                          radius="xl"
-                        >
-                          RECOMENDADO
-                        </Badge>
-                      )}
-                      <Stack gap={4}>
-                        <Text
-                          fw={900}
-                          size="xl"
-                          style={{ fontFamily: '"Clash Grotesk", sans-serif' }}
-                        >
-                          {plan.name}
-                        </Text>
-                        <Text fw={700} size="lg">
-                          ${plan.price.toLocaleString("es-CO")} COP
-                        </Text>
-                        <Text
-                          size="xs"
-                          style={{
-                            opacity: 0.6,
-                            fontFamily: '"Hepta Slab", serif',
-                          }}
-                        >
-                          {plan.duration === "monthly"
-                            ? "por mes"
-                            : plan.duration === "yearly"
-                              ? "por año"
-                              : "por periodo"}
-                        </Text>
-                      </Stack>
-                      <Text
-                        size="sm"
-                        style={{
-                          flex: 1,
-                          opacity: 0.8,
-                          fontFamily: '"Hepta Slab", serif',
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {PLAN_DESCRIPTIONS[plan.duration] ?? plan.description}
-                      </Text>
-                      <Button
-                        onClick={() => handleSelectPlan(planKey)}
-                        loading={checkoutMutation.isPending}
-                        color={plan.duration === "yearly" ? "white" : "dark"}
-                        variant={
-                          plan.duration === "yearly" ? "white" : "filled"
-                        }
-                        fullWidth
-                      >
-                        Suscribirme
-                      </Button>
-                    </Paper>
-                  );
-                })}
-              </SimpleGrid>
-            )}
+            {/* Plan cards — shared with /planes for UI consistency */}
+            <PlanCardsGrid
+              plans={plans}
+              loading={loadingPlans}
+              onSelect={handleSelectPlan}
+              pending={checkoutMutation.isPending}
+            />
 
             {/* Email capture */}
             {emailNeeded && (

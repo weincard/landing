@@ -19,9 +19,13 @@ import { getUserStatus } from "@/api/users";
 const TOKEN_KEY = "wc_access_token";
 
 function derivePlanKey(duration: string | null | undefined): PlanKey | null {
-  if (!duration) return null;
-  if (duration === "monthly") return "monthly";
-  if (duration === "yearly") return "yearly";
+  // The DB stores durations UPPERCASE ("MONTHLY"/"YEARLY") — compare
+  // case-insensitively. Family plans share the same durations; this key is
+  // only used to badge "Plan actual" on the individual cards, which never
+  // shows while any membership is active anyway.
+  const d = duration?.toLowerCase();
+  if (d === "monthly") return "monthly";
+  if (d === "yearly") return "yearly";
   return null;
 }
 
