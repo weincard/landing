@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { Loader } from "@mantine/core";
 import { useAuth } from "@/context/AuthContext";
-import { useCreateCheckout } from "@/hooks/useMembership";
+import { useCreateCheckout, useMembershipPlans } from "@/hooks/useMembership";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { getMe } from "@/api/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
@@ -42,6 +42,14 @@ export function PlanesPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [checkoutOpened, setCheckoutOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Family plans come from the API (opt-in flag) instead of the hard-coded
+  // PLANS array: their prices live in the DB. Price <= 0 = not sellable yet →
+  // the whole section stays hidden until real prices are configured.
+  const { data: allPlans = [] } = useMembershipPlans(true);
+  const familyPlans = allPlans.filter(
+    (p) => p.maxBeneficiaries != null && Number(p.price) > 0,
+  );
 
   // Email capture for logged-in users without email
   const [pendingPlan, setPendingPlan] = useState<PlanKey | null>(null);
@@ -525,6 +533,170 @@ export function PlanesPage() {
             </div>
           ))}
         </div>
+
+        {/* Family plans */}
+        {familyPlans.length > 0 && (
+          <>
+            <div style={{ textAlign: "center", margin: "56px 0 32px" }}>
+              <h2
+                style={{
+                  fontFamily: '"Clash Grotesk", sans-serif',
+                  fontWeight: 900,
+                  fontSize: "clamp(24px, 4vw, 32px)",
+                  color: "#000",
+                  letterSpacing: "-0.02em",
+                  marginBottom: "8px",
+                }}
+              >
+                PLAN FAMILIAR
+              </h2>
+              <p
+                style={{
+                  fontFamily: '"Hepta Slab", serif',
+                  color: "#6b7280",
+                  fontSize: "15px",
+                  lineHeight: 1.6,
+                }}
+              >
+                Un solo pago cubre al titular y sus beneficiarios. Invítalos
+                por su número de celular.
+              </p>
+            </div>
+            <div className="plans-grid">
+              {familyPlans.map((plan) => {
+                const dur = plan.duration.toLowerCase();
+                const planKey = `family_${dur}` as PlanKey;
+                return (
+                  <div
+                    key={plan.membershipPlanId}
+                    style={{
+                      borderRadius: "24px",
+                      padding: "48px 32px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "24px",
+                      background:
+                        "linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1), transparent)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#000",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-block",
+                        alignSelf: "flex-start",
+                        fontSize: "11px",
+                        fontFamily: '"Clash Grotesk", sans-serif',
+                        fontWeight: 700,
+                        padding: "4px 14px",
+                        borderRadius: "9999px",
+                        background: "#000",
+                        color: "#fff",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      TÚ + {plan.maxBeneficiaries} BENEFICIARIOS
+                    </span>
+                    <div>
+                      <h2
+                        style={{
+                          fontFamily: '"Hepta Slab", serif',
+                          fontWeight: 300,
+                          fontSize: "clamp(22px, 3vw, 28px)",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: '"Clash Grotesk", sans-serif',
+                            fontWeight: 700,
+                            display: "block",
+                          }}
+                        >
+                          FAMILIAR
+                        </span>
+                        {dur === "monthly" ? "MENSUAL" : "ANUAL"}
+                      </h2>
+                    </div>
+                    <div>
+                      <p
+                        style={{
+                          fontFamily: '"Hepta Slab", serif',
+                          fontSize: "clamp(20px, 3vw, 26px)",
+                        }}
+                      >
+                        ${Number(plan.price).toLocaleString("es-CO")} COP
+                        {dur === "monthly" ? "/MES" : ""}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          color: "rgba(0,0,0,0.5)",
+                          fontFamily: '"Hepta Slab", serif',
+                          marginTop: "4px",
+                        }}
+                      >
+                        {dur === "monthly" ? "por mes" : "por año"} — hasta{" "}
+                        {(plan.maxBeneficiaries ?? 0) + 1} personas
+                      </p>
+                    </div>
+                    <p
+                      style={{
+                        fontFamily: '"Hepta Slab", serif',
+                        fontSize: "14px",
+                        lineHeight: 1.6,
+                        flex: 1,
+                        color: "#000",
+                      }}
+                    >
+                      {plan.description ??
+                        "Una sola suscripción para toda la familia: el titular paga y los beneficiarios disfrutan los mismos descuentos."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPlan(planKey)}
+                      disabled={purchasing || hasMembership}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "12px",
+                        background: "#fff",
+                        color: "#000",
+                        fontFamily: '"Clash Grotesk", sans-serif',
+                        fontWeight: 700,
+                        fontSize: "13px",
+                        border: "none",
+                        cursor:
+                          hasMembership || purchasing
+                            ? "not-allowed"
+                            : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        transition: "transform 0.15s, background 0.15s",
+                        opacity: hasMembership ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!purchasing && !hasMembership) {
+                          e.currentTarget.style.background = "#000";
+                          e.currentTarget.style.color = "#fff";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.color = "#000";
+                      }}
+                    >
+                      {purchasing && <Loader size={14} color="black" />}
+                      Adquirir plan familiar
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         <p
           style={{

@@ -86,10 +86,14 @@ export interface UserStatusResponse {
 export interface MembershipPlan {
   membershipPlanId: number;
   name: string;
-  duration: "monthly" | "quarterly" | "yearly";
+  /** ⚠️ The DB stores this UPPERCASE ("MONTHLY"/"YEARLY") — always compare
+   *  with .toLowerCase(). */
+  duration: string;
   price: number;
   description?: string;
   isActive?: boolean;
+  /** Non-null = family plan; the value is its beneficiary seat count. */
+  maxBeneficiaries?: number | null;
 }
 
 // ─── Offers / Branches ───────────────────────────────────────────────────────
@@ -252,7 +256,45 @@ export interface TypesenseGroupedResponse {
   }>;
 }
 
-export type PlanKey = "monthly" | "yearly";
+export type PlanKey = "monthly" | "yearly" | "family_monthly" | "family_yearly";
+
+// ─── Family plans (spec: context/family-plans-design.md) ─────────────────────
+
+export interface FamilyMember {
+  familyBeneficiaryId: number;
+  userId: number;
+  name: string | null;
+  phone: string | null;
+  status: "pending" | "active";
+  invitedAt: string;
+  acceptedAt: string | null;
+}
+
+export interface FamilyInvite {
+  familyBeneficiaryId: number;
+  ownerName: string | null;
+  planName: string | null;
+  invitedAt: string;
+}
+
+/** GET /memberships/family — the caller's family situation. */
+export interface FamilyInfo {
+  role: "owner" | "beneficiary" | null;
+  pendingInvites: FamilyInvite[];
+  group?: {
+    planName: string;
+    status: string;
+    seatsTotal: number | null;
+    seatsUsed: number;
+    members: FamilyMember[];
+  };
+  beneficiary?: {
+    familyBeneficiaryId: number;
+    ownerName: string | null;
+    status: string | null;
+    acceptedAt: string | null;
+  };
+}
 
 // Per-offer channel tag on the verify response: 'onsite' = not valid for
 // delivery, 'delivery' = delivery-only, 'both' = valid on delivery and on-site.

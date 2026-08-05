@@ -26,6 +26,7 @@ import {
   useRedeemCoupon,
 } from "@/hooks/useMembership";
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
+import { FamilySection } from "@/components/membership/FamilySection";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
@@ -38,6 +39,10 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
   yearly:
     "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
   quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
+  family_monthly:
+    "Un solo pago mensual cubre al titular y hasta 4 beneficiarios. Invítalos por su celular.",
+  family_yearly:
+    "Un solo pago anual cubre al titular y hasta 4 beneficiarios. El mejor precio por persona.",
 };
 
 function formatDate(dateStr: string | null) {
@@ -60,7 +65,7 @@ export function MembershipManagementPage() {
   } = useAuth();
   const showCouponInput = useShowCouponInput();
   const gate = useEmailVerificationGate();
-  const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans();
+  const { data: plans = [], isLoading: loadingPlans } = useMembershipPlans(true);
   const cancelMutation = useCancelMembership();
   const checkoutMutation = useCreateCheckout();
   const redeemMutation = useRedeemCoupon();
@@ -74,6 +79,9 @@ export function MembershipManagementPage() {
   // requires the user to do it through iOS Settings. Calling our cancel endpoint
   // would error, so for IAP we show instructions instead of the cancel button.
   const isIapMembership = membership?.paymentMethod === "apple_iap";
+  // Family beneficiary rows have no subscription of their own (subId NULL) —
+  // the way out is leaving the family group, handled in FamilySection.
+  const isFamilyBeneficiary = membership?.paymentMethod === "family";
 
   // Detect membership activation after checkout via a WebSocket push (replaces
   // the old 4s polling loop). Active while waiting; on the activation signal it
@@ -222,7 +230,12 @@ export function MembershipManagementPage() {
             <Divider my="md" />
 
             {membership.status === "active" &&
-              (isIapMembership ? (
+              (isFamilyBeneficiary ? (
+                <Text size="sm" c="dimmed">
+                  Tu membresía hace parte de un plan familiar — gestiónala en
+                  la sección de abajo.
+                </Text>
+              ) : isIapMembership ? (
                 <Alert
                   icon={<AlertCircle size={16} />}
                   color="gray"
@@ -272,6 +285,9 @@ export function MembershipManagementPage() {
           </Paper>
         )}
 
+        {/* Family plan: pending invites + owner/beneficiary management */}
+        <FamilySection />
+
         {/* Post-checkout activation confirmation */}
         {checkoutInitiated && !hasMembership && (
           <Alert
@@ -303,7 +319,12 @@ export function MembershipManagementPage() {
             ) : (
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 {plans.map((plan) => {
-                  const planKey = plan.duration as PlanKey;
+                  // The DB stores durations UPPERCASE — normalize before any
+                  // comparison. Family plans get a `family_` checkout key.
+                  const dur = plan.duration.toLowerCase();
+                  const isFamily = plan.maxBeneficiaries != null;
+                  const planKey = (isFamily ? `family_${dur}` : dur) as PlanKey;
+                  const isYearlyIndividual = dur === "yearly" && !isFamily;
                   return (
                     <Paper
                       key={plan.membershipPlanId}
@@ -314,18 +335,16 @@ export function MembershipManagementPage() {
                         display: "flex",
                         flexDirection: "column",
                         gap: 16,
-                        background:
-                          plan.duration === "yearly"
-                            ? "linear-gradient(135deg, #1B1A1A 0%, #2d2c2c 100%)"
-                            : undefined,
-                        color: plan.duration === "yearly" ? "#fff" : undefined,
-                        borderColor:
-                          plan.duration === "yearly"
-                            ? "transparent"
-                            : undefined,
+                        background: isYearlyIndividual
+                          ? "linear-gradient(135deg, #1B1A1A 0%, #2d2c2c 100%)"
+                          : undefined,
+                        color: isYearlyIndividual ? "#fff" : undefined,
+                        borderColor: isYearlyIndividual
+                          ? "transparent"
+                          : undefined,
                       }}
                     >
-                      {plan.duration === "yearly" && (
+                      {isYearlyIndividual && (
                         <Badge
                           color="red"
                           variant="filled"
@@ -333,6 +352,16 @@ export function MembershipManagementPage() {
                           radius="xl"
                         >
                           RECOMENDADO
+                        </Badge>
+                      )}
+                      {isFamily && (
+                        <Badge
+                          color="dark"
+                          variant="light"
+                          size="sm"
+                          radius="xl"
+                        >
+                          TÚ + {plan.maxBeneficiaries} BENEFICIARIOS
                         </Badge>
                       )}
                       <Stack gap={4}>
@@ -353,9 +382,9 @@ export function MembershipManagementPage() {
                             fontFamily: '"Hepta Slab", serif',
                           }}
                         >
-                          {plan.duration === "monthly"
+                          {dur === "monthly"
                             ? "por mes"
-                            : plan.duration === "yearly"
+                            : dur === "yearly"
                               ? "por año"
                               : "por periodo"}
                         </Text>
@@ -369,15 +398,13 @@ export function MembershipManagementPage() {
                           lineHeight: 1.6,
                         }}
                       >
-                        {PLAN_DESCRIPTIONS[plan.duration] ?? plan.description}
+                        {PLAN_DESCRIPTIONS[planKey] ?? plan.description}
                       </Text>
                       <Button
                         onClick={() => handleSelectPlan(planKey)}
                         loading={checkoutMutation.isPending}
-                        color={plan.duration === "yearly" ? "white" : "dark"}
-                        variant={
-                          plan.duration === "yearly" ? "white" : "filled"
-                        }
+                        color={isYearlyIndividual ? "white" : "dark"}
+                        variant={isYearlyIndividual ? "white" : "filled"}
                         fullWidth
                       >
                         Suscribirme
