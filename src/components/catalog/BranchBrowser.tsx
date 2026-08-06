@@ -43,6 +43,8 @@ const MC_ALL = "all";
 // URL search param mirroring the selected category, so filtered views can be
 // linked/shared (e.g. /catalogo?merchantCategoryId=3). Absent = "Todos".
 const MC_PARAM = "merchantCategoryId";
+// Chip value AND URL search param: /catalogo?somos=1 opens the Somos promo
+// modal directly, so campaigns can deep-link users into it.
 const SOMOS = "somos";
 
 interface Props {
@@ -63,7 +65,33 @@ export function BranchBrowser({ onOpenBranch }: Props) {
       ? { ...INITIAL, merchantCategoryId: id }
       : INITIAL;
   });
-  const [somosModalOpened, setSomosModalOpened] = useState(false);
+  const [somosModalOpened, setSomosModalOpened] = useState(
+    () => searchParams.get(SOMOS) != null,
+  );
+
+  // Mirror the modal state in the URL so open/close keeps the link shareable
+  // and a refresh mid-modal reopens it.
+  const openSomosModal = () => {
+    setSomosModalOpened(true);
+    setSearchParams(
+      (params) => {
+        params.set(SOMOS, "1");
+        return params;
+      },
+      { replace: true },
+    );
+  };
+
+  const closeSomosModal = () => {
+    setSomosModalOpened(false);
+    setSearchParams(
+      (params) => {
+        params.delete(SOMOS);
+        return params;
+      },
+      { replace: true },
+    );
+  };
 
   const { data: appConfig } = useAppConfig();
 
@@ -210,7 +238,7 @@ export function BranchBrowser({ onOpenBranch }: Props) {
               }
               onChange={(v) => {
                 if (v === SOMOS) {
-                  setSomosModalOpened(true);
+                  openSomosModal();
                   return;
                 }
                 setMerchantCategoryId(!v || v === MC_ALL ? null : Number(v));
@@ -354,7 +382,7 @@ export function BranchBrowser({ onOpenBranch }: Props) {
       {appConfig?.somosPromo && (
         <SomosPromoModal
           opened={somosModalOpened}
-          onClose={() => setSomosModalOpened(false)}
+          onClose={closeSomosModal}
           somosPromo={appConfig.somosPromo}
         />
       )}
