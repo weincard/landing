@@ -72,8 +72,8 @@ export function HomePage() {
                 }}
               >
                 Multiplica tus salidas a comer por solo{" "}
-                <strong>$18,900 COP/mes,</strong> o ahorra dos meses con una
-                suscripción anual de <strong>$189,000 COP!</strong>
+                <strong>$19,900 COP/mes,</strong> o ahorra dos meses con una
+                suscripción anual de <strong>$199,000 COP!</strong>
               </p>
               {/* <div style={{ display: "flex", justifyContent: "center" }}>
                 <PromoModal />
@@ -182,8 +182,8 @@ export function HomePage() {
 
           <div className="pricing-grid">
             {[
-              { label: "MENSUAL", price: "$18.900 COP/MES" },
-              { label: "ANUAL", price: "$189.000 COP" },
+              { label: "MENSUAL", price: "$19.900 COP/MES" },
+              { label: "ANUAL", price: "$199.000 COP" },
             ].map((plan) => (
               <div
                 key={plan.label}
