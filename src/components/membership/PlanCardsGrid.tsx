@@ -10,9 +10,9 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
     "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
   quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
   family_monthly:
-    "Un solo pago mensual cubre al titular y hasta 4 beneficiarios. Invítalos por su celular.",
+    "Un solo pago mensual cubre al titular y hasta 3 beneficiarios. Invítalos por su celular.",
   family_yearly:
-    "Un solo pago anual cubre al titular y hasta 4 beneficiarios. El mejor precio por persona.",
+    "Un solo pago anual cubre al titular y hasta 3 beneficiarios. El mejor precio por persona.",
   duo_monthly:
     "Un solo pago mensual para dos: tú y la persona que elijas. Invítala por su celular.",
   duo_yearly:
@@ -25,7 +25,9 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
 function planKeyFor(plan: MembershipPlan): PlanKey {
   const dur = plan.duration.toLowerCase();
   if (plan.maxBeneficiaries == null) return dur as PlanKey;
-  return (plan.maxBeneficiaries === 1 ? `duo_${dur}` : `family_${dur}`) as PlanKey;
+  return (
+    plan.maxBeneficiaries === 1 ? `duo_${dur}` : `family_${dur}`
+  ) as PlanKey;
 }
 
 interface PlanCardsGridProps {
