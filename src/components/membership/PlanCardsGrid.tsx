@@ -9,15 +9,25 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
   yearly:
     "El mejor precio para quienes salen seguido. Dos meses gratis frente al plan mensual.",
   quarterly: "Tres meses de beneficios exclusivos con un precio especial.",
-  family_monthly:
-    "Un solo pago mensual cubre al titular y hasta 3 beneficiarios. Invítalos por su celular.",
-  family_yearly:
-    "Un solo pago anual cubre al titular y hasta 3 beneficiarios. El mejor precio por persona.",
   duo_monthly:
     "Un solo pago mensual para dos: tú y la persona que elijas. Invítala por su celular.",
   duo_yearly:
     "Un solo pago anual para dos: tú y la persona que elijas. El mejor precio por pareja.",
 };
+
+/** Family descriptions interpolate the seat count from the API
+ *  (membership_plans.maxBeneficiaries) — never hardcode the number, so a DB
+ *  change reflects without a redeploy. Other keys fall back to the static map. */
+function descriptionFor(plan: MembershipPlan, planKey: PlanKey): string | undefined {
+  const seats = plan.maxBeneficiaries;
+  if (planKey === "family_monthly") {
+    return `Un solo pago mensual cubre al titular y hasta ${seats} beneficiarios. Invítalos por su celular.`;
+  }
+  if (planKey === "family_yearly") {
+    return `Un solo pago anual cubre al titular y hasta ${seats} beneficiarios. El mejor precio por persona.`;
+  }
+  return PLAN_DESCRIPTIONS[planKey];
+}
 
 /** Checkout key for a plan. The DB stores durations UPPERCASE — normalize
  *  before any comparison. Shared plans get a prefix: `duo_` when they carry
@@ -138,7 +148,7 @@ export function PlanCardsGrid({
                 lineHeight: 1.6,
               }}
             >
-              {PLAN_DESCRIPTIONS[planKey] ?? plan.description}
+              {descriptionFor(plan, planKey) ?? plan.description}
             </Text>
             <Button
               onClick={() => onSelect(planKey)}
