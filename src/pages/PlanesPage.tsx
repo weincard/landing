@@ -90,7 +90,7 @@ export function PlanesPage() {
 
   async function handleSelectPlan(planKey: PlanKey) {
     // Never open the Treli checkout for a user who already has a plan — active,
-    // trialing, unpaid, or pending_cancel all report hasMembership. Beyond the
+    // trialing, or pending_cancel all report hasMembership. Beyond the
     // product rule, opening it would set checkoutOpened while hasMembership is
     // already true, bouncing them off the page before the socket can connect.
     if (hasMembership) return;
