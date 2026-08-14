@@ -23,6 +23,11 @@ export interface DeliveryBranch {
     whatsapp: string | null;
     phone: string | null;
     contactMessage: string;
+    /** contactType 'webpage': the ally takes orders on this URL (null on
+     *  /deliveries/search — Typesense docs don't carry it). */
+    webpageUrl: string | null;
+    /** Optional guidance text shown to the user in the delivery flow. */
+    instructions: string | null;
     deliveryFee: number | string | null;
     minimumOrder: number | string | null;
     estimatedTime: string | null;

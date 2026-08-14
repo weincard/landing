@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyRedemptions, generateCode, verifyCode } from "@/api/redemptions";
+import {
+  getMyRedemptions,
+  generateCode,
+  generateDeliveryCode,
+  verifyCode,
+} from "@/api/redemptions";
 
 export function useMyRedemptions() {
   return useQuery({
@@ -14,6 +19,15 @@ export function useGenerateCode() {
   return useMutation({
     mutationFn: (branchId: number) =>
       generateCode(branchId).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["redemptions"] }),
+  });
+}
+
+export function useGenerateDeliveryCode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (branchId: number) =>
+      generateDeliveryCode(branchId).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["redemptions"] }),
   });
 }

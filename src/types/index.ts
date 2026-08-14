@@ -146,6 +146,24 @@ export interface Merchant {
   createdAt: string;
 }
 
+// Delivery contact + terms for a branch (raw delivery_config row, included on
+// GET /branches/detail). contactType 'webpage' = the ally takes orders on
+// webpageUrl; `instructions` is optional on-screen guidance for all modes;
+// `contactMessage` is the WhatsApp prefill body.
+export interface BranchDeliveryConfig {
+  deliveryConfigId: number;
+  contactMessage: string;
+  whatsapp: string | null;
+  phone: string | null;
+  contactType: "whatsapp" | "phone" | "both" | "webpage" | null;
+  webpageUrl: string | null;
+  instructions: string | null;
+  estimatedTime: string | null;
+  deliveryFee: number | null;
+  minimumOrder: number | null;
+  isActive: boolean;
+}
+
 export interface Branch {
   branchId: number;
   name: string;
@@ -170,6 +188,8 @@ export interface Branch {
   merchant: Merchant;
   offers: Offer[];
   favoritesCount: number;
+  /** Present on /branches/detail when the branch has delivery configured. */
+  deliveryConfig?: BranchDeliveryConfig | null;
 }
 
 // ─── Favorites ───────────────────────────────────────────────────────────────

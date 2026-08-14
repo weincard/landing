@@ -121,6 +121,7 @@ src/
 | `/app/profile` | Profile & settings | Yes |
 | `/app/membership` | Membership management | Yes |
 | `/app/redeem/:branchId` | Redemption code generation for a branch | Yes |
+| `/app/delivery/:branchId` | Delivery code + contact CTA (WhatsApp / phone / ally webpage per delivery_config.contactType) | Yes |
 
 Protected routes are wrapped in `<RequireAuth>` which checks `localStorage` for `wc_access_token`.
 
