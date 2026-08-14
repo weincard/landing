@@ -25,6 +25,7 @@ import { MembershipManagementPage } from "@/pages/app/MembershipManagementPage";
 import { ExplorePage } from "@/pages/app/ExplorePage";
 import { BranchDetailPage } from "@/pages/app/BranchDetailPage";
 import { RedeemPage } from "@/pages/app/RedeemPage";
+import { DeliveryPage } from "@/pages/app/DeliveryPage";
 import { SavingsPage } from "@/pages/app/SavingsPage";
 import { FavoritesPage } from "@/pages/app/FavoritesPage";
 import { ProfilePage } from "@/pages/app/ProfilePage";
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
                 element: <MembershipManagementPage />,
               },
               { path: "/app/redeem/:branchId", element: <RedeemPage /> },
+              { path: "/app/delivery/:branchId", element: <DeliveryPage /> },
             ],
           },
         ],

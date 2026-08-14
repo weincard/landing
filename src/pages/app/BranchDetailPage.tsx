@@ -18,7 +18,7 @@ import {
   SimpleGrid,
   Box,
 } from "@mantine/core";
-import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star, Zap } from "lucide-react";
+import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star, Zap, Bike } from "lucide-react";
 import { toast } from "sonner";
 import { useBranchDetail } from "@/hooks/useBranches";
 import {
@@ -133,6 +133,12 @@ export function BranchDetailPage() {
 
   // Defensive: the branch-detail payload may omit `offers` entirely.
   const offers = branch.offers ?? [];
+  // Same gate as the mobile `offersDelivery`: an active delivery config with a
+  // reachable contact — whatsapp, phone, or the ally's webpage.
+  const dc = branch.deliveryConfig ?? null;
+  const offersDelivery =
+    !!dc?.isActive &&
+    !!(dc.whatsapp?.trim() || dc.phone?.trim() || dc.webpageUrl?.trim());
   return (
     <>
       <PageMeta
@@ -256,6 +262,22 @@ export function BranchDetailPage() {
                 to={`/app/redeem/${branchId}`}
               >
                 Usar mi Weincard
+              </Button>
+            )}
+
+            {/* Delivery CTA — same gate as the mobile `offersDelivery`: active
+                config with a reachable contact (whatsapp/phone/webpage). */}
+            {hasMembership && offersDelivery && (
+              <Button
+                variant="outline"
+                color="dark"
+                radius="xl"
+                size="md"
+                leftSection={<Bike size={16} />}
+                component={Link}
+                to={`/app/delivery/${branchId}`}
+              >
+                Pedir domicilio
               </Button>
             )}
 
