@@ -15,6 +15,7 @@ import type {
 } from "@/types";
 import { getMe } from "@/api/auth";
 import { getUserStatus } from "@/api/users";
+import { isActiveMembershipStatus } from "@/lib/membershipStatus";
 
 const TOKEN_KEY = "wc_access_token";
 
@@ -134,9 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isLoggedIn = !!user;
   const profileComplete = !!(user?.name && user?.email && user?.document);
-  const hasMembership = ["active", "pending_cancel", "trialing", "unpaid"].includes(
-    membership?.status ?? ""
-  );
+  const hasMembership = isActiveMembershipStatus(membership?.status);
   const activePlanKey = hasMembership
     ? derivePlanKey(membership?.membershipPlanDuration ?? null)
     : null;

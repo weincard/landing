@@ -28,6 +28,7 @@ import { SubmitButton } from "./SubmitButton";
 import { FormInput } from "./FormInput";
 import { CodeInput } from "./CodeInput";
 import { PhoneCountryInput } from "./PhoneCountryInput";
+import { isActiveMembershipStatus } from "@/lib/membershipStatus";
 
 // One unified auth funnel for the whole app. Both identity methods (phone OTP
 // and email+password) converge on a shared profile step, then a membership-aware
@@ -160,12 +161,7 @@ export function RegistroFlow() {
 
   async function landAfterAuth() {
     const status = await getUserStatus();
-    const hasMembership = [
-      "active",
-      "pending_cancel",
-      "trialing",
-      "unpaid",
-    ].includes(status.data.membership?.status ?? "");
+    const hasMembership = isActiveMembershipStatus(status.data.membership?.status);
     await refreshUser();
     if (hasMembership) {
       navigate(next, { replace: true });
