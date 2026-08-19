@@ -173,7 +173,8 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const deliveryCategories = useMemo<FoodCategory[]>(() => {
     const seen = new Map<number, string>();
     for (const b of deliveryBase.data ?? []) {
-      if (b.category.categoryId) seen.set(b.category.categoryId, b.category.name);
+      if (b.category.categoryId)
+        seen.set(b.category.categoryId, b.category.name);
     }
     return [...seen]
       .map(([categoryId, name]) => ({ categoryId, name }))
@@ -321,7 +322,7 @@ export function BranchBrowser({ onOpenBranch }: Props) {
       {isLoading && (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}>
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} height={260} radius="lg" />
+            <Skeleton key={i} height={260} width={260} radius="lg" />
           ))}
         </SimpleGrid>
       )}

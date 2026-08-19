@@ -29,6 +29,9 @@ import { DeliveryPage } from "@/pages/app/DeliveryPage";
 import { SavingsPage } from "@/pages/app/SavingsPage";
 import { FavoritesPage } from "@/pages/app/FavoritesPage";
 import { ProfilePage } from "@/pages/app/ProfilePage";
+import { LoyaltyPage } from "@/pages/app/LoyaltyPage";
+import { GiftsPage } from "@/pages/app/GiftsPage";
+import { ValidarRegaloPage } from "@/pages/ValidarRegaloPage";
 
 export const router = createBrowserRouter([
   // Pathless root route: its errorElement catches any render/loader error from
@@ -70,6 +73,7 @@ export const router = createBrowserRouter([
       { path: "/resolver-conflicto", element: <ConflictoResolverPage /> },
       { path: "/delete-account", element: <DeleteAccountPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
+      { path: "/validar-regalo", element: <ValidarRegaloPage /> },
       { path: "/politica-de-privacidad", element: <PoliticaPrivacidadPage /> },
       { path: "/politica-de-cookies", element: <PoliticaCookiesPage /> },
       { path: "/terminos-y-condiciones", element: <TerminosPage /> },
@@ -86,6 +90,8 @@ export const router = createBrowserRouter([
               { path: "/app/explore", element: <ExplorePage /> },
               { path: "/app/explore/:branchId", element: <BranchDetailPage /> },
               { path: "/app/savings", element: <SavingsPage /> },
+              { path: "/app/loyalty", element: <LoyaltyPage /> },
+              { path: "/app/gifts", element: <GiftsPage /> },
               { path: "/app/favorites", element: <FavoritesPage /> },
               { path: "/app/profile", element: <ProfilePage /> },
               {
