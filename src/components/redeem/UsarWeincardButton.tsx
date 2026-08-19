@@ -65,7 +65,7 @@ export function UsarWeincardButton() {
         opened={opened}
         onClose={() => setOpened(false)}
         title="¿En qué restaurante estás?"
-        size="lg"
+        size="xxl"
         radius="lg"
         centered
       >
