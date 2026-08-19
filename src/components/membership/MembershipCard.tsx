@@ -1,6 +1,14 @@
 import { Group, Stack, Text, Box } from "@mantine/core";
 import type { MembershipInfo, AuthUser } from "@/types";
 import { MembershipStatusBadge } from "./MembershipStatusBadge";
+import { useMyRank } from "@/hooks/useLoyalty";
+
+const TIER_COLOR: Record<string, string> = {
+  Diamante: "#1CD9EB",
+  Oro: "#F89E0A",
+  Plata: "#B8BCC4",
+  Bronce: "#C77B3B",
+};
 
 interface Props {
   user: AuthUser;
@@ -10,7 +18,6 @@ interface Props {
 
 export function MembershipCard({ user, membership, activeUntil }: Props) {
   const fullName = user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" ");
-  const memberId = String(membership.membershipId).padStart(4, "0");
 
   const formattedDate = activeUntil
     ? new Date(activeUntil).toLocaleDateString("es-CO", {
@@ -127,18 +134,61 @@ export function MembershipCard({ user, membership, activeUntil }: Props) {
             {formattedDate}
           </Text>
         </Stack>
+        <LoyaltyStanding />
+      </Group>
+    </Box>
+  );
+}
+
+// The former member-id (••• 0042) was just the DB membershipId — removed. In
+// its place we surface the user's live loyalty standing: their rank + tier for
+// the active season. Renders nothing (blank) when there's no active season or
+// the user isn't ranked yet.
+function LoyaltyStanding() {
+  const { data } = useMyRank();
+
+  if (!data?.season || !data.ranked || !data.rank) return null;
+
+  const tierColor = data.tierName ? TIER_COLOR[data.tierName] ?? "#9F82FF" : null;
+
+  return (
+    <Stack gap={2} align="flex-end">
+      <Text
+        style={{
+          fontFamily: '"Clash Grotesk", sans-serif',
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          color: "rgba(255,255,255,0.5)",
+          textTransform: "uppercase",
+        }}
+      >
+        Clasificación
+      </Text>
+      <Group gap={6} align="center">
+        {tierColor && (
+          <Box
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: tierColor,
+            }}
+          />
+        )}
         <Text
           style={{
             fontFamily: '"Clash Grotesk", sans-serif',
             fontWeight: 700,
             fontSize: 13,
-            color: "rgba(255,255,255,0.5)",
-            letterSpacing: "0.15em",
+            color: "rgba(255,255,255,0.9)",
+            letterSpacing: "0.06em",
           }}
         >
-          ••• {memberId}
+          #{data.rank}
+          {data.tierName ? ` · ${data.tierName}` : ""}
         </Text>
       </Group>
-    </Box>
+    </Stack>
   );
 }

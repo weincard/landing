@@ -3,6 +3,7 @@ import {
   getCurrentSeason,
   getMyRank,
   getMyGifts,
+  getSeasonPrizes,
   selectGift,
 } from "@/api/loyalty";
 
@@ -27,6 +28,14 @@ export function useMyGifts() {
     queryKey: ["loyalty", "gifts"],
     queryFn: getMyGifts,
     staleTime: 30_000,
+  });
+}
+
+export function useSeasonPrizes() {
+  return useQuery({
+    queryKey: ["loyalty", "prizes"],
+    queryFn: getSeasonPrizes,
+    staleTime: 60_000,
   });
 }
 

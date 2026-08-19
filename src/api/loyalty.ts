@@ -59,6 +59,19 @@ export interface LoyaltyGift {
   options: LoyaltyGiftOption[];
 }
 
+export interface LoyaltyTierPrizes {
+  tierId: number;
+  name: string;
+  level: number;
+  capacity: number;
+  options: LoyaltyGiftOption[];
+}
+
+export interface LoyaltySeasonPrizes {
+  season: { seasonId: number; name: string } | null;
+  tiers: LoyaltyTierPrizes[];
+}
+
 export interface LoyaltyValidateResult {
   found: boolean;
   tierName?: string;
@@ -88,6 +101,11 @@ export const getMyGifts = () =>
   honoClient
     .get<{ gifts: LoyaltyGift[] }>("/loyalty/gifts/mine")
     .then((r) => r.data.gifts ?? []);
+
+export const getSeasonPrizes = () =>
+  honoClient
+    .get<LoyaltySeasonPrizes>("/loyalty/season/prizes")
+    .then((r) => r.data);
 
 export const selectGift = (giftId: number, optionId: number, merchantId: number) =>
   honoClient

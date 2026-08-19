@@ -10,7 +10,7 @@ import {
   SimpleGrid,
   Button,
 } from "@mantine/core";
-import { Trophy, Gift } from "lucide-react";
+import { Trophy, Gift, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMyRank } from "@/hooks/useLoyalty";
 import { PageMeta } from "@/components/layout/PageMeta";
@@ -127,10 +127,7 @@ export function LoyaltyPage() {
                       {t.name}
                     </Badge>
                     <Text size="xs" c="dimmed">
-                      Puestos {t.startRank}–{t.endRank}
-                    </Text>
-                    <Text size="sm" fw={600} mt={2}>
-                      {t.cutoffCount != null ? `${t.cutoffCount}+ canjes` : "por definir"}
+                      {t.capacity} {t.capacity === 1 ? "persona" : "personas"}
                     </Text>
                   </Paper>
                 ))}
@@ -141,6 +138,15 @@ export function LoyaltyPage() {
               </Text>
             </div>
 
+            <Button
+              component={Link}
+              to="/app/loyalty/prizes"
+              variant="outline"
+              leftSection={<Award size={16} />}
+              radius="xl"
+            >
+              Ver premios disponibles
+            </Button>
             <Button
               component={Link}
               to="/app/gifts"
