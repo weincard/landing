@@ -5,6 +5,7 @@ import {
   generateDeliveryCode,
   verifyCode,
 } from "@/api/redemptions";
+import { getDeliveryPin } from "@/lib/deliveryLocation";
 
 export function useMyRedemptions() {
   return useQuery({
@@ -26,8 +27,10 @@ export function useGenerateCode() {
 export function useGenerateDeliveryCode() {
   const qc = useQueryClient();
   return useMutation({
+    // The chosen delivery pin rides along (when set) so the backend
+    // re-validates hours/coverage and stores the address on the code.
     mutationFn: (branchId: number) =>
-      generateDeliveryCode(branchId).then((r) => r.data),
+      generateDeliveryCode(branchId, getDeliveryPin()).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["redemptions"] }),
   });
 }

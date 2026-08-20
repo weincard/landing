@@ -31,6 +31,10 @@ export interface DeliveryBranch {
     deliveryFee: number | string | null;
     minimumOrder: number | string | null;
     estimatedTime: string | null;
+    /** Additive (deliveries v2): 'contact' | 'partner'. */
+    fulfillmentMode?: string | null;
+    /** Additive: computed from the branch's delivery hours (Bogotá). */
+    openNow?: boolean;
   };
   offers: {
     offerId: number;
@@ -48,11 +52,14 @@ export interface DeliveryBranchesParams {
   categoryId?: number;
   /** Only branches with a delivery-eligible offer valid on ANY of these days. */
   validDays?: string[];
+  /** The chosen delivery pin. Opt-in: when sent, the backend HIDES branches
+   *  that are out of coverage or closed right now. */
+  deliveryPin?: { lat: number; lng: number } | null;
 }
 
 export const getDeliveryBranches = (
   coords: Coords,
-  { q, categoryId, validDays }: DeliveryBranchesParams = {},
+  { q, categoryId, validDays, deliveryPin }: DeliveryBranchesParams = {},
 ) => {
   // With a search text, use the Typesense-backed GET /deliveries/search
   // (matches branch/offer text + merchant tags, typo/accent tolerant).
@@ -64,8 +71,46 @@ export const getDeliveryBranches = (
   qs.set("lng", String(coords.lng));
   if (categoryId) qs.set("categoryId", String(categoryId));
   if (validDays?.length) qs.set("validDays", validDays.join(","));
+  if (deliveryPin) {
+    qs.set("deliveryLat", String(deliveryPin.lat));
+    qs.set("deliveryLng", String(deliveryPin.lng));
+  }
   const path = `${query ? "/deliveries/search" : "/deliveries/branches"}?${qs.toString()}`;
   return honoClient.get<{ data: DeliveryBranch[]; count: number }>(path);
+};
+
+// ─── Branch catalog (browse-only menu) ──────────────────────────────────────
+
+export interface CatalogItem {
+  masterProductId: number;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  price: number;
+  isAvailable: boolean;
+}
+
+export interface BranchCatalog {
+  branchId: number;
+  /** false = the branch is outside its delivery hours right now. */
+  openNow: boolean;
+  /** null when no pin was sent; false = the pin is out of coverage. */
+  inCoverage: boolean | null;
+  fulfillmentMode: string | null;
+  sections: { name: string; items: CatalogItem[] }[];
+}
+
+export const getBranchCatalog = (
+  branchId: number,
+  deliveryPin?: { lat: number; lng: number } | null,
+) => {
+  const qs = new URLSearchParams();
+  if (deliveryPin) {
+    qs.set("deliveryLat", String(deliveryPin.lat));
+    qs.set("deliveryLng", String(deliveryPin.lng));
+  }
+  const suffix = qs.size ? `?${qs.toString()}` : "";
+  return honoClient.get<BranchCatalog>(`/deliveries/catalog/${branchId}${suffix}`);
 };
 
 // Map a delivery listing item into the Branch shape BranchCard / BranchModal use.

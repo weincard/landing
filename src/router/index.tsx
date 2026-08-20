@@ -4,6 +4,7 @@ import { ErrorPage } from "@/pages/ErrorPage";
 import { RegistroPage } from "@/pages/RegistroPage";
 import { PlanesPage } from "@/pages/PlanesPage";
 import { CatalogoPage } from "@/pages/CatalogoPage";
+import { MenuPage } from "@/pages/MenuPage";
 import { VerificacionPage } from "@/pages/VerificacionPage";
 import { PlazaVerificacionPage } from "@/pages/PlazaVerificacionPage";
 import { SomosVerificacionPage } from "@/pages/SomosVerificacionPage";
@@ -66,6 +67,8 @@ export const router = createBrowserRouter([
       { path: "/login", element: <Navigate to="/registro" replace /> },
       { path: "/planes", element: <PlanesPage /> },
       { path: "/catalogo", element: <CatalogoPage /> },
+      // Browse-only delivery menu (public — ordering itself needs auth).
+      { path: "/menu/:branchId", element: <MenuPage /> },
       // { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
       { path: "/verificacion", element: <VerificacionPage /> },
       { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
