@@ -28,6 +28,8 @@ import {
 import type { FoodCategory } from "@/api/categories";
 import { BranchCard } from "@/components/catalog/BranchCard";
 import { SomosPromoModal } from "@/components/catalog/SomosPromoModal";
+import { DeliveryLocationBar } from "@/components/delivery/DeliveryLocationBar";
+import { useDeliveryPin } from "@/lib/deliveryLocation";
 import { DAY_ORDER, DAY_LETTER } from "@/components/catalog/DayBadges";
 import type { Branch } from "@/types";
 
@@ -158,18 +160,26 @@ export function BranchBrowser({ onOpenBranch }: Props) {
   const channelIds = selectedCategory?.allowedChannelIds ?? [];
 
   const browse = useBranchBrowse(debounced, location, !isDelivery);
+  // The user's chosen delivery pin (deliveries v2): when set, both deliveries
+  // endpoints hide out-of-coverage and closed-now branches server-side.
+  const deliveryPin = useDeliveryPin();
   // All Domicilios filtering happens SERVER-side (text via the Typesense
   // /deliveries/search, categoryId + validDays on both endpoints).
   const delivery = useDeliveryBranches(location, isDelivery, {
     q: debounced.search,
     categoryId: debounced.categoryId,
     validDays: debounced.validDays,
+    deliveryPin,
   });
 
   // Domicilios chips derive from the UNFILTERED listing (a chip then always
   // matches ≥1 branch, and the row doesn't shrink once a filter applies).
-  // Same cache entry as the display query while no filter is active.
-  const deliveryBase = useDeliveryBranches(location, isDeliveryLive);
+  // Same cache entry as the display query while no filter is active. The pin
+  // DOES apply here too — chips should only offer categories the user can
+  // actually order from.
+  const deliveryBase = useDeliveryBranches(location, isDeliveryLive, {
+    deliveryPin,
+  });
   const deliveryCategories = useMemo<FoodCategory[]>(() => {
     const seen = new Map<number, string>();
     for (const b of deliveryBase.data ?? []) {
@@ -196,6 +206,14 @@ export function BranchBrowser({ onOpenBranch }: Props) {
 
   return (
     <Stack gap="lg">
+      {/* Delivery location — Domicilios only. Choosing a pin server-filters
+          the listing to branches that cover it and are open right now. */}
+      {isDeliveryLive && (
+        <Group>
+          <DeliveryLocationBar />
+        </Group>
+      )}
+
       {/* Filters bar */}
       <Paper radius="xl" p="lg" withBorder>
         <Stack gap="md">

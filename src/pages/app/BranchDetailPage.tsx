@@ -18,7 +18,9 @@ import {
   SimpleGrid,
   Box,
 } from "@mantine/core";
-import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star, Zap, Bike } from "lucide-react";
+import { ArrowLeft, Heart, HeartOff, Phone, Globe, Star, Zap, Bike, UtensilsCrossed } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getBranchCatalog } from "@/api/deliveries";
 import { toast } from "sonner";
 import { useBranchDetail } from "@/hooks/useBranches";
 import {
@@ -57,6 +59,15 @@ export function BranchDetailPage() {
   const addFav = useAddFavorite();
   const removeFav = useRemoveFavorite();
   const createReview = useCreateReview(branchId);
+
+  // Whether the branch has a published delivery menu — gates the "Ver menú"
+  // link. Cheap public fetch; no pin here (the menu page re-checks coverage).
+  const { data: catalog } = useQuery({
+    queryKey: ["branch-catalog", branchId, null],
+    enabled: branchId > 0,
+    queryFn: () => getBranchCatalog(branchId).then((r) => r.data),
+  });
+  const hasCatalog = (catalog?.sections?.length ?? 0) > 0;
 
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(false);
@@ -278,6 +289,21 @@ export function BranchDetailPage() {
                 to={`/app/delivery/${branchId}`}
               >
                 Pedir domicilio
+              </Button>
+            )}
+
+            {/* Menu link — only when the branch actually has a catalog. */}
+            {offersDelivery && hasCatalog && (
+              <Button
+                variant="subtle"
+                color="dark"
+                radius="xl"
+                size="sm"
+                leftSection={<UtensilsCrossed size={15} />}
+                component={Link}
+                to={`/menu/${branchId}`}
+              >
+                Ver menú
               </Button>
             )}
 

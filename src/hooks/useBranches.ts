@@ -73,18 +73,36 @@ export function browseBranches(pages: BranchTilesResponse[] | undefined): Branch
 export function useDeliveryBranches(
   location: Coords,
   enabled: boolean,
-  filters: { q?: string; categoryId?: number | null; validDays?: string[] } = {},
+  filters: {
+    q?: string;
+    categoryId?: number | null;
+    validDays?: string[];
+    deliveryPin?: { lat: number; lng: number } | null;
+  } = {},
 ) {
   const query = (filters.q ?? "").trim();
   const categoryId = filters.categoryId ?? undefined;
   const validDays = filters.validDays?.length ? filters.validDays : undefined;
+  // Chosen delivery pin — when present, the backend hides out-of-coverage and
+  // closed-now branches (deliveries v2). Null keeps the legacy full listing.
+  const deliveryPin = filters.deliveryPin ?? null;
   return useQuery({
-    queryKey: ["delivery-branches", location, query, categoryId, validDays],
+    queryKey: [
+      "delivery-branches",
+      location,
+      query,
+      categoryId,
+      validDays,
+      deliveryPin,
+    ],
     enabled,
     queryFn: () =>
-      getDeliveryBranches(location, { q: query, categoryId, validDays }).then(
-        (r) => r.data.data.map(deliveryBranchToBranch),
-      ),
+      getDeliveryBranches(location, {
+        q: query,
+        categoryId,
+        validDays,
+        deliveryPin,
+      }).then((r) => r.data.data.map(deliveryBranchToBranch)),
   });
 }
 

@@ -24,10 +24,24 @@ export interface DeliveryCodeResponse {
   };
 }
 
-export const generateDeliveryCode = (branchId: number) =>
+// deliveryPin (opt-in): sends the chosen delivery location so the backend
+// re-validates hours + coverage at generate time (409 with a clear message if
+// the branch closed or the pin moved out of zone while browsing). address is
+// stored on the code's delivery_use_info row.
+export const generateDeliveryCode = (
+  branchId: number,
+  deliveryPin?: { lat: number; lng: number; address?: string } | null,
+) =>
   honoClient.post<DeliveryCodeResponse>("/redemptions/codes/generate", {
     branchId,
     requestType: "delivery",
+    ...(deliveryPin
+      ? {
+          deliveryLat: deliveryPin.lat,
+          deliveryLng: deliveryPin.lng,
+          ...(deliveryPin.address ? { address: deliveryPin.address } : {}),
+        }
+      : {}),
   });
 
 export const getMyRedemptions = () =>
