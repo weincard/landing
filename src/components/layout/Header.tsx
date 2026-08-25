@@ -77,6 +77,20 @@ export function Header({ sticky = false }: HeaderProps) {
             >
               PLANES
             </Link>
+            <span style={{ color: "#fff", opacity: 0.5 }}>|</span>
+            <a
+              href="https://blog.weincard.com"
+              style={{
+                color: "#fff",
+                textDecoration: "none",
+                opacity: 1,
+                transition: "opacity 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              BLOG
+            </a>
           </nav>
 
           {/* Mobile nav */}

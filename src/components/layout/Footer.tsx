@@ -63,6 +63,15 @@ export function Footer() {
           <FooterLink to="/catalogo">BENEFICIOS</FooterLink>
           <Sep />
           <FooterLink to="/planes">PLANES</FooterLink>
+          <Sep />
+          <a
+            href="https://blog.weincard.com"
+            style={{ ...baseLinkStyle, opacity: 1 }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+          >
+            BLOG
+          </a>
           {!isLoggedIn && (
             <>
               <Sep />
