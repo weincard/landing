@@ -95,6 +95,28 @@ export function MobileNav() {
             >
               PLANES
             </Link>
+            <a
+              href="https://blog.weincard.com"
+              onClick={() => setOpen(false)}
+              style={{
+                color: "#fff",
+                textDecoration: "none",
+                padding: "10px 16px",
+                borderRadius: "10px",
+                fontFamily: '"Hepta Slab", serif',
+                fontSize: "14px",
+                letterSpacing: "0.05em",
+                display: "block",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              BLOG
+            </a>
           </div>
         </>
       )}

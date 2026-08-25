@@ -134,7 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const isLoggedIn = !!user;
-  const profileComplete = !!(user?.name && user?.email && user?.document);
+  // `document` is optional (2026-08-20) — only name + email gate completeness.
+  const profileComplete = !!(user?.name && user?.email);
   const hasMembership = isActiveMembershipStatus(membership?.status);
   const activePlanKey = hasMembership
     ? derivePlanKey(membership?.membershipPlanDuration ?? null)

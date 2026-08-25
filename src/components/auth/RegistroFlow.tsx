@@ -136,7 +136,9 @@ export function RegistroFlow() {
   async function afterLogin(token: string, knownEmail?: string) {
     await login(token);
     const me = await getMe();
-    const complete = !!(me.name && me.email && me.document);
+    // `document` is optional — only name + email decide whether the user
+    // must go through the register step.
+    const complete = !!(me.name && me.email);
     if (!complete) {
       if (me.firstName) setFirstName(me.firstName);
       if (me.lastName) setLastName(me.lastName);
@@ -325,8 +327,8 @@ export function RegistroFlow() {
   // ───────── register (shared profile step) ─────────
   async function submitRegister(e: React.FormEvent) {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !document.trim())
-      return;
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) return;
+    // Document is optional; when provided it must still match the type's rules.
     const docError = validateDocument(documentType, document);
     if (docError) {
       setError(docError);
@@ -343,8 +345,7 @@ export function RegistroFlow() {
         name: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        document: document.trim(),
-        documentType,
+        ...(document.trim() ? { document: document.trim(), documentType } : {}),
         ...(regNumber.trim() ? { phone: composePhone(regCountry, regNumber) } : {}),
         ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
         termsAcceptedAt: new Date().toISOString(),
@@ -690,7 +691,7 @@ export function RegistroFlow() {
                   ))}
                 </select>
               </div>
-              <FormInput label="Documento" required id="document" type="text" inputMode="numeric" value={document} onChange={(e) => setDocument(e.target.value)} placeholder="1234567890" />
+              <FormInput label="Documento (opcional)" id="document" type="text" inputMode="numeric" value={document} onChange={(e) => setDocument(e.target.value)} placeholder="1234567890" />
             </div>
             <div style={{ marginBottom: "12px" }}>
               <PhoneCountryInput
