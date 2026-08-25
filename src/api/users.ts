@@ -43,7 +43,8 @@ export interface CompleteRegistrationPayload {
   name: string;
   lastName: string;
   email: string;
-  document: string;
+  /** Optional since 2026-08-20; sent only when the user fills it in. */
+  document?: string;
   documentType?: string;
   /** Full E.164 phone (dial code + number). Stored unverified until OTP. */
   phone?: string;
