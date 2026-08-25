@@ -33,8 +33,8 @@ export function HomePage() {
             {/* Image */}
             <div className="hero-image" style={{ order: 2 }}>
               <img
-                src="/image-hero-weincard.webp"
-                alt="Pareja disfrutando comida"
+                src="/image-hero-weincard.jpg"
+                alt="Amigos compartiendo hamburguesa y papas en un restaurante"
                 style={{ width: "100%", height: "auto", display: "block" }}
               />
             </div>
