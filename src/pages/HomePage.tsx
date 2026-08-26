@@ -35,7 +35,12 @@ export function HomePage() {
               <img
                 src="/image-hero-weincard.jpg"
                 alt="Amigos compartiendo hamburguesa y papas en un restaurante"
-                style={{ width: "100%", height: "auto", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  display: "block",
+                  borderRadius: 35,
+                }}
               />
             </div>
 
