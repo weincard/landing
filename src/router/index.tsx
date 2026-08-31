@@ -31,6 +31,7 @@ import { SavingsPage } from "@/pages/app/SavingsPage";
 import { FavoritesPage } from "@/pages/app/FavoritesPage";
 import { ProfilePage } from "@/pages/app/ProfilePage";
 import { LoyaltyPage } from "@/pages/app/LoyaltyPage";
+import { MilestonePage } from "@/pages/app/MilestonePage";
 import { GiftsPage } from "@/pages/app/GiftsPage";
 import { PrizesPage } from "@/pages/app/PrizesPage";
 import { ValidarRegaloPage } from "@/pages/ValidarRegaloPage";
@@ -96,6 +97,7 @@ export const router = createBrowserRouter([
               { path: "/app/savings", element: <SavingsPage /> },
               { path: "/app/loyalty", element: <LoyaltyPage /> },
               { path: "/app/loyalty/prizes", element: <PrizesPage /> },
+              { path: "/app/loyalty/milestones", element: <MilestonePage /> },
               { path: "/app/gifts", element: <GiftsPage /> },
               { path: "/app/favorites", element: <FavoritesPage /> },
               { path: "/app/profile", element: <ProfilePage /> },
