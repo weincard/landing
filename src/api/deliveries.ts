@@ -35,6 +35,8 @@ export interface DeliveryBranch {
     fulfillmentMode?: string | null;
     /** Additive: computed from the branch's delivery hours (Bogotá). */
     openNow?: boolean;
+    /** Additive (Phase B): structured Armi ordering is live for this branch. */
+    partnerEnabled?: boolean;
   };
   offers: {
     offerId: number;
@@ -97,6 +99,10 @@ export interface BranchCatalog {
   /** null when no pin was sent; false = the pin is out of coverage. */
   inCoverage: boolean | null;
   fulfillmentMode: string | null;
+  /** Phase B: true = cart/checkout flow; false = contact hand-off flow. */
+  partnerEnabled?: boolean;
+  minimumOrder?: number | null;
+  armiCity?: string | null;
   sections: { name: string; items: CatalogItem[] }[];
 }
 

@@ -21,8 +21,7 @@ import {
   Settings,
   CompassIcon,
   Trophy,
-  Stamp,
-} from "lucide-react";
+  Stamp, Bike } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { UsarWeincardButton } from "@/components/redeem/UsarWeincardButton";
 
@@ -30,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/app/card", label: "Mi tarjeta", icon: CreditCard },
   { href: "/app/explore", label: "Explorar", icon: Compass },
   { href: "/app/savings", label: "Mis ahorros", icon: TrendingUp },
+  { href: "/app/orders", label: "Mis pedidos", icon: Bike },
   { href: "/app/loyalty", label: "Clasificación", icon: Trophy },
   { href: "/app/loyalty/milestones", label: "Sellos", icon: Stamp },
   { href: "/app/favorites", label: "Favoritos", icon: Heart },

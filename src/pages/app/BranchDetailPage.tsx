@@ -68,6 +68,9 @@ export function BranchDetailPage() {
     queryFn: () => getBranchCatalog(branchId).then((r) => r.data),
   });
   const hasCatalog = (catalog?.sections?.length ?? 0) > 0;
+  // Phase B: structured Armi ordering live for this branch → the delivery CTA
+  // goes through the menu/cart flow (open to everyone; discount is member-only).
+  const partnerEnabled = catalog?.partnerEnabled === true;
 
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(false);
@@ -276,9 +279,10 @@ export function BranchDetailPage() {
               </Button>
             )}
 
-            {/* Delivery CTA — same gate as the mobile `offersDelivery`: active
-                config with a reachable contact (whatsapp/phone/webpage). */}
-            {hasMembership && offersDelivery && (
+            {/* Delivery CTA. Partner branches (Phase B) → menu/cart flow, open
+                to everyone (anyone can order; the discount is member-only).
+                Contact branches keep the membership-gated hand-off flow. */}
+            {partnerEnabled ? (
               <Button
                 variant="outline"
                 color="dark"
@@ -286,14 +290,30 @@ export function BranchDetailPage() {
                 size="md"
                 leftSection={<Bike size={16} />}
                 component={Link}
-                to={`/app/delivery/${branchId}`}
+                to={`/menu/${branchId}`}
               >
                 Pedir domicilio
               </Button>
+            ) : (
+              hasMembership &&
+              offersDelivery && (
+                <Button
+                  variant="outline"
+                  color="dark"
+                  radius="xl"
+                  size="md"
+                  leftSection={<Bike size={16} />}
+                  component={Link}
+                  to={`/app/delivery/${branchId}`}
+                >
+                  Pedir domicilio
+                </Button>
+              )
             )}
 
-            {/* Menu link — only when the branch actually has a catalog. */}
-            {offersDelivery && hasCatalog && (
+            {/* Menu link — only when the branch actually has a catalog (the
+                partner CTA above already goes through the menu). */}
+            {!partnerEnabled && offersDelivery && hasCatalog && (
               <Button
                 variant="subtle"
                 color="dark"

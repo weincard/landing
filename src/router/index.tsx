@@ -27,6 +27,10 @@ import { ExplorePage } from "@/pages/app/ExplorePage";
 import { BranchDetailPage } from "@/pages/app/BranchDetailPage";
 import { RedeemPage } from "@/pages/app/RedeemPage";
 import { DeliveryPage } from "@/pages/app/DeliveryPage";
+import { CheckoutPage } from "@/pages/app/CheckoutPage";
+import { OrdersPage } from "@/pages/app/OrdersPage";
+import { OrderTrackingPage } from "@/pages/app/OrderTrackingPage";
+import { PedidoAliadoPage } from "@/pages/PedidoAliadoPage";
 import { SavingsPage } from "@/pages/app/SavingsPage";
 import { FavoritesPage } from "@/pages/app/FavoritesPage";
 import { ProfilePage } from "@/pages/app/ProfilePage";
@@ -68,8 +72,11 @@ export const router = createBrowserRouter([
       { path: "/login", element: <Navigate to="/registro" replace /> },
       { path: "/planes", element: <PlanesPage /> },
       { path: "/catalogo", element: <CatalogoPage /> },
-      // Browse-only delivery menu (public — ordering itself needs auth).
+      // Delivery menu (public — ordering itself needs auth). Partner branches
+      // get cart steppers; contact branches stay browse-only.
       { path: "/menu/:branchId", element: <MenuPage /> },
+      // Ally order confirmation via signed link (no login — Phase B).
+      { path: "/pedido-aliado/:token", element: <PedidoAliadoPage /> },
       // { path: "/la-plaza-de-wein-junio-2026", element: <LaPlazaPage /> },
       { path: "/verificacion", element: <VerificacionPage /> },
       { path: "/plaza/verificacion", element: <PlazaVerificacionPage /> },
@@ -107,6 +114,10 @@ export const router = createBrowserRouter([
               },
               { path: "/app/redeem/:branchId", element: <RedeemPage /> },
               { path: "/app/delivery/:branchId", element: <DeliveryPage /> },
+              // Phase B — structured Armi orders.
+              { path: "/app/checkout/:branchId", element: <CheckoutPage /> },
+              { path: "/app/orders", element: <OrdersPage /> },
+              { path: "/app/orders/:orderId", element: <OrderTrackingPage /> },
             ],
           },
         ],

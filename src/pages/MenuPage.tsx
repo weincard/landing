@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Box,
@@ -13,27 +14,46 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { AlertCircle, ArrowLeft, Bike, Clock, MapPinOff } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Bike,
+  Clock,
+  MapPinOff,
+  Minus,
+  Plus,
+  ShoppingBag,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getBranchCatalog } from "@/api/deliveries";
 import { useBranchDetail } from "@/hooks/useBranches";
 import { useDeliveryPin } from "@/lib/deliveryLocation";
+import {
+  cartCount,
+  cartQuantity,
+  cartSubtotal,
+  clearDeliveryCart,
+  setCartItem,
+  useDeliveryCart,
+} from "@/lib/deliveryCart";
 import { DeliveryLocationBar } from "@/components/delivery/DeliveryLocationBar";
 import { PageMeta } from "@/components/layout/PageMeta";
 
 const formatCop = (n: number) =>
   `$${Math.round(Number(n)).toLocaleString("es-CO")}`;
 
-// Browse-only branch menu (deliveries v2 catalogs). The order itself still
-// goes through the contact flow (/app/delivery/:branchId) — this page shows
-// what the ally offers, with per-branch prices and availability. openNow /
-// inCoverage are re-checked here (the race guard: the branch may have closed,
-// or the pin moved, while the user browsed the listing).
+// Branch delivery menu (deliveries v2). Two modes:
+//  - partner (Phase B, catalog.partnerEnabled): items get quantity steppers
+//    and the sticky cart bar leads to /app/checkout/:branchId.
+//  - contact: browse-only, the CTA keeps today's hand-off flow
+//    (/app/delivery/:branchId). openNow / inCoverage are re-checked here (the
+//    race guard: the branch may close, or the pin move, while browsing).
 export function MenuPage() {
   const { branchId: branchIdParam } = useParams<{ branchId: string }>();
   const branchId = Number(branchIdParam ?? "0");
   const navigate = useNavigate();
   const pin = useDeliveryPin();
+  const cart = useDeliveryCart();
 
   const { data: branch } = useBranchDetail(branchId, []);
   const {
@@ -49,6 +69,32 @@ export function MenuPage() {
   const closed = catalog ? !catalog.openNow : false;
   const outOfCoverage = catalog?.inCoverage === false;
   const canOrder = !!catalog && !closed && !outOfCoverage;
+  const partnerEnabled = catalog?.partnerEnabled === true;
+
+  const branchCart = cart && cart.branchId === branchId ? cart : null;
+  const itemsInCart = cartCount(branchCart);
+  const subtotal = cartSubtotal(branchCart);
+  const minimumOrder = catalog?.minimumOrder ?? null;
+  const belowMinimum = minimumOrder != null && subtotal < minimumOrder;
+
+  const changeQty = (
+    item: { masterProductId: number; name: string; price: number; imageUrl: string | null },
+    qty: number,
+  ) => {
+    // One cart, one branch: replacing another restaurant's cart is explicit.
+    if (cart && cart.branchId !== branchId && qty > 0) {
+      const ok = window.confirm(
+        `Tienes un pedido empezado en ${cart.branchName}. ¿Vaciarlo y empezar uno aquí?`,
+      );
+      if (!ok) return;
+      clearDeliveryCart();
+    }
+    setCartItem(
+      { branchId, branchName: branch?.name ?? catalog?.armiCity ?? "" },
+      item,
+      qty,
+    );
+  };
 
   return (
     <>
@@ -130,51 +176,123 @@ export function MenuPage() {
             <Title order={4} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
               {section.name}
             </Title>
-            {section.items.map((item) => (
-              <Paper
-                key={item.masterProductId}
-                withBorder
-                radius="lg"
-                p="sm"
-                style={{ opacity: item.isAvailable ? 1 : 0.55 }}
-              >
-                <Group wrap="nowrap" align="flex-start" justify="space-between">
-                  <Box style={{ flex: 1 }}>
-                    <Group gap="xs">
-                      <Text fw={600} size="sm">
-                        {item.name}
-                      </Text>
-                      {!item.isAvailable && (
-                        <Badge size="xs" color="gray">
-                          Agotado
-                        </Badge>
+            {section.items.map((item) => {
+              const qty = cartQuantity(branchCart, item.masterProductId);
+              return (
+                <Paper
+                  key={item.masterProductId}
+                  withBorder
+                  radius="lg"
+                  p="sm"
+                  style={{ opacity: item.isAvailable ? 1 : 0.55 }}
+                >
+                  <Group wrap="nowrap" align="flex-start" justify="space-between">
+                    <Box style={{ flex: 1 }}>
+                      <Group gap="xs">
+                        <Text fw={600} size="sm">
+                          {item.name}
+                        </Text>
+                        {!item.isAvailable && (
+                          <Badge size="xs" color="gray">
+                            Agotado
+                          </Badge>
+                        )}
+                      </Group>
+                      {item.description && (
+                        <Text size="xs" c="dimmed" mt={2} lineClamp={2}>
+                          {item.description}
+                        </Text>
                       )}
-                    </Group>
-                    {item.description && (
-                      <Text size="xs" c="dimmed" mt={2} lineClamp={2}>
-                        {item.description}
+                      <Text fw={700} size="sm" mt={4}>
+                        {formatCop(item.price)}
                       </Text>
+                      {partnerEnabled && item.isAvailable && canOrder && (
+                        <Group gap="xs" mt={6}>
+                          {qty > 0 ? (
+                            <>
+                              <ActionIcon
+                                variant="light"
+                                color="dark"
+                                radius="xl"
+                                onClick={() =>
+                                  changeQty(
+                                    {
+                                      masterProductId: item.masterProductId,
+                                      name: item.name,
+                                      price: item.price,
+                                      imageUrl: item.imageUrl,
+                                    },
+                                    qty - 1,
+                                  )
+                                }
+                              >
+                                <Minus size={14} />
+                              </ActionIcon>
+                              <Text fw={700} size="sm" w={20} ta="center">
+                                {qty}
+                              </Text>
+                              <ActionIcon
+                                variant="filled"
+                                color="dark"
+                                radius="xl"
+                                onClick={() =>
+                                  changeQty(
+                                    {
+                                      masterProductId: item.masterProductId,
+                                      name: item.name,
+                                      price: item.price,
+                                      imageUrl: item.imageUrl,
+                                    },
+                                    Math.min(50, qty + 1),
+                                  )
+                                }
+                              >
+                                <Plus size={14} />
+                              </ActionIcon>
+                            </>
+                          ) : (
+                            <Button
+                              size="xs"
+                              variant="light"
+                              color="dark"
+                              radius="xl"
+                              leftSection={<Plus size={13} />}
+                              onClick={() =>
+                                changeQty(
+                                  {
+                                    masterProductId: item.masterProductId,
+                                    name: item.name,
+                                    price: item.price,
+                                    imageUrl: item.imageUrl,
+                                  },
+                                  1,
+                                )
+                              }
+                            >
+                              Agregar
+                            </Button>
+                          )}
+                        </Group>
+                      )}
+                    </Box>
+                    {item.imageUrl && (
+                      <Image
+                        src={item.imageUrl}
+                        w={72}
+                        h={72}
+                        radius="md"
+                        fit="cover"
+                      />
                     )}
-                    <Text fw={700} size="sm" mt={4}>
-                      {formatCop(item.price)}
-                    </Text>
-                  </Box>
-                  {item.imageUrl && (
-                    <Image
-                      src={item.imageUrl}
-                      w={72}
-                      h={72}
-                      radius="md"
-                      fit="cover"
-                    />
-                  )}
-                </Group>
-              </Paper>
-            ))}
+                  </Group>
+                </Paper>
+              );
+            })}
           </Stack>
         ))}
 
-        {catalog && catalog.sections.length > 0 && (
+        {/* Contact-flow CTA (non-partner branches keep the hand-off flow). */}
+        {!partnerEnabled && catalog && catalog.sections.length > 0 && (
           <Button
             color="dark"
             radius="xl"
@@ -187,6 +305,36 @@ export function MenuPage() {
           </Button>
         )}
       </Stack>
+
+      {/* Sticky cart bar (partner branches). */}
+      {partnerEnabled && itemsInCart > 0 && (
+        <Paper
+          shadow="lg"
+          p="md"
+          style={{ position: "sticky", bottom: 0, zIndex: 20 }}
+          bg="white"
+        >
+          <Stack gap={6} maw={640} mx="auto">
+            {belowMinimum && (
+              <Text size="xs" c="orange" ta="center">
+                Pedido mínimo: {formatCop(minimumOrder!)} — te faltan{" "}
+                {formatCop(minimumOrder! - subtotal)}
+              </Text>
+            )}
+            <Button
+              color="dark"
+              radius="xl"
+              size="md"
+              fullWidth
+              leftSection={<ShoppingBag size={16} />}
+              disabled={!canOrder || belowMinimum}
+              onClick={() => navigate(`/app/checkout/${branchId}`)}
+            >
+              {`Continuar (${itemsInCart}) · ${formatCop(subtotal)}`}
+            </Button>
+          </Stack>
+        </Paper>
+      )}
     </>
   );
 }
