@@ -72,6 +72,25 @@ export interface LoyaltySeasonPrizes {
   tiers: LoyaltyTierPrizes[];
 }
 
+// ── Milestone (punch-card) strategy ──────────────────────────────────────────
+export interface LoyaltyMilestoneRung {
+  milestoneId: number;
+  threshold: number;
+  label: string;
+  reached: boolean;
+  giftId: number | null;
+  giftStatus: LoyaltyGiftStatus | null;
+  options: LoyaltyGiftOption[];
+}
+
+export interface LoyaltyMilestoneMe {
+  season: { seasonId: number; name: string; startsAt: string; endsAt: string } | null;
+  currentUses: number;
+  nextThreshold?: number | null;
+  usesToNext?: number | null;
+  milestones: LoyaltyMilestoneRung[];
+}
+
 export interface LoyaltyValidateResult {
   found: boolean;
   tierName?: string;
@@ -106,6 +125,9 @@ export const getSeasonPrizes = () =>
   honoClient
     .get<LoyaltySeasonPrizes>("/loyalty/season/prizes")
     .then((r) => r.data);
+
+export const getMilestoneMe = () =>
+  honoClient.get<LoyaltyMilestoneMe>("/loyalty/milestone/me").then((r) => r.data);
 
 export const selectGift = (giftId: number, optionId: number, merchantId: number) =>
   honoClient
