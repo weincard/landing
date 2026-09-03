@@ -17,6 +17,12 @@ export const createCheckoutSession = (email: string, plan: PlanKey) =>
 export const cancelMembership = (membershipId: number) =>
   honoClient.post(`/memberships/cancel/${membershipId}`);
 
+// Treli self-service portal (update payment method, invoices). Scoped to the
+// caller's Treli customer — 409 { code: "no_treli_customer" } when they never
+// reached a checkout session. Gate the UI on `user.hasTreliCustomer`.
+export const createPortalSession = () =>
+  honoClient.post<{ url: string }>("/memberships/portal/session");
+
 /** Result of the stateless Somos eligibility check (/verificacion-somos). */
 export interface SomosVerifyResult {
   valid: boolean;

@@ -16,6 +16,7 @@ type RawUser = {
   isVerified?: boolean;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
+  hasTreliCustomer?: boolean;
   role?: { name?: string | null } | string | null;
   createdAt?: string;
 };
@@ -43,6 +44,7 @@ export function mapAuthUser(raw: RawUser): AuthUser {
     isVerified: raw.isVerified,
     isEmailVerified: raw.isEmailVerified,
     isPhoneVerified: raw.isPhoneVerified,
+    hasTreliCustomer: raw.hasTreliCustomer ?? false,
     createdAt: raw.createdAt,
   };
 }
