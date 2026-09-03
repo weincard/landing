@@ -19,6 +19,9 @@ export interface AuthUser {
   isEmailVerified?: boolean;
   /** Phone proven via OTP. Distinct from `isVerified` (set on any finished registration). */
   isPhoneVerified?: boolean;
+  /** User has a Treli customer (created on their first checkout) → the Treli
+   *  self-service portal can be opened to manage their payment method. */
+  hasTreliCustomer?: boolean;
   createdAt?: string;
 }
 
