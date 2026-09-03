@@ -27,7 +27,7 @@ export function CheckoutPage() {
   const cart = useDeliveryCart();
   const pin = useDeliveryPin();
 
-  const [paymentMethod, setPaymentMethod] = useState<OrderPaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<OrderPaymentMethod>("card_terminal");
   const [details, setDetails] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -58,6 +58,11 @@ export function CheckoutPage() {
         paymentMethod,
       }).then((r) => r.data),
   });
+
+  // Mirror of the backend's discountedUnitPrice — line totals must match the
+  // quote's Descuento math to the peso.
+  const qPct = quote.data?.discountPct ?? 0;
+  const qUnit = (p: number) => Math.round((p * (100 - qPct)) / 100);
 
   const place = useMutation({
     mutationFn: () =>
@@ -123,9 +128,20 @@ export function CheckoutPage() {
                   <Text size="sm">
                     {item.quantity}× {item.name}
                   </Text>
-                  <Text size="sm" fw={600}>
-                    {formatCop(item.price * item.quantity)}
-                  </Text>
+                  {qPct > 0 ? (
+                    <Group gap={6}>
+                      <Text size="sm" fw={700} c="green.8">
+                        {formatCop(qUnit(item.price) * item.quantity)}
+                      </Text>
+                      <Text size="xs" c="dimmed" td="line-through">
+                        {formatCop(item.price * item.quantity)}
+                      </Text>
+                    </Group>
+                  ) : (
+                    <Text size="sm" fw={600}>
+                      {formatCop(item.price * item.quantity)}
+                    </Text>
+                  )}
                 </Group>
                 <TextInput
                   size="xs"
@@ -185,8 +201,8 @@ export function CheckoutPage() {
             value={paymentMethod}
             onChange={(v) => setPaymentMethod(v as OrderPaymentMethod)}
             data={[
-              { value: "cash", label: "Efectivo" },
               { value: "card_terminal", label: "Datáfono" },
+              { value: "cash", label: "Efectivo" },
             ]}
           />
         </Stack>

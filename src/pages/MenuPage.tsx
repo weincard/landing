@@ -67,6 +67,11 @@ export function MenuPage() {
   // equal checkout to the peso.
   const discountPct = catalog?.discount?.pct ?? 0;
   const discounted = (p: number) => Math.round((p * (100 - discountPct)) / 100);
+  // Cart-bar total with the discount applied (per-unit rounding = backend).
+  const barTotal =
+    discountPct > 0 && branchCart
+      ? branchCart.items.reduce((s, i) => s + discounted(i.price) * i.quantity, 0)
+      : subtotal;
 
   const changeQty = (
     item: { masterProductId: number; name: string; price: number; imageUrl: string | null },
@@ -350,7 +355,7 @@ export function MenuPage() {
               disabled={!canOrder || belowMinimum}
               onClick={() => navigate(`/app/checkout/${branchId}`)}
             >
-              {`Continuar (${itemsInCart}) · ${formatCop(subtotal)}`}
+              {`Continuar (${itemsInCart}) · ${formatCop(barTotal)}`}
             </Button>
           </Stack>
         </Paper>

@@ -62,7 +62,7 @@ export function BranchDetailPage() {
 
   // Whether the branch has a published delivery menu — gates the "Ver menú"
   // link. Cheap public fetch; no pin here (the menu page re-checks coverage).
-  const { data: catalog } = useQuery({
+  const { data: catalog, isPending: catalogPending } = useQuery({
     queryKey: ["branch-catalog", branchId, null],
     enabled: branchId > 0,
     queryFn: () => getBranchCatalog(branchId).then((r) => r.data),
@@ -282,7 +282,20 @@ export function BranchDetailPage() {
             {/* Delivery CTA. Partner branches (Phase B) → menu/cart flow, open
                 to everyone (anyone can order; the discount is member-only).
                 Contact branches keep the membership-gated hand-off flow. */}
-            {partnerEnabled ? (
+            {catalogPending && offersDelivery ? (
+              /* Race guard: the catalog decides partner (menu/cart) vs contact
+                 flow — deciding early sent partner branches to the old flow. */
+              <Button
+                variant="outline"
+                color="dark"
+                radius="xl"
+                size="md"
+                leftSection={<Bike size={16} />}
+                loading
+              >
+                Pedir domicilio
+              </Button>
+            ) : partnerEnabled ? (
               <Button
                 variant="outline"
                 color="dark"
