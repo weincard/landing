@@ -3,6 +3,7 @@ import {
   cancelMembership,
   getMembershipPlans,
   createCheckoutSession,
+  createPortalSession,
   getFamily,
   inviteFamilyMember,
   acceptFamilyInvite,
@@ -30,6 +31,12 @@ export function useCreateCheckout() {
   return useMutation({
     mutationFn: ({ email, plan }: { email: string; plan: PlanKey }) =>
       createCheckoutSession(email, plan).then((r) => r.data),
+  });
+}
+
+export function useCreatePortalSession() {
+  return useMutation({
+    mutationFn: () => createPortalSession().then((r) => r.data),
   });
 }
 

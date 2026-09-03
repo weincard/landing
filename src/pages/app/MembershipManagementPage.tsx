@@ -26,6 +26,7 @@ import {
 import { MembershipStatusBadge } from "@/components/membership/MembershipStatusBadge";
 import { FamilySection } from "@/components/membership/FamilySection";
 import { PlanCardsGrid } from "@/components/membership/PlanCardsGrid";
+import { TreliPortalSection } from "@/components/membership/TreliPortalSection";
 import { PageMeta } from "@/components/layout/PageMeta";
 import { useShowCouponInput } from "@/hooks/useAppConfig";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
@@ -269,6 +270,17 @@ export function MembershipManagementPage() {
                 {formatDate(membershipActiveUntil)}.
               </Alert>
             )}
+
+            {/* Treli self-service portal (update payment method). Keyed on the
+                user having a Treli customer, not on this membership's
+                paymentMethod — a member who paid via Treli before and now sits
+                on IAP/family/b2b can still fix the card on file. */}
+            {user?.hasTreliCustomer && (
+              <>
+                <Divider my="md" />
+                <TreliPortalSection />
+              </>
+            )}
           </Paper>
         )}
 
@@ -336,6 +348,14 @@ export function MembershipManagementPage() {
                     Cancelar
                   </Button>
                 </Group>
+              </Paper>
+            )}
+
+            {/* No current membership but a Treli customer exists (e.g. a
+                lapsed card) — let them fix the payment method before re-subscribing. */}
+            {user?.hasTreliCustomer && (
+              <Paper radius="xl" p="lg" withBorder>
+                <TreliPortalSection />
               </Paper>
             )}
 
