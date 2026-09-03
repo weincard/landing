@@ -11,6 +11,8 @@ export interface CartItem {
   price: number;
   imageUrl: string | null;
   quantity: number;
+  // Customer observation for this line ("sin queso") — optional.
+  notes?: string | null;
 }
 
 export interface DeliveryCart {
@@ -58,6 +60,19 @@ export function getDeliveryCart(): DeliveryCart | null {
 
 export function clearDeliveryCart() {
   write(null);
+}
+
+/** Set/clear the observation of a cart line (kept while quantities change). */
+export function setCartItemNote(masterProductId: number, notes: string) {
+  if (!current) return;
+  write({
+    ...current,
+    items: current.items.map((i) =>
+      i.masterProductId === masterProductId
+        ? { ...i, notes: notes.trim() ? notes : null }
+        : i,
+    ),
+  });
 }
 
 /**

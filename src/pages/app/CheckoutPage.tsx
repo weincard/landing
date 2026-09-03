@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  Alert,
-  Button,
-  Divider,
-  Group,
-  Paper,
-  SegmentedControl,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-  Title,
-} from "@mantine/core";
+import { Alert, Button, Divider, Group, Paper, SegmentedControl, Stack, Text, TextInput, Textarea, Title } from "@mantine/core";
 import { AlertCircle, ArrowLeft, Bike, Sparkles } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,7 +9,7 @@ import {
   quoteOrder,
   type OrderPaymentMethod,
 } from "@/api/orders";
-import { clearDeliveryCart, useDeliveryCart } from "@/lib/deliveryCart";
+import { clearDeliveryCart, useDeliveryCart, setCartItemNote } from "@/lib/deliveryCart";
 import { useDeliveryPin } from "@/lib/deliveryLocation";
 import { formatCop } from "@/lib/orderStatus";
 import { DeliveryLocationBar } from "@/components/delivery/DeliveryLocationBar";
@@ -53,6 +41,7 @@ export function CheckoutPage() {
   const items = (branchCart?.items ?? []).map((i) => ({
     masterProductId: i.masterProductId,
     quantity: i.quantity,
+    notes: i.notes ?? null,
   }));
   const itemsKey = items.map((i) => `${i.masterProductId}x${i.quantity}`).join(",");
 
@@ -129,14 +118,25 @@ export function CheckoutPage() {
         <Paper withBorder radius="lg" p="md">
           <Stack gap={6}>
             {branchCart.items.map((item) => (
-              <Group key={item.masterProductId} justify="space-between">
-                <Text size="sm">
-                  {item.quantity}× {item.name}
-                </Text>
-                <Text size="sm" fw={600}>
-                  {formatCop(item.price * item.quantity)}
-                </Text>
-              </Group>
+              <Stack key={item.masterProductId} gap={4}>
+                <Group justify="space-between">
+                  <Text size="sm">
+                    {item.quantity}× {item.name}
+                  </Text>
+                  <Text size="sm" fw={600}>
+                    {formatCop(item.price * item.quantity)}
+                  </Text>
+                </Group>
+                <TextInput
+                  size="xs"
+                  placeholder="Observación (ej. sin queso, sin salsas)"
+                  maxLength={200}
+                  value={item.notes ?? ""}
+                  onChange={(e) =>
+                    setCartItemNote(item.masterProductId, e.currentTarget.value)
+                  }
+                />
+              </Stack>
             ))}
             <Button
               variant="subtle"

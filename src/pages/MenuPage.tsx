@@ -1,19 +1,5 @@
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  ActionIcon,
-  Alert,
-  Badge,
-  Box,
-  Button,
-  Center,
-  Group,
-  Image,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ActionIcon, Alert, Anchor, Badge, Box, Button, Center, Group, Image, Loader, Paper, Stack, Text, Title } from "@mantine/core";
 import {
   AlertCircle,
   ArrowLeft,
@@ -77,6 +63,11 @@ export function MenuPage() {
   const minimumOrder = catalog?.minimumOrder ?? null;
   const belowMinimum = minimumOrder != null && subtotal < minimumOrder;
 
+  // Mirror of the backend's discountedUnitPrice — slashed menu prices must
+  // equal checkout to the peso.
+  const discountPct = catalog?.discount?.pct ?? 0;
+  const discounted = (p: number) => Math.round((p * (100 - discountPct)) / 100);
+
   const changeQty = (
     item: { masterProductId: number; name: string; price: number; imageUrl: string | null },
     qty: number,
@@ -115,6 +106,24 @@ export function MenuPage() {
           Volver
         </Button>
 
+        {discountPct > 0 && (
+          <Paper radius="md" p="xs" bg="green.0">
+            <Text size="sm" c="green.9" fw={600}>
+              Tu descuento Weincard del {discountPct}% ya está aplicado en estos
+              precios.
+            </Text>
+          </Paper>
+        )}
+        {!catalog?.discount && catalog?.upsellPct != null && (
+          <Paper radius="md" p="xs" bg="green.0">
+            <Text size="sm" c="green.9" fw={600}>
+              Con Weincard este menú tendría {catalog.upsellPct}% de descuento.{" "}
+              <Anchor component={Link} to="/planes" size="sm" fw={700}>
+                Conoce los planes
+              </Anchor>
+            </Text>
+          </Paper>
+        )}
         <Group justify="space-between" align="flex-start">
           <Stack gap={2}>
             <Title order={2} style={{ fontFamily: '"Clash Grotesk", sans-serif' }}>
@@ -203,9 +212,20 @@ export function MenuPage() {
                           {item.description}
                         </Text>
                       )}
-                      <Text fw={700} size="sm" mt={4}>
-                        {formatCop(item.price)}
-                      </Text>
+                      {discountPct > 0 ? (
+                        <Group gap={6} mt={4}>
+                          <Text fw={700} size="sm" c="green.8">
+                            {formatCop(discounted(item.price))}
+                          </Text>
+                          <Text size="xs" c="dimmed" td="line-through">
+                            {formatCop(item.price)}
+                          </Text>
+                        </Group>
+                      ) : (
+                        <Text fw={700} size="sm" mt={4}>
+                          {formatCop(item.price)}
+                        </Text>
+                      )}
                       {partnerEnabled && item.isAvailable && canOrder && (
                         <Group gap="xs" mt={6}>
                           {qty > 0 ? (

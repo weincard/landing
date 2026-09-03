@@ -104,6 +104,9 @@ export interface BranchCatalog {
   minimumOrder?: number | null;
   armiCity?: string | null;
   sections: { name: string; items: CatalogItem[] }[];
+  // Member discount preview (same engine as checkout) / non-member upsell.
+  discount?: { pct: number; title: string } | null;
+  upsellPct?: number | null;
 }
 
 export const getBranchCatalog = (

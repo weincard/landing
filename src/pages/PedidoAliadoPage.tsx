@@ -1,19 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  Alert,
-  Badge,
-  Button,
-  Center,
-  Divider,
-  Group,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-  Textarea,
-  Title,
-} from "@mantine/core";
+import { Alert, Badge, Button, Center, Divider, Group, Loader, Paper, Stack, Text, Textarea, Title } from "@mantine/core";
 import { AlertCircle, Check, Clock, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -103,12 +90,19 @@ export function PedidoAliadoPage() {
 
               <Divider />
               {order.items.map((item, idx) => (
-                <Group key={idx} justify="space-between">
-                  <Text size="sm">
-                    {item.quantity}× {item.name}
-                  </Text>
-                  <Text size="sm">{formatCop(item.lineTotal)}</Text>
-                </Group>
+                <Stack key={idx} gap={0}>
+                  <Group justify="space-between">
+                    <Text size="sm">
+                      {item.quantity}× {item.name}
+                    </Text>
+                    <Text size="sm">{formatCop(item.lineTotal)}</Text>
+                  </Group>
+                  {item.notes && (
+                    <Text size="xs" c="orange.8" fw={600}>
+                      ↳ {item.notes}
+                    </Text>
+                  )}
+                </Stack>
               ))}
               {order.discountAmount > 0 && (
                 <Group justify="space-between">

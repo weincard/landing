@@ -1,18 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import {
-  Alert,
-  Badge,
-  Button,
-  Center,
-  Divider,
-  Group,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-  Timeline,
-  Title,
-} from "@mantine/core";
+import { Alert, Badge, Button, Center, Divider, Group, Loader, Paper, Stack, Text, Timeline, Title } from "@mantine/core";
 import { AlertCircle, ArrowLeft, Check, Clock } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -162,12 +149,19 @@ export function OrderTrackingPage() {
             <Paper withBorder radius="lg" p="md">
               <Stack gap={6}>
                 {order.items.map((item) => (
-                  <Group key={item.deliveryOrderItemId} justify="space-between">
-                    <Text size="sm">
-                      {item.quantity}× {item.name}
-                    </Text>
-                    <Text size="sm">{formatCop(item.lineTotal)}</Text>
-                  </Group>
+                  <Stack key={item.deliveryOrderItemId} gap={0}>
+                    <Group justify="space-between">
+                      <Text size="sm">
+                        {item.quantity}× {item.name}
+                      </Text>
+                      <Text size="sm">{formatCop(item.lineTotal)}</Text>
+                    </Group>
+                    {item.notes && (
+                      <Text size="xs" c="dimmed">
+                        ↳ {item.notes}
+                      </Text>
+                    )}
+                  </Stack>
                 ))}
                 {order.discountAmount > 0 && (
                   <Group justify="space-between">

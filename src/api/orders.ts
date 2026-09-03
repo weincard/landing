@@ -19,6 +19,7 @@ export type OrderPaymentMethod = "cash" | "card_terminal";
 export interface OrderItemInput {
   masterProductId: number;
   quantity: number;
+  notes?: string | null;
 }
 
 export interface OrderQuote {
@@ -44,6 +45,7 @@ export interface DeliveryOrderItem {
   unitPrice: number;
   quantity: number;
   lineTotal: number;
+  notes?: string | null;
 }
 
 export interface DeliveryOrder {
@@ -142,7 +144,7 @@ export interface AllyOrderView {
   paymentMethod: OrderPaymentMethod;
   confirmExpiresAt: string;
   createdAt: string;
-  items: { name: string; quantity: number; unitPrice: number; lineTotal: number }[];
+  items: { name: string; quantity: number; unitPrice: number; lineTotal: number; notes?: string | null }[];
 }
 
 export const getAllyOrderByToken = (token: string) =>
