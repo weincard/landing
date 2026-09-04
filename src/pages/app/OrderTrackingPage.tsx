@@ -3,7 +3,7 @@ import { Alert, Badge, Button, Center, Divider, Group, Loader, Paper, Stack, Tex
 import { AlertCircle, ArrowLeft, Check, Clock } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { cancelOrder, getOrder, isTerminalOrder } from "@/api/orders";
+import { cancelOrder, getOrder, isTerminalOrder, describeModifiers } from "@/api/orders";
 import {
   ORDER_STATUS_META,
   PAYMENT_METHOD_LABELS,
@@ -156,6 +156,11 @@ export function OrderTrackingPage() {
                       </Text>
                       <Text size="sm">{formatCop(item.lineTotal)}</Text>
                     </Group>
+                    {!!item.modifiers?.length && (
+                      <Text size="xs" c="dimmed">
+                        {describeModifiers(item.modifiers)}
+                      </Text>
+                    )}
                     {item.notes && (
                       <Text size="xs" c="dimmed">
                         ↳ {item.notes}

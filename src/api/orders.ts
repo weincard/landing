@@ -20,7 +20,24 @@ export interface OrderItemInput {
   masterProductId: number;
   quantity: number;
   notes?: string | null;
+  // Catalog v2 — one entry per selected option (on/off, quantity 1).
+  selections?: { modifierOptionId: number }[];
 }
+
+// Snapshot of a selected modifier on an order line (names/prices at order time).
+export interface OrderItemModifier {
+  modifierOptionId: number;
+  groupName: string;
+  name: string;
+  priceDelta: number;
+  quantity: number;
+}
+
+/** "Cascos · +Queso extra" — free choices by name, priced add-ons with "+". */
+export const describeModifiers = (mods?: OrderItemModifier[] | null): string =>
+  (mods ?? [])
+    .map((m) => `${m.priceDelta > 0 ? "+" : ""}${m.name}`)
+    .join(" · ");
 
 export interface OrderQuote {
   subtotal: number;
@@ -46,6 +63,8 @@ export interface DeliveryOrderItem {
   quantity: number;
   lineTotal: number;
   notes?: string | null;
+  /** Catalog v2 selections; unitPrice is the COMPOSED price (base + deltas). */
+  modifiers?: OrderItemModifier[];
 }
 
 export interface DeliveryOrder {
@@ -144,7 +163,14 @@ export interface AllyOrderView {
   paymentMethod: OrderPaymentMethod;
   confirmExpiresAt: string;
   createdAt: string;
-  items: { name: string; quantity: number; unitPrice: number; lineTotal: number; notes?: string | null }[];
+  items: {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    notes?: string | null;
+    modifiers?: OrderItemModifier[];
+  }[];
 }
 
 export const getAllyOrderByToken = (token: string) =>

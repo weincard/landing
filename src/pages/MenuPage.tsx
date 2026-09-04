@@ -1,36 +1,39 @@
+import { useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ActionIcon, Alert, Anchor, Badge, Box, Button, Center, Group, Image, Loader, Paper, Stack, Text, Title } from "@mantine/core";
+import { Alert, Anchor, Badge, Box, Button, Center, Group, Image, Loader, Paper, Stack, Text, Title } from "@mantine/core";
 import {
   AlertCircle,
   ArrowLeft,
   Bike,
   Clock,
   MapPinOff,
-  Minus,
   Plus,
   ShoppingBag,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getBranchCatalog } from "@/api/deliveries";
+import { getBranchCatalog, type CatalogItem } from "@/api/deliveries";
 import { useBranchDetail } from "@/hooks/useBranches";
 import { useDeliveryPin } from "@/lib/deliveryLocation";
 import {
+  addCartLine,
   cartCount,
-  cartQuantity,
   cartSubtotal,
   clearDeliveryCart,
-  setCartItem,
+  productQuantity,
   useDeliveryCart,
 } from "@/lib/deliveryCart";
 import { DeliveryLocationBar } from "@/components/delivery/DeliveryLocationBar";
+import { ProductSheet, type ProductSheetResult } from "@/components/delivery/ProductSheet";
 import { PageMeta } from "@/components/layout/PageMeta";
 
 const formatCop = (n: number) =>
   `$${Math.round(Number(n)).toLocaleString("es-CO")}`;
 
 // Branch delivery menu (deliveries v2). Two modes:
-//  - partner (Phase B, catalog.partnerEnabled): items get quantity steppers
-//    and the sticky cart bar leads to /app/checkout/:branchId.
+//  - partner (Phase B, catalog.partnerEnabled): tapping an item opens the
+//    ProductSheet (qty + modifiers + observation — catalog v2, the ONLY add
+//    path) and the sticky cart bar leads to /app/checkout/:branchId. Lines
+//    are edited/removed in the checkout.
 //  - contact: browse-only, the CTA keeps today's hand-off flow
 //    (/app/delivery/:branchId). openNow / inCoverage are re-checked here (the
 //    race guard: the branch may close, or the pin move, while browsing).
@@ -73,23 +76,30 @@ export function MenuPage() {
       ? branchCart.items.reduce((s, i) => s + discounted(i.price) * i.quantity, 0)
       : subtotal;
 
-  const changeQty = (
-    item: { masterProductId: number; name: string; price: number; imageUrl: string | null },
-    qty: number,
-  ) => {
+  const [sheetItem, setSheetItem] = useState<CatalogItem | null>(null);
+
+  const addFromSheet = (item: CatalogItem, r: ProductSheetResult) => {
     // One cart, one branch: replacing another restaurant's cart is explicit.
-    if (cart && cart.branchId !== branchId && qty > 0) {
+    if (cart && cart.branchId !== branchId) {
       const ok = window.confirm(
         `Tienes un pedido empezado en ${cart.branchName}. ¿Vaciarlo y empezar uno aquí?`,
       );
       if (!ok) return;
       clearDeliveryCart();
     }
-    setCartItem(
+    addCartLine(
       { branchId, branchName: branch?.name ?? catalog?.armiCity ?? "" },
-      item,
-      qty,
+      {
+        masterProductId: item.masterProductId,
+        name: item.name,
+        price: r.unitPrice,
+        imageUrl: item.imageUrl,
+        selections: r.selections,
+        notes: r.notes,
+      },
+      r.quantity,
     );
+    setSheetItem(null);
   };
 
   return (
@@ -191,14 +201,16 @@ export function MenuPage() {
               {section.name}
             </Title>
             {section.items.map((item) => {
-              const qty = cartQuantity(branchCart, item.masterProductId);
+              const qty = productQuantity(branchCart, item.masterProductId);
+              const addable = partnerEnabled && item.isAvailable && canOrder;
               return (
                 <Paper
                   key={item.masterProductId}
                   withBorder
                   radius="lg"
                   p="sm"
-                  style={{ opacity: item.isAvailable ? 1 : 0.55 }}
+                  style={{ opacity: item.isAvailable ? 1 : 0.55, cursor: addable ? "pointer" : undefined }}
+                  onClick={addable ? () => setSheetItem(item) : undefined}
                 >
                   <Group wrap="nowrap" align="flex-start" justify="space-between">
                     <Box style={{ flex: 1 }}>
@@ -209,6 +221,11 @@ export function MenuPage() {
                         {!item.isAvailable && (
                           <Badge size="xs" color="gray">
                             Agotado
+                          </Badge>
+                        )}
+                        {qty > 0 && (
+                          <Badge size="xs" color="dark" variant="filled" radius="xl">
+                            {qty} en el carrito
                           </Badge>
                         )}
                       </Group>
@@ -231,72 +248,28 @@ export function MenuPage() {
                           {formatCop(item.price)}
                         </Text>
                       )}
-                      {partnerEnabled && item.isAvailable && canOrder && (
+                      {!!item.modifierGroups?.length && (
+                        <Text size="xs" c="dimmed" mt={2}>
+                          {item.modifierGroups.some((g) => g.minSelect > 0)
+                            ? "Elige tus opciones"
+                            : "Con adicionales"}
+                        </Text>
+                      )}
+                      {addable && (
                         <Group gap="xs" mt={6}>
-                          {qty > 0 ? (
-                            <>
-                              <ActionIcon
-                                variant="light"
-                                color="dark"
-                                radius="xl"
-                                onClick={() =>
-                                  changeQty(
-                                    {
-                                      masterProductId: item.masterProductId,
-                                      name: item.name,
-                                      price: item.price,
-                                      imageUrl: item.imageUrl,
-                                    },
-                                    qty - 1,
-                                  )
-                                }
-                              >
-                                <Minus size={14} />
-                              </ActionIcon>
-                              <Text fw={700} size="sm" w={20} ta="center">
-                                {qty}
-                              </Text>
-                              <ActionIcon
-                                variant="filled"
-                                color="dark"
-                                radius="xl"
-                                onClick={() =>
-                                  changeQty(
-                                    {
-                                      masterProductId: item.masterProductId,
-                                      name: item.name,
-                                      price: item.price,
-                                      imageUrl: item.imageUrl,
-                                    },
-                                    Math.min(50, qty + 1),
-                                  )
-                                }
-                              >
-                                <Plus size={14} />
-                              </ActionIcon>
-                            </>
-                          ) : (
-                            <Button
-                              size="xs"
-                              variant="light"
-                              color="dark"
-                              radius="xl"
-                              leftSection={<Plus size={13} />}
-                              onClick={() =>
-                                changeQty(
-                                  {
-                                    masterProductId: item.masterProductId,
-                                    name: item.name,
-                                    price: item.price,
-                                    imageUrl: item.imageUrl,
-                                  },
-                                  1,
-                                )
-                              }
-                            >
-                              Agregar
-                            </Button>
-                          )}
+                          <Button
+                            size="xs"
+                            variant={qty > 0 ? "filled" : "light"}
+                            color="dark"
+                            radius="xl"
+                            leftSection={<Plus size={13} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSheetItem(item);
+                            }}
+                          >
+                            {qty > 0 ? "Agregar otro" : "Agregar"}
+                          </Button>
                         </Group>
                       )}
                     </Box>
@@ -330,6 +303,13 @@ export function MenuPage() {
           </Button>
         )}
       </Stack>
+
+      <ProductSheet
+        item={sheetItem}
+        discountPct={discountPct}
+        onClose={() => setSheetItem(null)}
+        onAdd={(r) => sheetItem && addFromSheet(sheetItem, r)}
+      />
 
       {/* Sticky cart bar (partner branches). */}
       {partnerEnabled && itemsInCart > 0 && (

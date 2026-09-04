@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Alert, Button, Divider, Group, Paper, SegmentedControl, Stack, Text, TextInput, Textarea, Title } from "@mantine/core";
-import { AlertCircle, ArrowLeft, Bike, Sparkles } from "lucide-react";
+import { ActionIcon, Alert, Button, Divider, Group, Paper, SegmentedControl, Stack, Text, TextInput, Textarea, Title } from "@mantine/core";
+import { AlertCircle, ArrowLeft, Bike, Minus, Plus, Sparkles } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -9,7 +9,12 @@ import {
   quoteOrder,
   type OrderPaymentMethod,
 } from "@/api/orders";
-import { clearDeliveryCart, useDeliveryCart, setCartItemNote } from "@/lib/deliveryCart";
+import {
+  clearDeliveryCart,
+  describeSelections,
+  setLineQuantity,
+  useDeliveryCart,
+} from "@/lib/deliveryCart";
 import { useDeliveryPin } from "@/lib/deliveryLocation";
 import { formatCop } from "@/lib/orderStatus";
 import { DeliveryLocationBar } from "@/components/delivery/DeliveryLocationBar";
@@ -38,12 +43,24 @@ export function CheckoutPage() {
     if (!branchCart) navigate(`/menu/${branchId}`, { replace: true });
   }, [branchCart, branchId, navigate]);
 
+  // One entry per cart LINE (the server no longer merges by product).
   const items = (branchCart?.items ?? []).map((i) => ({
     masterProductId: i.masterProductId,
     quantity: i.quantity,
     notes: i.notes ?? null,
+    selections: i.selections.map((s) => ({ modifierOptionId: s.modifierOptionId })),
   }));
-  const itemsKey = items.map((i) => `${i.masterProductId}x${i.quantity}`).join(",");
+  // Quote cache key: product × qty × sorted selection ids per line — two
+  // carts that differ only in selections must never share a cached quote.
+  const itemsKey = items
+    .map(
+      (i) =>
+        `${i.masterProductId}x${i.quantity}[${i.selections
+          .map((s) => s.modifierOptionId)
+          .sort((a, b) => a - b)
+          .join("+")}]`,
+    )
+    .join(",");
 
   const quote = useQuery({
     queryKey: ["order-quote", branchId, itemsKey, pin?.lat, pin?.lng, paymentMethod],
@@ -123,35 +140,65 @@ export function CheckoutPage() {
         <Paper withBorder radius="lg" p="md">
           <Stack gap={6}>
             {branchCart.items.map((item) => (
-              <Stack key={item.masterProductId} gap={4}>
-                <Group justify="space-between">
-                  <Text size="sm">
-                    {item.quantity}× {item.name}
-                  </Text>
+              <Stack key={item.lineId} gap={2}>
+                <Group justify="space-between" wrap="nowrap" align="flex-start">
+                  <Stack gap={0} style={{ flex: 1 }}>
+                    <Text size="sm">
+                      {item.quantity}× {item.name}
+                    </Text>
+                    {item.selections.length > 0 && (
+                      <Text size="xs" c="dimmed">
+                        {describeSelections(item.selections)}
+                      </Text>
+                    )}
+                    {item.notes && (
+                      <Text size="xs" c="dimmed">
+                        ↳ {item.notes}
+                      </Text>
+                    )}
+                  </Stack>
                   {qPct > 0 ? (
-                    <Group gap={6}>
+                    <Stack gap={0} align="flex-end">
                       <Text size="sm" fw={700} c="green.8">
                         {formatCop(qUnit(item.price) * item.quantity)}
                       </Text>
                       <Text size="xs" c="dimmed" td="line-through">
                         {formatCop(item.price * item.quantity)}
                       </Text>
-                    </Group>
+                    </Stack>
                   ) : (
                     <Text size="sm" fw={600}>
                       {formatCop(item.price * item.quantity)}
                     </Text>
                   )}
                 </Group>
-                <TextInput
-                  size="xs"
-                  placeholder="Observación (ej. sin queso, sin salsas)"
-                  maxLength={200}
-                  value={item.notes ?? ""}
-                  onChange={(e) =>
-                    setCartItemNote(item.masterProductId, e.currentTarget.value)
-                  }
-                />
+                {/* Per-line quantity edit (catalog v2): 0 removes the line. */}
+                <Group gap="xs">
+                  <ActionIcon
+                    variant="light"
+                    color="dark"
+                    radius="xl"
+                    size="sm"
+                    aria-label="Menos"
+                    onClick={() => setLineQuantity(item.lineId, item.quantity - 1)}
+                  >
+                    <Minus size={12} />
+                  </ActionIcon>
+                  <Text fw={700} size="xs" w={18} ta="center">
+                    {item.quantity}
+                  </Text>
+                  <ActionIcon
+                    variant="filled"
+                    color="dark"
+                    radius="xl"
+                    size="sm"
+                    aria-label="Más"
+                    disabled={item.quantity >= 50}
+                    onClick={() => setLineQuantity(item.lineId, item.quantity + 1)}
+                  >
+                    <Plus size={12} />
+                  </ActionIcon>
+                </Group>
               </Stack>
             ))}
             <Button
@@ -162,7 +209,7 @@ export function CheckoutPage() {
               to={`/menu/${branchId}`}
               style={{ alignSelf: "flex-start" }}
             >
-              Editar pedido
+              Agregar más productos
             </Button>
           </Stack>
         </Paper>

@@ -83,6 +83,24 @@ export const getDeliveryBranches = (
 
 // ─── Branch catalog (browse-only menu) ──────────────────────────────────────
 
+// Catalog v2 — modifier groups. minSelect=maxSelect=1 → required choice
+// (radio); otherwise optional add-ons (checkboxes, maxSelect distinct).
+export interface CatalogModifierOption {
+  modifierOptionId: number;
+  name: string;
+  priceDelta: number;
+  /** false = "Agotado" at this branch. */
+  isAvailable: boolean;
+}
+
+export interface CatalogModifierGroup {
+  modifierGroupId: number;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  options: CatalogModifierOption[];
+}
+
 export interface CatalogItem {
   masterProductId: number;
   name: string;
@@ -90,6 +108,7 @@ export interface CatalogItem {
   imageUrl: string | null;
   price: number;
   isAvailable: boolean;
+  modifierGroups?: CatalogModifierGroup[];
 }
 
 export interface BranchCatalog {

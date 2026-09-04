@@ -4,7 +4,7 @@ import { Alert, Badge, Button, Center, Divider, Group, Loader, Paper, Stack, Tex
 import { AlertCircle, Check, Clock, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { actOnAllyOrder, getAllyOrderByToken } from "@/api/orders";
+import { actOnAllyOrder, describeModifiers, getAllyOrderByToken } from "@/api/orders";
 import { PAYMENT_METHOD_LABELS, formatCop } from "@/lib/orderStatus";
 import { PageMeta } from "@/components/layout/PageMeta";
 
@@ -97,6 +97,11 @@ export function PedidoAliadoPage() {
                     </Text>
                     <Text size="sm">{formatCop(item.lineTotal)}</Text>
                   </Group>
+                  {!!item.modifiers?.length && (
+                    <Text size="sm" fw={600}>
+                      {describeModifiers(item.modifiers)}
+                    </Text>
+                  )}
                   {item.notes && (
                     <Text size="xs" c="orange.8" fw={600}>
                       ↳ {item.notes}
